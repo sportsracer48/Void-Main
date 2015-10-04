@@ -1,4 +1,6 @@
-package graphics;
+package graphics.geom;
+
+import graphics.registry.VertexArrayBuilder;
 
 import java.nio.ByteBuffer;
 
@@ -24,7 +26,7 @@ public class Rectangle implements Model
 		};
 	}
 	
-	public void addPositions(VertexBufferBuilder builder)
+	public void addPositions(VertexArrayBuilder builder)
 	{
 		builder.addAttrib(4, verticies);
 	}
@@ -32,6 +34,11 @@ public class Rectangle implements Model
 	public int nVerticies()
 	{
 		return 4;
+	}
+	
+	public int nIndicies()
+	{
+		return 6;
 	}
 	
 	public int bindIndicies()

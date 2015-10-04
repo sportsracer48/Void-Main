@@ -1,35 +1,43 @@
 package entry;
 
-import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryUtil.*;
 import graphics.Context;
-import graphics.Program;
-import graphics.Shader;
-import graphics.Sprite;
+import graphics.Renderlist;
+import graphics.entity.Entity;
+import graphics.registry.SpriteAtlasBuilder;
+import graphics.shader.Program;
+import graphics.shader.Shader;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import math.Matrix;
+
 import org.lwjgl.glfw.Callbacks;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWvidmode;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GLContext;
+import org.lwjgl.system.MemoryUtil;
 
-import util.MatUtil;
+import util.GLU;
 
 public class Driver
 {
 
-	public int width = 800, height = 600;
-
+	public int wWidth,wHeight;
 	public long window;
 	public boolean running = false;
 	public Program prog;
 	public Context context;
+	public Renderlist renderlist;
+	public SpriteAtlasBuilder spriteAtlas;
 	
 	
-	public Sprite test;
+	public Entity test;
 	
 	long lastUpdate;
 	int framesRendered = 0;
@@ -37,52 +45,58 @@ public class Driver
 	public void init()
 	{
 		this.running = true;
-
-		if (glfwInit() != GL_TRUE)
+		initGLFW();
+		initGL();
+		initShaders();
+		initSprites();
+		initContext();
+	}
+	
+	public void initGLFW()
+	{
+		if (GLFW.glfwInit() != GL_TRUE)
 		{
 			System.err.println("GLFW Window Handler Library failed to initialize");
 		}
 		
 		
-		glfwSetErrorCallback(Callbacks.errorCallbackPrint(System.err));
-		
-		glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+		GLFW.glfwSetErrorCallback(Callbacks.errorCallbackPrint(System.err));
+		ByteBuffer vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+		wWidth = GLFWvidmode.width(vidmode);
+		wHeight = GLFWvidmode.height(vidmode);
 
-		ByteBuffer vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		window = GLFW.glfwCreateWindow(wWidth, wHeight, "Void Main", GLFW.glfwGetPrimaryMonitor(), MemoryUtil.NULL);
 
-		glfwWindowHint(GLFW_DECORATED, GL_FALSE);
-
-		glfwWindowHint(GLFW_RED_BITS, GLFWvidmode.redBits(vidmode));
-		glfwWindowHint(GLFW_GREEN_BITS, GLFWvidmode.greenBits(vidmode));
-		glfwWindowHint(GLFW_BLUE_BITS, GLFWvidmode.blueBits(vidmode));
-		glfwWindowHint(GLFW_REFRESH_RATE, GLFWvidmode.refreshRate(vidmode));
-
-		width = GLFWvidmode.width(vidmode);
-		height = GLFWvidmode.height(vidmode);
-
-		window = glfwCreateWindow(width, height, "Void Main", NULL, NULL);
-
-		if (window == NULL)
+		if (window == MemoryUtil.NULL)
 		{
-			System.err.println("Could not create our window");
+			System.err.println("Could not create window");
 		}
 
-		// creates a bytebuffer object 'vidmode' which then queries
-		// to see what the primary monitor is.
-
-		// Sets the initial position of our game window.
-		glfwSetWindowPos(window, 0, 0);
-		// Sets the context of GLFW, this is vital for our program to work.
-		glfwMakeContextCurrent(window);
-		// finally shows our created window in all it's glory.
-		glfwShowWindow(window);
-
+		GLFW.glfwMakeContextCurrent(window);
+		GLFW.glfwShowWindow(window);
+	}
+	
+	public void initGL()
+	{
 		GLContext.createFromCurrent();
 
-		glClearColor(0, 0, 0, 0);
+		glClearColor(0, .1f, .05f, 0);
+		glEnable(GL_BLEND);
+		GL14.glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ZERO,GL_ZERO);
+		GL20.glBlendEquationSeparate(GL14.GL_FUNC_ADD,GL14.GL_FUNC_ADD);
+	}
+	
+	public void initSprites()
+	{
+		spriteAtlas = new SpriteAtlasBuilder(new File("res\\sprite\\workbench\\"));
+		spriteAtlas.build();
 		
+		test = new Entity(100,100,0,spriteAtlas.getSprite("res\\sprite\\workbench\\background.png"));
+	}
+	
+	public void initShaders()
+	{
 		Shader vs, fs;
-		
 		try
 		{
 			vs = new Shader("res\\shader\\vs.glsl",GL20.GL_VERTEX_SHADER);
@@ -92,44 +106,47 @@ public class Driver
 			prog.addAttrib("in_Color");
 			prog.addAttrib("in_TextureCoord");
 			prog.link();
-			context = prog.getContext("modelMatrix", "viewMatrix", "projectionMatrix");
 		} 
 		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
-		
-		try
-		{
-			test = new Sprite("res\\sprite\\workbench\\ouino.png");
-		} 
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-		
-		System.out.println("OpenGL: " + glGetString(GL_VERSION));
-
 	}
 
+	public void initContext()
+	{
+		spriteAtlas.bind();
+		prog.use();
+		renderlist = new Renderlist();
+		context = prog.getContext("modelMatrix", "viewMatrix", "projectionMatrix","stMatrix");
+		context.setProjection(Matrix.gluOrtho(
+				0, wWidth, 
+				wHeight, 0, 
+				1, -1));
+		
+	}
+	
+	public void checkError()
+	{
+		int error;
+		while((error = GL11.glGetError())!=GL11.GL_NO_ERROR)
+		{
+			System.err.println(GLU.gluErrorString(error));
+		}
+	}
+	
 	public void render()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		context.setProjection(MatUtil.gluOrtho(
-				0, width, 
-				height, 0, 
-				1, -1));
-		context.setView(MatUtil.identity());
-		
-		prog.use();
-		test.render(context);
-		glfwSwapBuffers(window);
+		context.setView(Matrix.scaling(1,1,1));
+		context.setModel(Matrix.identity(4));
+		renderlist.render(context);
+		GLFW.glfwSwapBuffers(window);
 	}
 
 	public void update()
 	{
-		glfwPollEvents();
+		GLFW.glfwPollEvents();
 	}
 
 	public void run()
@@ -140,6 +157,7 @@ public class Driver
 		{
 			update();
 			render();
+			checkError();
 			framesRendered++;
 			long time = System.currentTimeMillis();
 			long dt = time-lastUpdate;
@@ -150,7 +168,7 @@ public class Driver
 				lastUpdate = System.currentTimeMillis();
 			}
 
-			if (glfwWindowShouldClose(window) == GL_TRUE)
+			if (GLFW.glfwWindowShouldClose(window) == GL_TRUE)
 			{
 				running = false;
 			}

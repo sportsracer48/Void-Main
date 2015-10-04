@@ -1,4 +1,6 @@
-package graphics;
+package graphics.shader;
+
+import graphics.Context;
 
 import org.lwjgl.opengl.GL20;
 
@@ -23,9 +25,9 @@ public class Program
 		attribIndex++;
 	}
 	
-	public Context getContext(String modelName, String viewName, String projectionName)
+	public Context getContext(String modelName, String viewName, String projectionName, String stName)
 	{
-		return new Context(new Uniform(this,modelName),new Uniform(this,viewName),new Uniform(this,projectionName));
+		return new Context(new Uniform(this,modelName),new Uniform(this,viewName),new Uniform(this,projectionName),new Uniform(this,stName));
 	}
 	
 	public void link()

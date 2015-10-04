@@ -1,4 +1,4 @@
-package graphics;
+package graphics.shader;
 
 import java.nio.FloatBuffer;
 

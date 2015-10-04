@@ -1,4 +1,4 @@
-package graphics;
+package graphics.registry;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 
-public class VertexBufferBuilder
+public class VertexArrayBuilder
 {
 	int nVerticies;
 	List<float[]> attribs=new ArrayList<>();
@@ -17,7 +17,7 @@ public class VertexBufferBuilder
 	List<Integer> sizes=new ArrayList<>();
 	int stride = 0;
 	
-	public VertexBufferBuilder(int nVerticies)
+	public VertexArrayBuilder(int nVerticies)
 	{
 		this.nVerticies=nVerticies;
 	}
@@ -30,7 +30,7 @@ public class VertexBufferBuilder
 		attribs.add(attrib);
 	}
 	
-	public int bindVBO()
+	public int buildVBO()
 	{
 		//assemble the floatbuffer in ram
 		FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(nVerticies*stride);

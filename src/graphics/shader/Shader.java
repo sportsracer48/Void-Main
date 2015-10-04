@@ -1,4 +1,4 @@
-package graphics;
+package graphics.shader;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
