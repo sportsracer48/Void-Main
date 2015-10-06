@@ -25,20 +25,21 @@ import javax.imageio.ImageIO;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
-public class SpriteAtlasBuilder
+public class SpriteAtlas
 {
 	List<BufferedImage> images = new ArrayList<>();
 	List<String> names = new ArrayList<>();
+	String namespace = "";
 	int pTex;
 	List<Sprite> sprites = new ArrayList<>();
 	Hashtable<String,Sprite> spriteTable =new Hashtable<>();
 	
-	public SpriteAtlasBuilder()
+	public SpriteAtlas()
 	{
 		
 	}
 	
-	public SpriteAtlasBuilder(File f)
+	public SpriteAtlas(File f)
 	{
 		addAllChildren(f);
 	}
@@ -150,9 +151,19 @@ public class SpriteAtlasBuilder
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, pTex);
 	}
 	
+	public void setNamespace(String namespace)
+	{
+		this.namespace = namespace;
+	}
+	
+	public void resetNamespace()
+	{
+		this.namespace = "";
+	}
+	
 	public Sprite getSprite(String name)
 	{
-		return spriteTable.get(name);
+		return spriteTable.get(namespace + name);
 	}
 	
 	static class Rectangle

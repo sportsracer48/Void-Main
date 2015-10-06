@@ -11,9 +11,11 @@ public class Matrix
 	static FloatBuffer tempMatrix = BufferUtils.createFloatBuffer(16);
 	
 	
-	public float[] mat;
-	int cols;
-	int rows;
+	private final float[] mat;
+	public final int cols;
+	public final int rows;
+	
+	
 	
 	public Matrix(int rows, int cols)
 	{
@@ -95,6 +97,107 @@ public class Matrix
 		return out;
 	}
 	
+	public Matrix scale(float f)
+	{
+		Matrix out = new Matrix(rows,cols);
+		for(int row = 0; row<out.rows; row++)
+		{
+			for(int col = 0; col<out.cols; col++)
+			{
+				out.set(row, col, get(row,col)*f);
+			}
+		}
+		return out;
+	}
+	
+	public Matrix subMat(int pivotRow, int pivotCol)
+	{
+		Matrix toReturn = new Matrix(rows-1,cols-1);
+		for(int row = 0,outRow = 0; row<rows; row++)
+		{
+			if(row == pivotRow)
+			{
+				continue;
+			}
+			for(int col = 0,outCol=0; col<cols; col++)
+			{
+				if(col == pivotCol)
+				{
+					continue;
+				}
+				toReturn.set(outRow, outCol, get(row,col));
+				outCol++;
+			}
+			outRow++;
+		}
+		return toReturn;
+	}
+	
+	public float det()
+	{
+		if(rows == 1 && cols == 1)
+		{
+			return mat[0];
+		}
+		float sum = 0;
+		for(int col = 0; col<cols; col++)
+		{
+			sum += get(0,col)*cofactor(0,col);
+		}
+		return sum;
+	}
+	
+	public float minor(int row, int col)
+	{
+		return subMat(row,col).det();
+	}
+	
+	public float cofactor(int row, int col)
+	{
+		return minor(row,col)*(((col+row)%2)*-2+1);
+	}
+	
+	public Matrix cofactor()
+	{
+		Matrix out = new Matrix(rows,cols);
+		for(int row = 0; row<out.rows; row++)
+		{
+			for(int col = 0; col<out.cols; col++)
+			{
+				out.set(row, col, cofactor(row,col));
+			}
+		}
+		return out;
+	}
+	
+	public Matrix transpose()
+	{
+		Matrix out = new Matrix(cols,rows);
+		for(int row = 0; row<out.rows; row++)
+		{
+			for(int col = 0; col<out.cols; col++)
+			{
+				out.set(row, col, get(col,row));
+			}
+		}
+		return out;
+	}
+	
+	public Matrix adjoint()
+	{
+		return cofactor().transpose();
+	}
+	
+	public Matrix inverse()
+	{
+		float det = det();
+		if(det == 0)
+		{
+			throw new RuntimeException("Illegal matrix");
+		}
+		return adjoint().scale(1/det());
+	}
+	
 	public String toString()
 	{
 		StringBuilder out = new StringBuilder();
@@ -134,6 +237,39 @@ public class Matrix
 	private void set(int row, int col, float val)
 	{
 		mat[row*cols+col] = val;
+	}
+	
+	public float x()
+	{
+		return mat[0];
+	}
+	public float y()
+	{
+		return mat[1];
+	}
+	public float z()
+	{
+		return mat[2];
+	}
+	public float w()
+	{
+		return mat[3];
+	}
+	public float r()
+	{
+		return mat[0];
+	}
+	public float g()
+	{
+		return mat[1];
+	}
+	public float b()
+	{
+		return mat[2];
+	}
+	public float a()
+	{
+		return mat[3];
 	}
 	
 	public static Matrix identity(int size)

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Renderlist
+public class RenderList
 {
 	List<Renderable> renderList = new ArrayList<>();
 	

@@ -5,6 +5,7 @@ import graphics.Renderable;
 import graphics.Sprite;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import math.Matrix;
@@ -50,6 +51,7 @@ public class Entity implements Renderable
 		{
 			base.render(c);
 		}
+		Collections.sort(children);
 		for(Entity e:children)
 		{
 			e.render(c);

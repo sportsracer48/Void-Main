@@ -2,9 +2,9 @@ package entry;
 
 import static org.lwjgl.opengl.GL11.*;
 import graphics.Context;
-import graphics.Renderlist;
+import graphics.RenderList;
 import graphics.entity.Entity;
-import graphics.registry.SpriteAtlasBuilder;
+import graphics.registry.SpriteAtlas;
 import graphics.shader.Program;
 import graphics.shader.Shader;
 
@@ -23,24 +23,25 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.system.MemoryUtil;
 
+import state.GameState;
+import state.workbench.WorkbenchState;
 import util.GLU;
 
 public class Driver
 {
+	boolean fullScreen = true;
 
 	public int wWidth,wHeight;
 	public long window;
 	public boolean running = false;
 	public Program prog;
 	public Context context;
-	public Renderlist renderlist;
-	public SpriteAtlasBuilder spriteAtlas;
+	public RenderList renderlist;
+	public SpriteAtlas spriteAtlas;
 	
-	
+	public GlobalInput input;
+	public GameState currentState;
 	public Entity test;
-	
-	long lastUpdate;
-	int framesRendered = 0;
 
 	public void init()
 	{
@@ -50,6 +51,8 @@ public class Driver
 		initShaders();
 		initSprites();
 		initContext();
+		
+		initGame();
 	}
 	
 	public void initGLFW()
@@ -65,13 +68,14 @@ public class Driver
 		wWidth = GLFWvidmode.width(vidmode);
 		wHeight = GLFWvidmode.height(vidmode);
 
-		window = GLFW.glfwCreateWindow(wWidth, wHeight, "Void Main", GLFW.glfwGetPrimaryMonitor(), MemoryUtil.NULL);
+		window = GLFW.glfwCreateWindow(wWidth, wHeight, "Void Main", fullScreen?GLFW.glfwGetPrimaryMonitor():MemoryUtil.NULL, MemoryUtil.NULL);
 
 		if (window == MemoryUtil.NULL)
 		{
 			System.err.println("Could not create window");
 		}
-
+		
+		input = new GlobalInput(this);
 		GLFW.glfwMakeContextCurrent(window);
 		GLFW.glfwShowWindow(window);
 	}
@@ -88,7 +92,7 @@ public class Driver
 	
 	public void initSprites()
 	{
-		spriteAtlas = new SpriteAtlasBuilder(new File("res\\sprite\\workbench\\"));
+		spriteAtlas = new SpriteAtlas(new File("res\\sprite\\workbench\\"));
 		spriteAtlas.build();
 		
 		test = new Entity(100,100,0,spriteAtlas.getSprite("res\\sprite\\workbench\\background.png"));
@@ -117,13 +121,18 @@ public class Driver
 	{
 		spriteAtlas.bind();
 		prog.use();
-		renderlist = new Renderlist();
+		renderlist = new RenderList();
 		context = prog.getContext("modelMatrix", "viewMatrix", "projectionMatrix","stMatrix");
 		context.setProjection(Matrix.gluOrtho(
 				0, wWidth, 
 				wHeight, 0, 
-				1, -1));
-		
+				100, -100));
+	}
+	
+	public void initGame()
+	{
+		currentState = new WorkbenchState(input);
+		currentState.init(spriteAtlas);
 	}
 	
 	public void checkError()
@@ -138,30 +147,42 @@ public class Driver
 	public void render()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		context.setView(Matrix.scaling(1,1,1));
+		context.setView(Matrix.scaling(2,2,1));
 		context.setModel(Matrix.identity(4));
-		renderlist.render(context);
+		currentState.render(context);
 		GLFW.glfwSwapBuffers(window);
 	}
 
-	public void update()
+	public void update(int dt)
 	{
 		GLFW.glfwPollEvents();
+		currentState.update(dt);
 	}
 
 	public void run()
 	{
 		init();
-		lastUpdate = System.currentTimeMillis();
+		
+
+		int framesRendered = 0;
+		long lastUpdate = System.currentTimeMillis();
+		long lastTime = System.currentTimeMillis();
+		
+		
 		while (running)
 		{
-			update();
+			int dt = (int) (System.currentTimeMillis()-lastTime);
+			if(dt<0)//I just want to make sure, ok? We could have switched cpu cores or something.
+			{
+				dt = 0;
+			}
+			lastTime = System.currentTimeMillis();
+			update(dt);
 			render();
 			checkError();
 			framesRendered++;
-			long time = System.currentTimeMillis();
-			long dt = time-lastUpdate;
-			if(dt>=1000)
+			long timeSinceUpdate = System.currentTimeMillis()-lastUpdate;
+			if(timeSinceUpdate>=1000)
 			{
 				System.out.format("%d FPS%n", framesRendered);
 				framesRendered=0;
