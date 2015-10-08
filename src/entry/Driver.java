@@ -150,6 +150,8 @@ public class Driver
 		context.setView(Matrix.scaling(2,2,1));
 		context.setModel(Matrix.identity(4));
 		currentState.render(context);
+		context.setView(Matrix.identity(4));
+		currentState.renderUI(context);
 		GLFW.glfwSwapBuffers(window);
 	}
 

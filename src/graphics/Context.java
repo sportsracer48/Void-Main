@@ -11,6 +11,7 @@ public class Context
 {
 	Uniform model,view,projection,st;
 	Matrix modelMat;
+	Matrix inverseView;
 	
 	List<Matrix> stack = new ArrayList<>();
 	
@@ -29,6 +30,11 @@ public class Context
 		{
 			throw new RuntimeException("context stack size exceded.");
 		}
+	}
+	
+	public Matrix screenToWorld(Matrix screen)
+	{
+		return inverseView.dot(screen);
 	}
 	
 	public void popTransform()
@@ -63,6 +69,7 @@ public class Context
 	public void setView(Matrix matrix)
 	{
 		Matrix.uniformMatrix(matrix, view);
+		inverseView = matrix.inverse();
 	}
 	
 	public void setProjection(Matrix matrix)

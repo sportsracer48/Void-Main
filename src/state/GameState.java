@@ -17,6 +17,7 @@ import graphics.registry.SpriteAtlas;
 public abstract class GameState
 {
 	public RenderList renderList = new RenderList();
+	public RenderList uiList = new RenderList(false);
 	public ActList actList = new ActList();
 	protected GlobalInput input;
 	
@@ -58,6 +59,11 @@ public abstract class GameState
 		renderList.add(r);
 	}
 	
+	public void addUI(Renderable r)
+	{
+		uiList.add(r);
+	}
+	
 	public void addActable(Actable a)
 	{
 		actList.add(a);
@@ -66,6 +72,11 @@ public abstract class GameState
 	public void removeRenderable(Renderable r)
 	{
 		renderList.remove(r);
+	}
+	
+	public void removeUI(Renderable r)
+	{
+		uiList.remove(r);
 	}
 	
 	public void removeActable(Actable a)
@@ -93,5 +104,10 @@ public abstract class GameState
 	public void render(Context c)
 	{
 		renderList.render(c);
+	}
+	
+	public void renderUI(Context c)
+	{
+		uiList.render(c);
 	}
 }

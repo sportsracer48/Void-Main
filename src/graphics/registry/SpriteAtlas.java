@@ -78,7 +78,7 @@ public class SpriteAtlas
 		
 		int width = -(Integer.MIN_VALUE/2);//max power of two an integer can represent
 		int height = (int)Math.pow(2,Math.ceil(Math.log(rects.get(0).height)/Math.log(2)));
-		int bestArea = Integer.MAX_VALUE;
+		int bestMaxDim = Integer.MAX_VALUE;
 		Packing bestCand = null;
 		while(width>maxWidth)
 		{
@@ -96,10 +96,10 @@ public class SpriteAtlas
 			{
 				cand.trimToPowerOfTwo();
 				width = cand.getWidth();
-				if(bestCand==null || width*height<=bestArea)
+				if(bestCand==null || Math.max(width, height)<=bestMaxDim)
 				{
 					bestCand=cand;
-					bestArea = width*height;
+					bestMaxDim = Math.max(width, height);
 				}
 				width/=2;
 			}
@@ -107,7 +107,7 @@ public class SpriteAtlas
 			{
 				height*=2;
 			}
-			while(width*height>bestArea)
+			while(Math.max(width, height)>bestMaxDim)
 			{
 				width/=2;
 			}
@@ -119,6 +119,15 @@ public class SpriteAtlas
 		WritableRaster raster=Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 4, null);
 		BufferedImage texImage = new BufferedImage(glColor,raster,true,new Hashtable<>());
 		bestCand.render(texImage.getGraphics());
+		try
+		{
+			ImageIO.write(texImage,"PNG",new File("Atlas.png"));
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		
 		
 		byte[] data=((DataBufferByte)(texImage.getRaster().getDataBuffer())).getData();
 		ByteBuffer imageBuffer=BufferUtils.createByteBuffer(data.length);
