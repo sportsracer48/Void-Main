@@ -14,6 +14,7 @@ public class Rectangle
 		corner = new Matrix(new float[]{x,y,0,1});//w=1 for point, affected by translation
 		diag = new Matrix(new float[]{width,height,0,0});//w=0 for vector, unaffected by translation
 	}
+
 	
 	public Rectangle(Matrix corner, Matrix diag)
 	{
@@ -30,13 +31,29 @@ public class Rectangle
 		return new Rectangle(transform.dot(corner),transform.dot(diag));
 	}
 	
+	/**
+	 * <pre>
+	 * inclusive
+	 *            ---------
+	 *            |       |
+	 *            |
+	 *            |       |         
+	 *            |         
+	 *            |       |
+	 *            - - - - -
+	 *                      exclusive
+	 * </pre>
+	 * @param x
+	 * @param y
+	 * @return
+	 */
 	public boolean contains(float x, float y)
 	{
 		return 
 				x>=this.x && 
-				x<=this.x+width && 
+				x<this.x+width && 
 				y>=this.y && 
-				y<=this.y+height; 
+				y<this.y+height; 
 	}
 	
 	public boolean contains(Matrix model,float x, float y)

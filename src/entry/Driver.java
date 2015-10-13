@@ -2,8 +2,6 @@ package entry;
 
 import static org.lwjgl.opengl.GL11.*;
 import graphics.Context;
-import graphics.RenderList;
-import graphics.entity.Entity;
 import graphics.registry.SpriteAtlas;
 import graphics.shader.Program;
 import graphics.shader.Shader;
@@ -36,12 +34,10 @@ public class Driver
 	public boolean running = false;
 	public Program prog;
 	public Context context;
-	public RenderList renderlist;
 	public SpriteAtlas spriteAtlas;
 	
 	public GlobalInput input;
 	public GameState currentState;
-	public Entity test;
 
 	public void init()
 	{
@@ -94,8 +90,6 @@ public class Driver
 	{
 		spriteAtlas = new SpriteAtlas(new File("res\\sprite\\workbench\\"));
 		spriteAtlas.build();
-		
-		test = new Entity(100,100,0,spriteAtlas.getSprite("res\\sprite\\workbench\\background.png"));
 	}
 	
 	public void initShaders()
@@ -121,7 +115,6 @@ public class Driver
 	{
 		spriteAtlas.bind();
 		prog.use();
-		renderlist = new RenderList();
 		context = prog.getContext("modelMatrix", "viewMatrix", "projectionMatrix","stMatrix");
 		context.setProjection(Matrix.gluOrtho(
 				0, wWidth, 
@@ -147,16 +140,13 @@ public class Driver
 	public void render()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		context.setView(Matrix.scaling(2,2,1));
-		context.setModel(Matrix.identity(4));
-		currentState.render(context);
-		context.setView(Matrix.identity(4));
-		currentState.renderUI(context);
+		currentState.renderAll(context);
 		GLFW.glfwSwapBuffers(window);
 	}
 
 	public void update(int dt)
 	{
+		currentState.beforeInput(dt);
 		GLFW.glfwPollEvents();
 		currentState.update(dt);
 	}

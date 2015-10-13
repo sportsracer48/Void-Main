@@ -84,6 +84,12 @@ public abstract class GameState
 		actList.remove(a);
 	}
 	
+	/**
+	 * first thing updated during the update step.
+	 * @param dt
+	 */
+	public void beforeInput(int dt){}
+	public void eachFrame(int dt){}	
 	public void mouseMoved(float x, float y){}
 	public void keyPressed(int key){}
 	public void keyRealeased(int key){}
@@ -95,9 +101,11 @@ public abstract class GameState
 	public void fileDropped(String path){}
 	
 	public abstract void init(SpriteAtlas sprites);
+	public abstract void renderAll(Context c);
 	
 	public void update(int dt)
 	{
+		eachFrame(dt);
 		actList.act(dt);
 	}
 	
