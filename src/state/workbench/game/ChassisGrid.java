@@ -4,10 +4,12 @@ import state.workbench.ItemAcceptor;
 import state.workbench.ItemManipulator;
 import util.GridBuilder;
 import util.GridBuilder.Coord;
+import util.Color;
 import game.item.Item;
 import game.item.ItemType;
 import graphics.Sprite;
 import graphics.entity.Entity;
+import graphics.entity.FluidEntity;
 
 public class ChassisGrid extends Entity
 {
@@ -16,6 +18,7 @@ public class ChassisGrid extends Entity
 	ItemAcceptor[][] slots;
 	int width, height;
 	GridBuilder grid;
+	FluidEntity preview;
 	
 	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip)
 	{
@@ -29,6 +32,9 @@ public class ChassisGrid extends Entity
 		contents = new Item[width][height];
 		entities = new Entity[width][height];
 		slots = new ItemAcceptor[width][height];
+		preview = new FluidEntity(0,0,height+4);
+		preview.setVisible(false);
+		addChild(preview);
 		this.width = width;
 		this.height = height;
 		
@@ -49,6 +55,27 @@ public class ChassisGrid extends Entity
 				public boolean displayedItem(Item i)
 				{
 					return true;
+				}
+
+				public void preview(Item i) 
+				{
+					if(i == null)
+					{
+						preview.setVisible(false);
+						return;
+					}
+					ItemType type = i.getType();
+					preview.setSpriteAndSize(i.getWorldSprite());
+					preview.setPos(x2-type.getOffsetX(), y2-type.getOffsetY());
+					preview.setVisible(true);
+					if(canAccept(i))
+					{
+						preview.setColor(new Color(1,1,1,.4f));
+					}
+					else
+					{
+						preview.setColor(new Color(2,.5f,.5f,.4f));
+					}
 				}
 			};
 			slots[col][row] = a;

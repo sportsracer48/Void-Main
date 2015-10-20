@@ -1,9 +1,11 @@
 package state.workbench;
 
 import state.ui.HighlightArea;
+import util.Color;
 import game.item.Item;
 import graphics.Sprite;
 import graphics.entity.Entity;
+import graphics.entity.FluidEntity;
 
 public class InvenorySlot extends Entity
 {
@@ -11,6 +13,7 @@ public class InvenorySlot extends Entity
 	HighlightArea area;
 	ItemAcceptor acceptor;
 	Entity itemEntity;
+	FluidEntity preview;
 	Item contents;
 	float width, height;
 	
@@ -23,6 +26,7 @@ public class InvenorySlot extends Entity
 		this.height = area.getHeight();
 		this.itemEntity = contains.getInvEntity();
 		this.itemEntity.setPos(3, 3);
+		preview = new FluidEntity(3,3,0);
 		this.contents = contains;
 		this.acceptor = new ItemAcceptor(3,3,0,area.getArea(),manip)
 		{
@@ -43,11 +47,29 @@ public class InvenorySlot extends Entity
 			{
 				return canAccept(i);
 			}
+
+			@Override
+			public void preview(Item i) 
+			{
+				if(i==null)
+				{
+					preview.setVisible(false);
+					return;
+				}
+				if(canAccept(manip.getItem()))
+				{
+					Sprite world = i.getInvSprite();
+					preview.setSpriteAndSize(world);
+					preview.setColor(new Color(1,1,1,.4f));
+					preview.setVisible(true);
+				}
+			}
 		};
 		acceptor.setDisplayIcon(true);
 		
 		addChild(this.acceptor);
 		addChild(this.itemEntity);
+		addChild(preview);
 		addChild(this.area);
 		area.getArea().addOnClick((x2,y2)->
 		{
