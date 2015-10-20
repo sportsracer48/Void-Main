@@ -1,21 +1,25 @@
 package graphics.entity;
 
 import graphics.Context;
-import graphics.Renderable;
+import graphics.RenderList;
 import graphics.Sprite;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import action.Actable;
 import state.ui.ClickableArea;
 import state.ui.MouseoverContext;
+import util.Color;
 import math.Matrix;
 
-public class Entity implements Renderable, Actable
+public class Entity implements Comparable<Entity>, Actable
 {
-	List<Entity> children = new ArrayList<>();
+	public static final double percentPerFrame = .3;
+	public static final double msPerFrame = 16;
+	public static final double percentChangePerMs = Math.pow((1-percentPerFrame),1/msPerFrame);
+	
+	RenderList children = new RenderList();
 	List<ClickableArea> clickable = new ArrayList<>();
 	ClickableArea root = null;
 	
@@ -23,7 +27,10 @@ public class Entity implements Renderable, Actable
 	float targetX, targetY, targetZ;
 	Sprite base;
 	Matrix translation;
+	boolean enabled = true;
 	boolean visible = true;
+	Matrix color = Color.white;
+	boolean colored = false;
 	
 	public Entity(float x, float y, float z, Sprite base)
 	{
@@ -52,16 +59,26 @@ public class Entity implements Renderable, Actable
 		children.add(child);
 	}
 	
+	public void removeChild(Entity child)
+	{
+		children.remove(child);
+	}
+	
 	public void addClickableArea(ClickableArea area)
 	{
 		clickable.add(area);
 	}
 	
-	public boolean handleClick(float x, float y)
+	public boolean handleClick(float x, float y, Matrix model)
 	{
-		if(!visible)
+		if(!enabled)
 		{
 			return false;
+		}
+		Matrix translation = model.dot(this.translation);
+		for(Entity e: children)
+		{
+			e.handleClick(x, y, translation);
 		}
 		for(ClickableArea a: clickable)
 		{
@@ -82,14 +99,24 @@ public class Entity implements Renderable, Actable
 		return false;
 	}
 	
+	public boolean handleClick(float x, float y)
+	{
+		return(handleClick(x,y,Matrix.identity(4)));
+	}
+	
 	public void handleRelease()
 	{
+		for(Entity e: children)
+		{
+			e.handleRelease();
+		}
 		for(ClickableArea a: clickable)
 		{
 			if(a.isMouseHeld())
 			{
 				a.handleRelease();
 			}
+			a.handleAnyRelease();
 		}
 		if(root!=null)
 		{
@@ -102,11 +129,16 @@ public class Entity implements Renderable, Actable
 		handleMove(x,y,null);
 	}
 	
-	public void handleMove(float x, float y, MouseoverContext context)
+	public void handleMove(float x, float y, MouseoverContext context, Matrix model)
 	{
-		if(!visible)
+		if(!enabled)
 		{
 			return;
+		}
+		Matrix translation = model.dot(this.translation);
+		for(Entity e: children)
+		{
+			e.handleMove(x, y, context, translation);
 		}
 		for(ClickableArea a:clickable)
 		{
@@ -118,9 +150,32 @@ public class Entity implements Renderable, Actable
 		}
 	}
 	
+	public void handleMove(float x, float y, MouseoverContext context)
+	{
+		handleMove(x,y,context,Matrix.identity(4));
+	}
+	
+	public void setEnabled(boolean enabled)
+	{
+		this.enabled = enabled;
+	}
+	
 	public void setVisible(boolean visible)
 	{
 		this.visible = visible;
+	}
+	
+	public void setColor(Matrix c)
+	{
+		if(c.equals(Color.white))
+		{
+			return;
+		}
+		else
+		{
+			colored = true;
+			color = c;
+		}
 	}
 	
 	public void moveTo(float x, float y)
@@ -133,52 +188,88 @@ public class Entity implements Renderable, Actable
 	{
 		this.targetX=this.x=x;
 		this.targetY=this.y=y;
+		updateTranslation();
+	}
+	
+	public void updateTranslation()
+	{
 		this.translation = Matrix.translation(x,y,0);
 	}
 	
 	public void act(int dt)
 	{
-		setPos(targetX,targetY);
+		if(x!=targetX || y!=targetY)
+		{
+			x += (targetX-x)*(1-Math.pow(percentChangePerMs,dt));
+			y += (targetY-y)*(1-Math.pow(percentChangePerMs,dt));
+			if(Math.abs(targetX-x)<1)
+			{
+				x = targetX;
+			}
+			if(Math.abs(targetY-y)<1)
+			{
+				y = targetY;
+			}
+			updateTranslation();
+		}
 		this.z=targetZ;
+		children.update();
 		for(Entity e: children)
 		{
 			e.act(dt);
 		}
+		children.update();
 	}
 	
 	public void setZ(float z)
 	{
-		this.z=z;
+		this.targetZ=this.z=z;
 	}
 	
-	public void render(Context c)
+	public final void render(Context c)
 	{
-		if(!visible)
+		if(!enabled || !visible)
 		{
 			return;
+		}
+		if(colored)
+		{
+			c.setColor(color);
 		}
 		c.pushTransform();
 		c.prependTransform(translation);
 		
+		renderBase(c);
+		
+		children.render(c);
+		c.popTransform();
+		if(colored)
+		{
+			c.resetColor();
+		}
+	}
+	
+	public void renderBase(Context c)
+	{
 		if(base!=null)
 		{
 			base.render(c);
 		}
-		Collections.sort(children);
-		for(Entity e:children)
-		{
-			e.render(c);
-		}
-		c.popTransform();
 	}
+	
+	public float getX()
+	{
+		return x;
+	}
+	
+	public float getY()
+	{
+		return y;
+	}
+	
 	public float getZ()
 	{
 		return z;
-	}
-
-	public int compareTo(Renderable o)
-	{
-		return 0;
 	}
 
 	public ClickableArea getRoot()
@@ -191,5 +282,8 @@ public class Entity implements Renderable, Actable
 		this.root = root;
 	}
 	
-	
+	public int compareTo(Entity r)
+	{
+		return Float.compare(getZ(), r.getZ());
+	}
 }

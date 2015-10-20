@@ -16,27 +16,14 @@ public class DragArea extends ClickableArea
 		target.addClickableArea(this);
 	}
 
-	public void mouseEntered()
-	{
-	}
-
-	public void mouseExited()
-	{
-	}
-
 	public void onClick(float x, float y)
 	{
 		context.setGrabbed(this, x+this.getX(), y+this.getY());
 		
 	}
 
-	public void onRelease()
-	{
-	}
-
 	public void move(float x, float y)
 	{
 		target.moveTo(x, y);
 	}
-
 }

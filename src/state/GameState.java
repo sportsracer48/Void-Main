@@ -1,11 +1,13 @@
 package state;
 
+import org.lwjgl.glfw.GLFW;
+
 import entry.GlobalInput;
 import action.ActList;
 import action.Actable;
 import graphics.Context;
 import graphics.RenderList;
-import graphics.Renderable;
+import graphics.entity.Entity;
 import graphics.registry.SpriteAtlas;
 
 /**
@@ -20,11 +22,23 @@ public abstract class GameState
 	public RenderList uiList = new RenderList(false);
 	public ActList actList = new ActList();
 	protected GlobalInput input;
+	private long window;
 	
-	public GameState(GlobalInput input)
+	public GameState(GlobalInput input, long window)
 	{
 		this.input = input;
+		this.window = window;
 	}
+	
+	public void hideCursor()
+	{
+		GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_HIDDEN);
+	}
+	public void showCursor()
+	{
+		GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+	}
+	
 	public float getMouseX()
 	{
 		return input.getMouseX();
@@ -42,24 +56,24 @@ public abstract class GameState
 		return input.isButtonPressed(button);
 	}
 	
-	public <T extends Renderable & Actable> void add(T t)
+	public void add(Entity t)
 	{
 		renderList.add(t);
 		actList.add(t);
 	}
 	
-	public <T extends Renderable & Actable> void remove(T t)
+	public void remove(Entity t)
 	{
 		renderList.remove(t);
 		actList.remove(t);
 	}
 	
-	public void addRenderable(Renderable r)
+	public void addRenderable(Entity r)
 	{
 		renderList.add(r);
 	}
 	
-	public void addUI(Renderable r)
+	public void addUI(Entity r)
 	{
 		uiList.add(r);
 	}
@@ -69,12 +83,12 @@ public abstract class GameState
 		actList.add(a);
 	}
 	
-	public void removeRenderable(Renderable r)
+	public void removeRenderable(Entity r)
 	{
 		renderList.remove(r);
 	}
 	
-	public void removeUI(Renderable r)
+	public void removeUI(Entity r)
 	{
 		uiList.remove(r);
 	}
@@ -89,7 +103,8 @@ public abstract class GameState
 	 * @param dt
 	 */
 	public void beforeInput(int dt){}
-	public void eachFrame(int dt){}	
+	public void afterInput(int dt){}
+	public void afterUpdate(int dt){}
 	public void mouseMoved(float x, float y){}
 	public void keyPressed(int key){}
 	public void keyRealeased(int key){}
@@ -105,8 +120,11 @@ public abstract class GameState
 	
 	public void update(int dt)
 	{
-		eachFrame(dt);
+		afterInput(dt);
 		actList.act(dt);
+		afterUpdate(dt);
+		renderList.update();
+		uiList.update();
 	}
 	
 	public void render(Context c)

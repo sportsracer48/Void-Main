@@ -21,27 +21,9 @@ public class Window extends Entity
 				close.getHeight(),
 				context,
 				this);
-		addClickableArea(close.getArea());
-		setRoot(new ClickableArea(BORDER,BORDER,getWidth()-2*BORDER,getHeight()-2*BORDER)
-		{
-			public void mouseEntered()
-			{
-			}
-
-			public void mouseExited()
-			{
-			}
-
-			public void onClick(float x, float y)
-			{
-			}
-
-			public void onRelease()
-			{
-			}
-		});
+		setRoot(new ClickableArea(BORDER,BORDER,getWidth()-2*BORDER,getHeight()-2*BORDER));
 		addChild(close);
-		close.setOnPress(()->this.setVisible(false));
+		close.setOnPress(()->this.setEnabled(false));
 	}
 	
 	

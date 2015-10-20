@@ -151,7 +151,7 @@ public class SpriteAtlas
 			float sheight = (float)r.height/height;
 			Sprite s = new Sprite(pTex,x,y,swidth,sheight,r.width,r.height);
 			sprites.add(s);
-			spriteTable.put(r.name, s);
+			spriteTable.put(r.name.replace(File.separatorChar, '/'), s);
 		}
 	}
 	

@@ -1,12 +1,17 @@
 package graphics;
 
+import graphics.entity.Entity;
+
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
-public class RenderList
+public class RenderList implements Iterable<Entity>
 {
-	List<Renderable> renderList = new ArrayList<>();
+	List<Entity> renderList = new ArrayList<>();
+	List<Entity> toAdd = new ArrayList<>();
+	List<Entity> toRemove = new ArrayList<>();
 	boolean zSorted;
 	
 	public RenderList()
@@ -18,23 +23,32 @@ public class RenderList
 		this.zSorted = zSorted;
 	}
 	
-	public void add(Renderable r)
+	public void add(Entity r)
 	{
+		toAdd.add(r);
+	}
+	
+	public void remove(Entity r)
+	{
+		r.setEnabled(false);
+		toRemove.add(r);
+	}
+	
+	public void update()
+	{
+		renderList.removeAll(toRemove);
+		toRemove.clear();
+		renderList.addAll(toAdd);
+		toAdd.clear();
+	}
+	
+	public void floatToTop(Entity r)
+	{
+		renderList.remove(r);
 		renderList.add(r);
 	}
 	
-	public void remove(Renderable r)
-	{
-		renderList.remove(r);
-	}
-	
-	public void floatToTop(Renderable r)
-	{
-		renderList.remove(r);
-		renderList.add(r);
-	}
-	
-	public List<Renderable> getList()
+	public List<Entity> getList()
 	{
 		if(zSorted)
 		{
@@ -50,9 +64,13 @@ public class RenderList
 			Collections.sort(renderList);
 		}
 		
-		for(Renderable r: renderList)
+		for(Entity r: renderList)
 		{
 			r.render(c);
 		}
+	}
+	public Iterator<Entity> iterator()
+	{
+		return renderList.iterator();
 	}
 }

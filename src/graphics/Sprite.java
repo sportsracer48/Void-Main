@@ -25,13 +25,6 @@ public class Sprite
 		model = new Rectangle(0,0,0,1,1);
 		VertexArrayBuilder b = new VertexArrayBuilder(model.nVerticies());
 		model.addPositions(b);
-		//add color attrib
-		b.addAttrib(4, new float[]{
-				0,0,1,1,
-				0,1,1,1,
-				1,1,0,1,
-				1,0,1,1
-				});
 		//add texture coord attrib
 		b.addAttrib(2, new float[]{
 				0,0,
@@ -44,6 +37,7 @@ public class Sprite
 		vboi = model.bindIndicies();
 	}
 	
+	public float x,y,width,height;
 	int pTex;
 	public Matrix modelMatrix;
 	public Matrix stMatrix;
@@ -54,8 +48,17 @@ public class Sprite
 		this.imWidth = imwidth;
 		this.imHeight = imheight;
 		this.pTex = atlas;
+		this.x=x;
+		this.y=y;
+		this.width=width;
+		this.height=height;
 		this.modelMatrix = Matrix.scaling(imwidth,imheight,1);
 		this.stMatrix = Matrix.scaling(width,height,1).translate(x,y,0);
+	}
+	
+	public Sprite scale(float scale)
+	{
+		return new ScaledSprite(pTex,x,y,width,height,imWidth,imHeight,scale);
 	}
 	
 	/**

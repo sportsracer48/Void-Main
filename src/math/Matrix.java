@@ -3,19 +3,21 @@ package math;
 import graphics.shader.Uniform;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import org.lwjgl.BufferUtils;
 
 public class Matrix
 {
 	static FloatBuffer tempMatrix = BufferUtils.createFloatBuffer(16);
+	static FloatBuffer tempVector = BufferUtils.createFloatBuffer(4);
 	
 	
 	private final float[] mat;
 	public final int cols;
 	public final int rows;
 	
-	
+	static Matrix I4 = _identity(4);
 	
 	public Matrix(int rows, int cols)
 	{
@@ -272,7 +274,26 @@ public class Matrix
 		return mat[3];
 	}
 	
+	public boolean equals(Object o)
+	{
+		if(o instanceof Matrix)
+		{
+			Matrix m = (Matrix)o;
+			return rows==m.rows && cols == m.cols && Arrays.equals(mat, m.mat);
+		}
+		return false;
+	}
+	
 	public static Matrix identity(int size)
+	{
+		if(size == 4)
+		{
+			return I4;
+		}
+		return _identity(size);
+	}
+	
+	private static Matrix _identity(int size)
 	{
 		Matrix out = new Matrix(size,size);
 		for(int i = 0; i<size; i++)
@@ -341,5 +362,14 @@ public class Matrix
 		tempMatrix.flip();
 		
 		location.setMat4(tempMatrix);
+	}
+	
+	public static void uniformVector(Matrix vector, Uniform location)
+	{
+		tempVector.clear();
+		tempVector.put(vector.mat);
+		tempVector.flip();
+		
+		location.setVec4(tempVector);
 	}
 }

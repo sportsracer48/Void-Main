@@ -1,39 +1,17 @@
 package state.ui;
 
 import graphics.Sprite;
-import graphics.entity.Entity;
+import graphics.entity.FrameEntity;
 
-public class HighlightArea extends Entity
+public class HighlightArea extends FrameEntity
 {
 	ClickableArea area;
 	
 	public HighlightArea(float x, float y, Sprite highlight)
 	{
 		super(x,y,0,highlight);
-		area = new ClickableArea(x,y,getWidth(),getHeight())
-		{
-			public void mouseEntered()
-			{
-			}
-
-			public void mouseExited()
-			{
-			}
-
-			public void onClick(float x, float y)
-			{
-			}
-
-			public void onRelease()
-			{
-			}
-		};
-	}
-	
-	public void setPos(float x, float y)
-	{
-		super.setPos(x, y);
-		area.setPos(x,y);
+		area = new ClickableArea(0,0,getWidth(),getHeight());
+		addClickableArea(area);
 	}
 	
 	public ClickableArea getArea()
@@ -46,11 +24,11 @@ public class HighlightArea extends Entity
 		super.act(dt);
 		if(area.ownsMouse())
 		{
-			setVisible(true);
+			setFrame(0);
 		}
 		else
 		{
-			setVisible(false);
+			setFrame(-1);//still visible, so that it can be interacted with, but nothing will be rendered
 		}
 	}
 

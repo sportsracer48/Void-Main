@@ -25,9 +25,9 @@ public class Program
 		attribIndex++;
 	}
 	
-	public Context getContext(String modelName, String viewName, String projectionName, String stName)
+	public Context getContext(String modelName, String viewName, String projectionName, String stName, String colorName)
 	{
-		return new Context(new Uniform(this,modelName),new Uniform(this,viewName),new Uniform(this,projectionName),new Uniform(this,stName));
+		return new Context(new Uniform(this,modelName),new Uniform(this,viewName),new Uniform(this,projectionName),new Uniform(this,stName),new Uniform(this,colorName));
 	}
 	
 	public void link()

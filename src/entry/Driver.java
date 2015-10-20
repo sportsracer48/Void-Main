@@ -42,7 +42,7 @@ public class Driver
 	public void init()
 	{
 		this.running = true;
-		initGLFW();
+		initGLFW();		
 		initGL();
 		initShaders();
 		initSprites();
@@ -88,7 +88,7 @@ public class Driver
 	
 	public void initSprites()
 	{
-		spriteAtlas = new SpriteAtlas(new File("res\\sprite\\workbench\\"));
+		spriteAtlas = new SpriteAtlas(new File("res/sprite/workbench/"));
 		spriteAtlas.build();
 	}
 	
@@ -97,11 +97,10 @@ public class Driver
 		Shader vs, fs;
 		try
 		{
-			vs = new Shader("res\\shader\\vs.glsl",GL20.GL_VERTEX_SHADER);
-			fs = new Shader("res\\shader\\fs.glsl",GL20.GL_FRAGMENT_SHADER);
+			vs = new Shader("res/shader/vs.glsl",GL20.GL_VERTEX_SHADER);
+			fs = new Shader("res/shader/fs.glsl",GL20.GL_FRAGMENT_SHADER);
 			prog = new Program(vs,fs);
 			prog.addAttrib("in_Position");
-			prog.addAttrib("in_Color");
 			prog.addAttrib("in_TextureCoord");
 			prog.link();
 		} 
@@ -115,7 +114,7 @@ public class Driver
 	{
 		spriteAtlas.bind();
 		prog.use();
-		context = prog.getContext("modelMatrix", "viewMatrix", "projectionMatrix","stMatrix");
+		context = prog.getContext("modelMatrix", "viewMatrix", "projectionMatrix","stMatrix","color");
 		context.setProjection(Matrix.gluOrtho(
 				0, wWidth, 
 				wHeight, 0, 
@@ -124,7 +123,7 @@ public class Driver
 	
 	public void initGame()
 	{
-		currentState = new WorkbenchState(input);
+		currentState = new WorkbenchState(input,window);
 		currentState.init(spriteAtlas);
 	}
 	

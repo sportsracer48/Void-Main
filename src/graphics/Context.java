@@ -5,22 +5,23 @@ import graphics.shader.Uniform;
 import java.util.ArrayList;
 import java.util.List;
 
+import util.Color;
 import math.Matrix;
 
 public class Context
 {
-	Uniform model,view,projection,st;
+	Uniform model,view,projection,st,color;
 	Matrix modelMat;
-	Matrix inverseView;
 	
 	List<Matrix> stack = new ArrayList<>();
 	
-	public Context(Uniform model, Uniform view, Uniform projection,Uniform st)
+	public Context(Uniform model, Uniform view, Uniform projection,Uniform st, Uniform color)
 	{
 		this.model=model;
 		this.view=view;
 		this.projection=projection;
 		this.st=st;
+		this.color = color;
 	}
 	
 	public void pushTransform()
@@ -30,11 +31,6 @@ public class Context
 		{
 			throw new RuntimeException("context stack size exceded.");
 		}
-	}
-	
-	public Matrix screenToWorld(Matrix screen)
-	{
-		return inverseView.dot(screen);
 	}
 	
 	public void popTransform()
@@ -69,7 +65,6 @@ public class Context
 	public void setView(Matrix matrix)
 	{
 		Matrix.uniformMatrix(matrix, view);
-		inverseView = matrix.inverse();
 	}
 	
 	public void setProjection(Matrix matrix)
@@ -85,5 +80,14 @@ public class Context
 	public void setSt(Matrix matrix)
 	{
 		Matrix.uniformMatrix(matrix, st);
+	}
+	
+	public void setColor(Matrix color)
+	{
+		Matrix.uniformVector(color, this.color);
+	}
+	public void resetColor()
+	{
+		Matrix.uniformVector(Color.white, this.color);
 	}
 }

@@ -1,37 +1,49 @@
 package state.workbench;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import math.Matrix;
 
 import org.lwjgl.glfw.GLFW;
 
 import entry.GlobalInput;
+import game.item.Item;
+import game.item.ItemType;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
 import graphics.registry.SpriteAtlas;
 import state.GameState;
 import state.ui.Button;
-import state.ui.HighlightArea;
 import state.ui.MouseoverContext;
 import state.ui.Window;
+import state.workbench.game.ChassisGrid;
+import util.GridBuilder;
 
 public class WorkbenchState extends GameState
 {
-	public WorkbenchState(GlobalInput input)
+	public WorkbenchState(GlobalInput input, long window)
 	{
-		super(input);
+		super(input,window);
+		ui = uiList.getList();
+		screen = renderList.getList();
 	}
+	
+	Matrix view = Matrix.scaling(2,2,2);
+	Matrix uiView = Matrix.identity(4);
+	Matrix invView = view.inverse();
+	
 	Entity inventory,partMounting;
 	
 	DragContext grabContext = new DragContext();
 	MouseoverContext mouseContext = new MouseoverContext();
+	ItemManipulator itemManip = new ItemManipulator(grabContext,this);
 	
+	List<Entity> ui;
+	List<Entity> screen;
 	
-	List<Entity> ui = new ArrayList<Entity>();
-	List<Entity> screen = new ArrayList<Entity>();
+	ChassisGrid grid;
 	
 	public void keyPressed(int key)
 	{
@@ -39,17 +51,24 @@ public class WorkbenchState extends GameState
 		{
 			if(isKeyPressed(GLFW.GLFW_KEY_LEFT_SHIFT))
 			{
-				inventory.setVisible(true);
+				inventory.setEnabled(true);
 			}
 			else
 			{
-				partMounting.setVisible(true);
+				partMounting.setEnabled(true);
 			}
 		}
 	}
 	
+	public Matrix worldMouse()
+	{
+		Matrix mousePos = new Matrix(new float[]{getMouseX(),getMouseY(),0,1});
+		return invView.dot(mousePos);
+	}
+	
 	public void mousePressed(int button)
 	{
+		Matrix worldMouse = worldMouse();
 		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT && mouseContext.hasMouseHolder())
 		{
 			clickableSearch:
@@ -63,7 +82,7 @@ public class WorkbenchState extends GameState
 				}
 				for(int i = screen.size()-1; i>=0; i--)
 				{
-					if(screen.get(i).handleClick(getMouseX(), getMouseY()))
+					if(screen.get(i).handleClick(worldMouse.x(), worldMouse.y()))
 					{
 						break clickableSearch;
 					}
@@ -94,60 +113,58 @@ public class WorkbenchState extends GameState
 	
 	public void mouseMoved(float x, float y)
 	{
-		grabContext.mouseMoved(x,y);
-		mouseContext.setMouseHolder(null);
+		Matrix worldMouse = worldMouse();
+		itemManip.resetAcceptor();
+		grabContext.mouseMoved(x,y);//for now, the only grabable things will be ui elements.
+		if(grabContext.hasObject() && grabContext.getGrabbedArea().desiresMouse())
+		{
+			mouseContext.setMouseHolder(grabContext.getGrabbedArea());
+			mouseContext.setFrozen(true);
+		}
+		else
+		{
+			mouseContext.setMouseHolder(null);
+		}
 		for(int i = ui.size()-1; i>=0; i--)
 		{
-			ui.get(i).handleMove(getMouseX(), getMouseY(),mouseContext);
+			ui.get(i).handleMove(x, y, mouseContext);
 		}
 		for(int i = screen.size()-1; i>=0; i--)
 		{
-			screen.get(i).handleMove(getMouseX(), getMouseY(),mouseContext);
+			screen.get(i).handleMove(worldMouse.x(), worldMouse.y(), mouseContext);
 		}
 	}
 	
-	public void eachFrame(int dt)
+	public void afterInput(int dt)
 	{
-		float x = getMouseX();
-		float y = getMouseY();
-		
-		for(Entity e: ui)
-		{
-			e.handleMove(x, y);
-		}
-		for(Entity e:screen)
-		{
-			e.handleMove(x, y);
-		}
+		mouseMoved(getMouseX(),getMouseY());
+		mouseContext.setFrozen(false);
+		itemManip.act(dt);
 		
 		if(grabContext.grabbed != null)
 		{
 			if(uiList.getList().contains(grabContext.grabbed.target))
 			{
 				uiList.floatToTop(grabContext.grabbed.target);
-				ui.remove(grabContext.grabbed.target);
-				ui.add(grabContext.grabbed.target);
 			}
 		}
 	}
 	
 	public void renderAll(Context context)
 	{
-		context.setView(Matrix.scaling(2,2,1));
+		context.resetColor();
+		context.setView(view);
 		context.setModel(Matrix.identity(4));
 		render(context);
-		context.setView(Matrix.identity(4));
+		context.setView(uiView);
 		renderUI(context);
 	}
 	
 	public void init(SpriteAtlas sprites)
 	{
-		sprites.setNamespace("res\\sprite\\workbench\\");
+		sprites.setNamespace("res/sprite/workbench/");
 		Entity bg = new Entity(0, 0, 0, sprites.getSprite("background.png"));
 		addRenderable(bg);
-		Entity chassis = new Entity(40,40,1,sprites.getSprite("Chassis plate.png"));
-		
-
 		
 		Button closeButton = new Button(0,0,
 				sprites.getSprite("Button raised.png"),
@@ -165,65 +182,42 @@ public class WorkbenchState extends GameState
 		partMounting = new Window(120,100,sprites.getSprite("part mounting ui.png"), closeButton,grabContext);
 		inventory = new Window(220,100,sprites.getSprite("Inventory UI.png"),closeButton2,grabContext);
 		
-		
-		//create a local namespace, because why not
+		Sprite invHighlight = sprites.getSprite("inv-slot highlight.png");
+		Sprite itemSprite = sprites.getSprite("ouino item.png");
+		Sprite worldSprite = sprites.getSprite("ouino.png");
+		ItemType microController = new ItemType(worldSprite,itemSprite);
+		microController.setOffsetX(0);
+		microController.setOffsetY(7);
+		microController.setWorkbenchHeight(2);
+		microController.setWorkbenchWidth(2);
+		BiConsumer<Float,Float> addToInventory = (x2,y2) ->
 		{
-			Sprite invHighlight = sprites.getSprite("inv-slot highlight.png");
-			float x = 48, y = 76,step = 43;
-			for(int col = 0; col <10; col++)
-			{
-				for(int row = 0; row<7; row++)
-				{
-					HighlightArea area = new HighlightArea(x+col*step,y+row*step,invHighlight);
-					//area.getArea().setPadding(3, 3);
-					inventory.addChild(area);
-					inventory.addClickableArea(area.getArea());
-				}
-			}
-			
-			
-			x=178;
-			y=65;
-			float yStep = 42;
-			
-			for(int row = 0; row<8; row+=2)
-			{
-				for(int col = 0; col<4; col++)
-				{
-					HighlightArea area = new HighlightArea(x+col*step,y+row*yStep,invHighlight);
-					partMounting.addChild(area);
-					partMounting.addClickableArea(area.getArea());
-				}
-			}
-			
-			x=112;
-			y=149;
-			
-			for(int row = 0; row<4; row++)
-			{
-				int col = 0;
-				HighlightArea area = new HighlightArea(x+col*step,y+row*yStep,invHighlight);
-				partMounting.addChild(area);
-				partMounting.addClickableArea(area.getArea());
-			}
-			
-			x=373;
-			for(int row = 0; row<4; row++)
-			{
-				int col = 0;
-				HighlightArea area = new HighlightArea(x+col*step,y+row*yStep,invHighlight);
-				partMounting.addChild(area);
-				partMounting.addClickableArea(area.getArea());
-			}
-		}
+			InvenorySlot slot = new InvenorySlot(x2,y2,invHighlight,new Item(microController),itemManip);	
+			inventory.addChild(slot);
+		};
+		BiConsumer<Float,Float> addToPartMount = (x2,y2) ->
+		{
+			InvenorySlot slot = new InvenorySlot(x2,y2,invHighlight,new Item(microController),itemManip);	
+			partMounting.addChild(slot);
+		};
+		new GridBuilder(48,76,43,43,7,10).//grid for inventory window
+		forEach(addToInventory);
+		
+		new GridBuilder(178,65,43,42*2,4,4).//grid for top, left, right, bottom
+		forEach(addToPartMount);
+		
+		new GridBuilder(112,149,43,42,4,1).//grid for front
+		forEach(addToPartMount);
+
+		new GridBuilder(373,149,43,42,4,1).//grid for back
+		forEach(addToPartMount);
 		
 		addActable(partMounting);
 		addActable(inventory);
+
+		grid = new ChassisGrid(40,40,1,sprites.getSprite("Chassis plate.png"),itemManip);
 		
-		ui.add(partMounting);
-		ui.add(inventory);
-		
-		addRenderable(chassis);
+		add(grid);
 		addUI(partMounting);
 		addUI(inventory);
 		Entity laptop = new Entity(700,100,1, sprites.getSprite("laptop.png"));

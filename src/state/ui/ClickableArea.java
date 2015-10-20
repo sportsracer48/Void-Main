@@ -1,15 +1,24 @@
 package state.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import math.Matrix;
 import math.Rectangle;
 
-public abstract class ClickableArea
+public class ClickableArea
 {
 	private boolean containsMouse;
 	private boolean ownsMouse = false;
 	private boolean mouseHeld = false;
 	Rectangle bounds;
 	float width,height;
+	private boolean desiresMouse = true; //of mouse
+	List<ClickListener> onClick =  new ArrayList<>();
+	List<Runnable> onRelease = new ArrayList<>();
+	List<Runnable> onAnyRelease = new ArrayList<>();
+	List<Runnable> onAnyMove = new ArrayList<>();
+	
 	public ClickableArea(float x, float y, float width, float height)
 	{
 		bounds = new Rectangle(x,y,width,height);
@@ -36,7 +45,7 @@ public abstract class ClickableArea
 		}
 		
 		
-		if(containsMouse && context!= null && !context.hasMouseHolder())
+		if(desiresMouse && containsMouse && context!= null && !context.hasMouseHolder())
 		{
 			context.setMouseHolder(this);
 		}
@@ -46,12 +55,24 @@ public abstract class ClickableArea
 			context.setMouseHolder(null);
 		}
 		
+		for(Runnable r: onAnyMove)
+		{
+			r.run();
+		}
+		onAnyMove();
+		
 	}
 	
 	public void handleClick(float x, float y, Matrix model)
 	{
 		Rectangle worldBounds = bounds.transform(model);
-		onClick(x-worldBounds.x,y-worldBounds.y);
+		float xLocal = x - worldBounds.x;
+		float yLocal = y - worldBounds.y;
+		for(ClickListener c: onClick)
+		{
+			c.onClick(xLocal,yLocal);
+		}
+		onClick(xLocal,yLocal);
 		mouseHeld = true;
 	}
 	
@@ -59,19 +80,35 @@ public abstract class ClickableArea
 	{
 		mouseHeld = false;
 		onRelease();
+		for(Runnable r: onRelease)
+		{
+			r.run();
+		}
 	}
 	
-	public abstract void mouseEntered();
-	public abstract void mouseExited();
-	public abstract void onClick(float x, float y);
-	public abstract void onRelease();
+
+	public void handleAnyRelease()
+	{
+		onAnyRelease();
+		for(Runnable r: onAnyRelease)
+		{
+			r.run();
+		}
+	}
+	
+	public void mouseEntered(){}
+	public void mouseExited(){}
+	public void onClick(float x, float y){}
+	public void onRelease(){}
+	public void onAnyRelease(){}
+	public void onAnyMove(){}
 
 	public void setPos(float x, float y)
 	{
 		bounds = new Rectangle(x,y,bounds.width,bounds.height);
 	}
 	
-	public void setPadding(float x, float y)
+	public void addPadding(float x, float y)
 	{
 		bounds = new Rectangle(bounds.x-x,bounds.y-y, width+2*x, height+2*y);
 	}
@@ -95,14 +132,53 @@ public abstract class ClickableArea
 	{
 		return mouseHeld;
 	}
+	
+	/**
+	 * please don't call this method unless the mouse is actually pressed.
+	 * @param mouseHeld
+	 */
+	public void setMouseHeld(boolean mouseHeld)
+	{
+		this.mouseHeld = mouseHeld;
+	}
 
 	public boolean ownsMouse()
 	{
 		return ownsMouse;
 	}
+	
+	public void addOnClick(ClickListener r)
+	{
+		onClick.add(r);
+	}
+	
+	public void addOnRelease(Runnable r)
+	{
+		onRelease.add(r);
+	}
+	
+	public void addOnAnyRelease(Runnable r)
+	{
+		onAnyRelease.add(r);
+	}
+	
+	public void addOnAnyMove(Runnable r)
+	{
+		onAnyMove.add(r);
+	}
 
 	void setOwnsMouse(boolean ownsMouse)
 	{
-		this.ownsMouse = ownsMouse;
+		this.ownsMouse = desiresMouse && ownsMouse; //don't own the mouse unless you want it
+	}
+	
+	public void setDesiresMouse(boolean desiresMouse)
+	{
+		this.desiresMouse = desiresMouse;
+	}
+
+	public boolean desiresMouse()
+	{
+		return desiresMouse;
 	}
 }

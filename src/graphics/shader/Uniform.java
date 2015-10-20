@@ -19,4 +19,9 @@ public class Uniform
 	{
 		GL20.glUniformMatrix4fv(id, true, buf);
 	}
+
+	public void setVec4(FloatBuffer buf)
+	{
+		GL20.glUniform4fv(id, buf);
+	}
 }
