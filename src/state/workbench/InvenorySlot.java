@@ -24,8 +24,6 @@ public class InvenorySlot extends Entity
 		this.area=new HighlightArea(0,0,highlightSprite);
 		this.width = area.getWidth();
 		this.height = area.getHeight();
-		this.itemEntity = contains.getInvEntity();
-		this.itemEntity.setPos(3, 3);
 		preview = new FluidEntity(3,3,0);
 		this.contents = contains;
 		this.acceptor = new ItemAcceptor(3,3,0,area.getArea(),manip)
@@ -38,7 +36,7 @@ public class InvenorySlot extends Entity
 			public void accept(Item i)
 			{
 				contents = i;
-				itemEntity = contains.getInvEntity();
+				itemEntity = i.getInvEntity();
 				//itemEntity.setPos(3, 3);
 				addChild(itemEntity);
 			}
@@ -68,7 +66,12 @@ public class InvenorySlot extends Entity
 		acceptor.setDisplayIcon(true);
 		
 		addChild(this.acceptor);
-		addChild(this.itemEntity);
+		if(contains != null)
+		{
+			this.itemEntity = contains.getInvEntity();
+			this.itemEntity.setPos(3, 3);
+			addChild(this.itemEntity);
+		}
 		addChild(preview);
 		addChild(this.area);
 		area.getArea().addOnClick((x2,y2)->
@@ -77,7 +80,7 @@ public class InvenorySlot extends Entity
 			{
 				return;
 			}
-			manip.grabItem(contents, -16, -16, acceptor);
+			manip.grabItem(contents, 16, 16, acceptor);
 			removeChild(itemEntity);
 			contents = null;
 		});

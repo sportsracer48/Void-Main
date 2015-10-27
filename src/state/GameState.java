@@ -39,6 +39,16 @@ public abstract class GameState
 		GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
 	}
 	
+	public int screenWidth()
+	{
+		return input.getScreenWidth();
+	}
+	
+	public int screenHeight()
+	{
+		return input.getScreenHeight();
+	}
+	
 	public float getMouseX()
 	{
 		return input.getMouseX();
@@ -76,6 +86,7 @@ public abstract class GameState
 	public void addUI(Entity r)
 	{
 		uiList.add(r);
+		actList.add(r);
 	}
 	
 	public void addActable(Actable a)

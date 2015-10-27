@@ -1,6 +1,10 @@
 package state.workbench;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import state.GameState;
+import state.ui.ClickableArea;
 import game.item.Item;
 import graphics.entity.Entity;
 
@@ -8,15 +12,22 @@ public class ItemManipulator
 {
 	DragContext core;
 	GameState root;
+	ClickableArea globalArea;
 	Item held;
 	Entity world;
 	ItemAcceptor acceptor;
 	ItemAcceptor source;
+	List<GrabBound<?>> grabBound = new ArrayList<>();
 	
-	public ItemManipulator(DragContext core, GameState root)
+	public ItemManipulator(DragContext core, GameState root, ClickableArea globalArea)
 	{
 		this.core = core;
 		this.root = root;
+		this.globalArea = globalArea;
+		globalArea.addOnAnyRelease(()->
+		{
+			handleDrop();
+		});
 	}
 	
 	public void grabItem(Item i, float x, float y, ItemAcceptor source)
@@ -36,19 +47,22 @@ public class ItemManipulator
 		}
 		this.source = source;
 		held = i;
+		resetGrabBound();
 		world = i.getInvEntity();
 		world.setPos(root.getMouseX()+x,root.getMouseY()+y);
 		root.addUI(world);
-		root.addActable(world);
 		DragArea area = new DragArea(0,0,world.getWidth(),world.getHeight(),core,world);
 		area.setDesiresMouse(false);
-		area.addOnRelease(()->
-		{
-			handleDrop();
-		});
 		world.addClickableArea(area);
-		core.setGrabbed(area, -x, -y);
-		area.setMouseHeld(true);
+		core.setGrabbed(area, x, y);
+	}
+	
+	private void resetGrabBound()
+	{
+		for(GrabBound<?> b: grabBound)
+		{
+			b.reset();
+		}
 	}
 
 	public boolean hasItem()
@@ -87,6 +101,7 @@ public class ItemManipulator
 	
 	public void handleFail()
 	{
+		resetGrabBound();
 		source.accept(held);
 		root.removeUI(world);
 		root.removeActable(world);
@@ -95,16 +110,26 @@ public class ItemManipulator
 
 	public void handleDrop()
 	{
+		if(held == null)
+		{
+			return;
+		}
 		if(acceptor != null && acceptor.canAccept(held))
 		{
 			acceptor.accept(held);
 			root.removeUI(world);
 			root.removeActable(world);
 			held = null;
+			resetGrabBound();
 		}
 		else
 		{
 			handleFail();
 		}
+	}
+	
+	public void addGrabBound(GrabBound<?> grabBound)
+	{
+		this.grabBound.add(grabBound);
 	}
 }

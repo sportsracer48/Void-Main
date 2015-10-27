@@ -19,13 +19,13 @@ public class FluidEntity extends Entity
 	{
 		super(x,y,z,null);
 	}
-	
-	public float getWidth()
+
+	public float getSpriteWidth()
 	{
 		return width;
 	}
 	
-	public float getHeight()
+	public float getSpriteHeight()
 	{
 		return height;
 	}

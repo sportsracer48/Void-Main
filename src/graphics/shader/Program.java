@@ -25,9 +25,14 @@ public class Program
 		attribIndex++;
 	}
 	
-	public Context getContext(String modelName, String viewName, String projectionName, String stName, String colorName)
+	public Context getContext(String modelName, String viewName, String projectionName, String stName, String colorName, String... flags)
 	{
-		return new Context(new Uniform(this,modelName),new Uniform(this,viewName),new Uniform(this,projectionName),new Uniform(this,stName),new Uniform(this,colorName));
+		Uniform[] flagUniforms = new Uniform[flags.length];
+		for(int i = 0; i<flags.length; i++)
+		{
+			flagUniforms[i] = new Uniform(this,flags[i]);
+		}
+		return new Context(new Uniform(this,modelName),new Uniform(this,viewName),new Uniform(this,projectionName),new Uniform(this,stName),new Uniform(this,colorName),flagUniforms);
 	}
 	
 	public void link()

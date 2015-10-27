@@ -11,17 +11,24 @@ import math.Matrix;
 public class Context
 {
 	Uniform model,view,projection,st,color;
+	Uniform[] flags;
 	Matrix modelMat;
 	
 	List<Matrix> stack = new ArrayList<>();
 	
-	public Context(Uniform model, Uniform view, Uniform projection,Uniform st, Uniform color)
+	public Context(Uniform model, Uniform view, Uniform projection,Uniform st, Uniform color, Uniform... flags)
 	{
 		this.model=model;
 		this.view=view;
 		this.projection=projection;
 		this.st=st;
 		this.color = color;
+		this.flags = flags;
+	}
+	
+	public void setFlag(int flag, boolean val)
+	{
+		flags[flag].setBoolean(val);
 	}
 	
 	public void pushTransform()

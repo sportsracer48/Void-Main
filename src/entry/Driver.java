@@ -8,17 +8,16 @@ import graphics.shader.Shader;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import math.Matrix;
 
-import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWvidmode;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GLContext;
 import org.lwjgl.system.MemoryUtil;
 
 import state.GameState;
@@ -59,10 +58,10 @@ public class Driver
 		}
 		
 		
-		GLFW.glfwSetErrorCallback(Callbacks.errorCallbackPrint(System.err));
-		ByteBuffer vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-		wWidth = GLFWvidmode.width(vidmode);
-		wHeight = GLFWvidmode.height(vidmode);
+		GLFW.glfwSetErrorCallback(GLFWErrorCallback.createPrint(System.err));
+		GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+		wWidth = vidmode.getWidth();
+		wHeight = vidmode.getHeight();
 
 		window = GLFW.glfwCreateWindow(wWidth, wHeight, "Void Main", fullScreen?GLFW.glfwGetPrimaryMonitor():MemoryUtil.NULL, MemoryUtil.NULL);
 
@@ -78,9 +77,11 @@ public class Driver
 	
 	public void initGL()
 	{
-		GLContext.createFromCurrent();
-
-		glClearColor(0, .1f, .05f, 0);
+		GL.createCapabilities();
+		
+		System.out.println(GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE));
+		
+		glClearColor(0, 0, 0, 0);
 		glEnable(GL_BLEND);
 		GL14.glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ZERO,GL_ZERO);
 		GL20.glBlendEquationSeparate(GL14.GL_FUNC_ADD,GL14.GL_FUNC_ADD);
@@ -114,7 +115,7 @@ public class Driver
 	{
 		spriteAtlas.bind();
 		prog.use();
-		context = prog.getContext("modelMatrix", "viewMatrix", "projectionMatrix","stMatrix","color");
+		context = prog.getContext("modelMatrix", "viewMatrix", "projectionMatrix","stMatrix","color","yToAlpha");
 		context.setProjection(Matrix.gluOrtho(
 				0, wWidth, 
 				wHeight, 0, 

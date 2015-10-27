@@ -1,9 +1,12 @@
 package state.workbench.game;
 
+import state.ModeManager;
+import state.workbench.GrabBound;
 import state.workbench.ItemAcceptor;
 import state.workbench.ItemManipulator;
-import util.GridBuilder;
-import util.GridBuilder.Coord;
+import state.workbench.WiringMode;
+import util.Grid;
+import util.Grid.Coord;
 import util.Color;
 import game.item.Item;
 import game.item.ItemType;
@@ -16,27 +19,55 @@ public class ChassisGrid extends Entity
 	Item[][] contents;
 	Entity[][] entities;
 	ItemAcceptor[][] slots;
-	int width, height;
-	GridBuilder grid;
 	FluidEntity preview;
+	FluidEntity returnPreview;
+	Coord previewCoord;
+	GrabBound<Coord> grabbedSquare = new GrabBound<>();
+	GrabBound<Boolean> showReturnPreview = new GrabBound<>();
+	int width, height;
+	Grid grid;
+	ItemManipulator manip;
+	ModeManager manager;
+	WiringMode wiring;
 	
-	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip)
+	
+	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring)
 	{
-		this(10,10,21,38,55,36,x,y,z,base, manip);
+		this(10,10,21,38,55,36,x,y,z,base, manip,manager,wiring);
 	}
 	
-	private ChassisGrid(int width, int height, float offsetX, float offsetY, float xStep, float yStep,float x, float y, float z, Sprite base, ItemManipulator manip)
+	private ChassisGrid(int width, int height, float offsetX, float offsetY, float xStep, float yStep, float x, float y, float z, Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring)
 	{
 		super(x,y,z,base);
-		grid = new GridBuilder(offsetX,offsetY,xStep,yStep,width,height);
+		
+		//bind grab bound objects. These get reset to their default values on a drop event.
+		grabbedSquare.setDefault(new Coord(0,0));
+		showReturnPreview.setDefault(false);
+		manip.addGrabBound(grabbedSquare);
+		manip.addGrabBound(showReturnPreview);
+		
+		//a grid to be iterated over
+		grid = new Grid(offsetX,offsetY,xStep,yStep,width,height);
+		
+		//initialize arrays
 		contents = new Item[width][height];
 		entities = new Entity[width][height];
 		slots = new ItemAcceptor[width][height];
+		
 		preview = new FluidEntity(0,0,height+4);
 		preview.setVisible(false);
+		
+		returnPreview = new FluidEntity(0,0,height+3);
+		returnPreview.setVisible(false);
+		
 		addChild(preview);
+		addChild(returnPreview);
+		
 		this.width = width;
 		this.height = height;
+		this.manip = manip;
+		this.manager = manager;
+		this.wiring = wiring;
 		
 		grid.forEachWithIndicies((x2,y2,col,row)->
 		{
@@ -44,12 +75,14 @@ public class ChassisGrid extends Entity
 			{
 				public boolean canAccept(Item i)
 				{
-					return canPlace(i,col,row);
+					Coord grabbed = grabbedSquare.getValue();
+					return canPlace(i,col-grabbed.x,row-grabbed.y);
 				}
 
 				public void accept(Item i)
 				{
-					place(i, col, row);
+					Coord grabbed = grabbedSquare.getValue();
+					place(i, col-grabbed.x, row-grabbed.y);
 				}
 
 				public boolean displayedItem(Item i)
@@ -59,22 +92,10 @@ public class ChassisGrid extends Entity
 
 				public void preview(Item i) 
 				{
-					if(i == null)
+					Coord grabbed = grabbedSquare.getValue();
+					if(i != null)
 					{
-						preview.setVisible(false);
-						return;
-					}
-					ItemType type = i.getType();
-					preview.setSpriteAndSize(i.getWorldSprite());
-					preview.setPos(x2-type.getOffsetX(), y2-type.getOffsetY());
-					preview.setVisible(true);
-					if(canAccept(i))
-					{
-						preview.setColor(new Color(1,1,1,.4f));
-					}
-					else
-					{
-						preview.setColor(new Color(2,.5f,.5f,.4f));
+						enablePreview(i,col-grabbed.x,row-grabbed.y);
 					}
 				}
 			};
@@ -85,9 +106,20 @@ public class ChassisGrid extends Entity
 				{
 					return;
 				}
-				Coord c = getCoords(item);
-				remove(contents[col][row]);
-				manip.grabItem(item, 0, 0, getSlot(c));
+				if(manager.getMode()!=wiring)
+				{
+					Coord c = getCoords(item);
+					Coord squareGrabbed = new Coord(col-c.x,row-c.y);
+					remove(item);
+					manip.grabItem(item, 16, 16, getSlot(c));
+					enableReturnPreview(item,col-squareGrabbed.x,row-squareGrabbed.y);
+					showReturnPreview.setValue(true);
+					grabbedSquare.setValue(squareGrabbed);
+				}
+				else
+				{
+					wiring.showSelector(item);
+				}
 			});
 			addChild(a);
 		});
@@ -96,6 +128,10 @@ public class ChassisGrid extends Entity
 	public boolean canPlace(Item i, int x, int y)
 	{
 		if(!i.existsInWorld())
+		{
+			return false;
+		}
+		if(x<0 || y<0)
 		{
 			return false;
 		}
@@ -111,6 +147,65 @@ public class ChassisGrid extends Entity
 			}
 		}
 		return true;
+	}
+	
+	public void enableReturnPreview(Item i, int x, int y)
+	{
+		ItemType type = i.getType();
+		returnPreview.setSpriteAndSize(i.getWorldSprite());
+		returnPreview.setPos(grid.getX(x)-type.getOffsetX(), grid.getY(y)-type.getOffsetY());
+		returnPreview.setZ(y);
+		returnPreview.setVisible(true);
+		returnPreview.setColor(new Color(1f,1f,1f,.2f));
+	}
+	
+	public void enablePreview(Item i,int x, int y)
+	{
+		previewCoord = new Coord(x,y);
+		ItemType type = i.getType();
+		preview.setSpriteAndSize(i.getWorldSprite());
+		preview.setPos(grid.getX(x)-type.getOffsetX(), grid.getY(y)-type.getOffsetY());
+		preview.setVisible(true);
+		if(canPlace(i,x,y))
+		{
+			preview.setColor(new Color(1,1,1,.4f));
+		}
+		else
+		{
+			preview.setColor(new Color(2,.5f,.5f,.4f));
+		}
+	}
+	public void disablePreview(int x, int y)
+	{
+		if(previewCoord != null && previewCoord.equals(x,y))
+		{
+			disablePreview();
+		}
+	}
+	public void disablePreview()
+	{
+		preview.setVisible(false);
+		previewCoord = null;
+	}
+	public void disableReturnPreview()
+	{
+		returnPreview.setVisible(false);
+	}
+	public boolean ownsMouse()
+	{
+		return grid.anyMatch((x,y)->slots[x][y].getArea().ownsMouse());
+	}
+	public void act(int dt)
+	{
+		super.act(dt);
+		if(!manip.hasItem() || !ownsMouse())
+		{
+			disablePreview();
+		}
+		if(!showReturnPreview.getValue())
+		{
+			disableReturnPreview();
+		}
 	}
 	
 	public Item remove(Item i)

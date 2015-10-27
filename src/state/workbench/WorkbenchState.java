@@ -13,13 +13,19 @@ import game.item.ItemType;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
+import graphics.entity.FluidEntity;
 import graphics.registry.SpriteAtlas;
 import state.GameState;
+import state.Mode;
+import state.ModeManager;
 import state.ui.Button;
+import state.ui.Button.ButtonTheme;
+import state.ui.ClickableArea;
 import state.ui.MouseoverContext;
 import state.ui.Window;
 import state.workbench.game.ChassisGrid;
-import util.GridBuilder;
+import util.Color;
+import util.Grid;
 
 public class WorkbenchState extends GameState
 {
@@ -28,17 +34,58 @@ public class WorkbenchState extends GameState
 		super(input,window);
 		ui = uiList.getList();
 		screen = renderList.getList();
+		globalClickArea.setDesiresMouse(false);
 	}
 	
 	Matrix view = Matrix.scaling(2,2,2);
 	Matrix uiView = Matrix.identity(4);
 	Matrix invView = view.inverse();
 	
-	Entity inventory,partMounting;
+	Entity inventory,partMounting,tools;
+	
 	
 	DragContext grabContext = new DragContext();
 	MouseoverContext mouseContext = new MouseoverContext();
-	ItemManipulator itemManip = new ItemManipulator(grabContext,this);
+	ClickableArea globalClickArea = new ClickableArea(0,0,0,0);
+	ItemManipulator itemManip = new ItemManipulator(grabContext,this,globalClickArea);
+	FluidEntity mouseCompanion = new FluidEntity(0,0,0);
+	
+	Sprite wireSymbol;
+	
+	Mode edit = new Mode()
+	{
+
+		public void enable()
+		{
+		}
+
+		public void disable()
+		{
+			if(itemManip.hasItem())
+			{
+				itemManip.handleFail();
+			}
+		}
+		
+	};
+	WiringMode wiring = new WiringMode(mouseCompanion,this,screenWidth(),screenHeight())
+	{
+
+		public void enable()
+		{
+			super.enable();
+			mouseCompanion.setSpriteAndSize(wireSymbol);
+		}
+
+		public void disable()
+		{
+			super.disable();
+			mouseCompanion.setSpriteAndSize(null);
+			mouseCompanion.setColor(Color.white);
+		}
+		
+	};
+	ModeManager manager = new ModeManager(edit);
 	
 	List<Entity> ui;
 	List<Entity> screen;
@@ -49,14 +96,11 @@ public class WorkbenchState extends GameState
 	{
 		if(key == GLFW.GLFW_KEY_E)
 		{
-			if(isKeyPressed(GLFW.GLFW_KEY_LEFT_SHIFT))
-			{
-				inventory.setEnabled(true);
-			}
-			else
-			{
-				partMounting.setEnabled(true);
-			}
+			manager.setMode(wiring);
+		}
+		else if(key == GLFW.GLFW_KEY_Q)
+		{
+			manager.setMode(edit);
 		}
 	}
 	
@@ -69,6 +113,10 @@ public class WorkbenchState extends GameState
 	public void mousePressed(int button)
 	{
 		Matrix worldMouse = worldMouse();
+		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
+		{
+			globalClickArea.handleClick(getMouseX(), getMouseY(), Matrix.identity(4));
+		}
 		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT && mouseContext.hasMouseHolder())
 		{
 			clickableSearch:
@@ -96,6 +144,7 @@ public class WorkbenchState extends GameState
 	{
 		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
 		{
+			globalClickArea.handleAnyRelease();
 			grabContext.resetGrabbed();
 			if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
 			{
@@ -114,6 +163,8 @@ public class WorkbenchState extends GameState
 	public void mouseMoved(float x, float y)
 	{
 		Matrix worldMouse = worldMouse();
+		mouseCompanion.setPos(x+16, y+16);
+		globalClickArea.handleMove(x, y, Matrix.identity(4), mouseContext);
 		itemManip.resetAcceptor();
 		grabContext.mouseMoved(x,y);//for now, the only grabable things will be ui elements.
 		if(grabContext.hasObject() && grabContext.getGrabbedArea().desiresMouse())
@@ -158,68 +209,143 @@ public class WorkbenchState extends GameState
 		render(context);
 		context.setView(uiView);
 		renderUI(context);
+		mouseCompanion.render(context);
 	}
 	
 	public void init(SpriteAtlas sprites)
 	{
 		sprites.setNamespace("res/sprite/workbench/");
+		
 		Entity bg = new Entity(0, 0, 0, sprites.getSprite("background.png"));
 		addRenderable(bg);
-		
-		Button closeButton = new Button(0,0,
+		ButtonTheme close = new ButtonTheme(
 				sprites.getSprite("Button raised.png"),
 				sprites.getSprite("Button pressed selected.png"),
-				sprites.getSprite("Button pressed unselected.png")
+				sprites.getSprite("Button pressed unselected.png"));
+		ButtonTheme inv = new ButtonTheme(
+				sprites.getSprite("Inv Button Raised.png"),
+				sprites.getSprite("Inv Button Pressed.png"),
+				sprites.getSprite("Inv Button Gray.png")
 				);
-		Button closeButton2 = new Button(0,0,
-				sprites.getSprite("Button raised.png"),
-				sprites.getSprite("Button pressed selected.png"),
-				sprites.getSprite("Button pressed unselected.png")
-				);
 		
+		Button closeButton3 = close.build();
+		closeButton3.setEnabled(false);
 		
+		partMounting = new Window(1300,40,sprites.getSprite("part mounting ui.png"), close.build(),grabContext);
+		partMounting.setEnabled(false);
+		partMounting.setMode(edit, manager);
+		inventory = new Window(1300,440,sprites.getSprite("Inventory UI.png"),close.build(),grabContext);
+		inventory.setEnabled(false);
+		inventory.setMode(edit, manager);
+		tools = new Window(650,screenHeight()-200,sprites.getSprite("Tools.png"),closeButton3,grabContext);
 		
-		partMounting = new Window(120,100,sprites.getSprite("part mounting ui.png"), closeButton,grabContext);
-		inventory = new Window(220,100,sprites.getSprite("Inventory UI.png"),closeButton2,grabContext);
+		wireSymbol = sprites.getSprite("wire symbol.png");
+		
+		ItemType.setDefaultWireSprites(
+				sprites.getSprite("pin highlight end.png"),
+				sprites.getSprite("pin highlight.png"),
+				sprites.getSprite("wire end.png"),
+				sprites.getSprite("wire fade.png"));
 		
 		Sprite invHighlight = sprites.getSprite("inv-slot highlight.png");
-		Sprite itemSprite = sprites.getSprite("ouino item.png");
-		Sprite worldSprite = sprites.getSprite("ouino.png");
-		ItemType microController = new ItemType(worldSprite,itemSprite);
-		microController.setOffsetX(0);
-		microController.setOffsetY(7);
-		microController.setWorkbenchHeight(2);
-		microController.setWorkbenchWidth(2);
+		ItemType microController = new ItemType(sprites.getSprite("ouino.png"),sprites.getSprite("ouino item.png"));
+		ItemType battery = new ItemType(sprites.getSprite("battery.png"),sprites.getSprite("battery item.png"));
+		ItemType antenna = new ItemType(sprites.getSprite("antenna ic.png"),sprites.getSprite("antenna item.png"));
+		ItemType breadboard = new ItemType(sprites.getSprite("breadboard.png"),sprites.getSprite("breadboard item.png"));
+		antenna.setOffsets(-1, -1);
+		battery.setOffsets(-1, -1);
+		
+		
+		microController.setOffsets(0, 7);
+		microController.setWorkbenchSize(2,2);
+		microController.setWireSpritesToDefault(sprites.getSprite("pin mask.png"));
+		microController.addPinStrip(35, 1, 10);
+		microController.addPinStrip(72, 1, 8);
+		microController.addPinStrip(50, 62, 8);
+		microController.addPinStrip(81, 62, 5);
+		
+		
+		breadboard.setOffsets(-2, 5);
+		breadboard.setWorkbenchSize(2,2);
+		breadboard.setWireSpritesToDefault(null);
+		breadboard.setWireEnd(sprites.getSprite("wire end no pin.png"));
+		breadboard.addPins(new Grid(7,14,3,3,5,30));
+		breadboard.addPins(new Grid(7,38,3,3,5,30));
+		new Grid(10,4,18,3,1,5).forEach((x2,y2)->{
+			breadboard.addPins(new Grid(x2,y2,3,3,2,5));
+		});
+		new Grid(10,57,18,3,1,5).forEach((x2,y2)->{
+			breadboard.addPins(new Grid(x2,y2,3,3,2,5));
+		});
+		
 		BiConsumer<Float,Float> addToInventory = (x2,y2) ->
 		{
-			InvenorySlot slot = new InvenorySlot(x2,y2,invHighlight,new Item(microController),itemManip);	
+			InvenorySlot slot;
+			if(Math.random()>.5)
+			{
+				slot = new InvenorySlot(x2,y2,invHighlight,new Item(microController),itemManip);
+			}
+			else
+			{
+				slot = new InvenorySlot(x2,y2,invHighlight,new Item(antenna),itemManip);
+			}
+			
 			inventory.addChild(slot);
 		};
 		BiConsumer<Float,Float> addToPartMount = (x2,y2) ->
 		{
-			InvenorySlot slot = new InvenorySlot(x2,y2,invHighlight,new Item(microController),itemManip);	
+			InvenorySlot slot;
+			if(Math.random()>.5)
+			{
+				slot = new InvenorySlot(x2,y2,invHighlight,new Item(battery),itemManip);
+			}
+			else
+			{
+				slot = new InvenorySlot(x2,y2,invHighlight,new Item(breadboard),itemManip);
+			}
 			partMounting.addChild(slot);
 		};
-		new GridBuilder(48,76,43,43,7,10).//grid for inventory window
+		new Grid(48,76,43,43,7,10).//grid for inventory window
 		forEach(addToInventory);
 		
-		new GridBuilder(178,65,43,42*2,4,4).//grid for top, left, right, bottom
+		new Grid(178,65,43,42*2,4,4).//grid for top, left, right, bottom
 		forEach(addToPartMount);
 		
-		new GridBuilder(112,149,43,42,4,1).//grid for front
+		new Grid(112,149,43,42,4,1).//grid for front
 		forEach(addToPartMount);
 
-		new GridBuilder(373,149,43,42,4,1).//grid for back
+		new Grid(373,149,43,42,4,1).//grid for back
 		forEach(addToPartMount);
 		
-		addActable(partMounting);
-		addActable(inventory);
-
-		grid = new ChassisGrid(40,40,1,sprites.getSprite("Chassis plate.png"),itemManip);
+		new Grid(48,76,43,43,1,10).
+		forEach((x2,y2)->{
+			InvenorySlot slot = new InvenorySlot(x2,y2,invHighlight,null,itemManip);
+			tools.addChild(slot);
+		});
+		
+		Button[] toolButtons = new Button[10];
+		
+		new Grid(48,119,43,43,1,10).
+		forEachWithIndicies((x2,y2,i,j)->{
+			Button b = inv.build();
+			b.setPos(x2, y2);
+			toolButtons[i] = b;
+			tools.addChild(b);
+		});
+		toolButtons[0].setOnPress(()->inventory.setEnabled(true));
+		toolButtons[1].setOnPress(()->partMounting.setEnabled(true));
+		toolButtons[2].setOnPress(()->{
+			manager.setMode(wiring);
+		});
+	
+		
+		tools.addChild(new Entity(48,119,0,sprites.getSprite("icons.png")));
+		grid = new ChassisGrid(40,20,1,sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring);
 		
 		add(grid);
 		addUI(partMounting);
 		addUI(inventory);
+		addUI(tools);
 		Entity laptop = new Entity(700,100,1, sprites.getSprite("laptop.png"));
 		addRenderable(laptop);
 		

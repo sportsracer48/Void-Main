@@ -46,6 +46,14 @@ public class GlobalInput
 	{
 		return mouseY;
 	}
+	public int getScreenWidth()
+	{
+		return globalState.wWidth;
+	}
+	public int getScreenHeight()
+	{
+		return globalState.wHeight;
+	}
 	
 	private GLFWKeyCallback key = new GLFWKeyCallback()
 	{
@@ -54,6 +62,10 @@ public class GlobalInput
 			if(action == GLFW.GLFW_PRESS && key == GLFW.GLFW_KEY_ESCAPE)
 			{
 				globalState.running = false;
+			}
+			if(key<0 || key>GLFW.GLFW_KEY_LAST)
+			{
+				return;
 			}
 			switch(action)
 			{

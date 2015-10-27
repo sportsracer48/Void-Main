@@ -61,6 +61,22 @@ public class Sprite
 		return new ScaledSprite(pTex,x,y,width,height,imWidth,imHeight,scale);
 	}
 	
+	public Sprite reverseH()
+	{
+		Sprite toReturn = new Sprite(pTex,x,y,width,height,imWidth,imHeight);
+		Matrix stPre = Matrix.translation(1,0,0).dot(Matrix.scaling(-1,1,1));
+		toReturn.stMatrix = toReturn.stMatrix.dot(stPre);
+		return toReturn;
+	}
+	
+	public Sprite reverseV()
+	{
+		Sprite toReturn = new Sprite(pTex,x,y,width,height,imWidth,imHeight);
+		Matrix stPre = Matrix.translation(0,1,0).dot(Matrix.scaling(1,-1,1));
+		toReturn.stMatrix = toReturn.stMatrix.dot(stPre);
+		return toReturn;
+	}
+	
 	/**
 	 * Draws the sprite. Specifically, feeds a rectangle of size (width) by (height) into the existing model matrix.
 	 * The square consists of six triangles, and has it's upper left corner at (0,0). No transformations are appended, and the state of the context is not changed.
@@ -77,7 +93,6 @@ public class Sprite
 		GL30.glBindVertexArray(vao);
 		GL20.glEnableVertexAttribArray(0);
 		GL20.glEnableVertexAttribArray(1);
-		GL20.glEnableVertexAttribArray(2);
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboi);
 			
 		GL11.glDrawElements(GL11.GL_TRIANGLES, model.nIndicies(), GL11.GL_UNSIGNED_BYTE, 0);

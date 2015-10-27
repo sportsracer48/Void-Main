@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import action.Actable;
+import state.Mode;
+import state.ModeManager;
 import state.ui.ClickableArea;
 import state.ui.MouseoverContext;
 import util.Color;
@@ -22,15 +24,21 @@ public class Entity implements Comparable<Entity>, Actable
 	RenderList children = new RenderList();
 	List<ClickableArea> clickable = new ArrayList<>();
 	ClickableArea root = null;
-	
+
 	float x,y,z;
 	float targetX, targetY, targetZ;
 	Sprite base;
 	Matrix translation;
+	Matrix scale = Matrix.identity(4);
+	float scaleX=1,scaleY=1;
+	Matrix model;
 	boolean enabled = true;
 	boolean visible = true;
 	Matrix color = Color.white;
 	boolean colored = false;
+	Mode mode;
+	ModeManager manager;
+	
 	
 	public Entity(float x, float y, float z, Sprite base)
 	{
@@ -42,16 +50,36 @@ public class Entity implements Comparable<Entity>, Actable
 		this.targetZ=z;
 		this.base=base;
 		this.translation = Matrix.translation(x,y,0);
+		this.model = translation;
 	}
 	
-	public float getWidth()
+	public void setScale(float scale)
+	{
+		this.scale = Matrix.scaling(scale,scale,scale);
+		this.scaleX = scale;
+		this.scaleY = scale;
+		this.model = translation.dot(this.scale);
+	}
+	
+	
+	public float getSpriteWidth()
 	{
 		return base.imWidth;
 	}
 	
-	public float getHeight()
+	public float getSpriteHeight()
 	{
 		return base.imHeight;
+	}
+	
+	public float getWidth()
+	{
+		return getSpriteWidth()*scaleX;
+	}
+	
+	public float getHeight()
+	{
+		return getSpriteHeight()*scaleY;
 	}
 	
 	public void addChild(Entity child)
@@ -69,30 +97,41 @@ public class Entity implements Comparable<Entity>, Actable
 		clickable.add(area);
 	}
 	
+	public boolean modeEnabled()
+	{
+		return manager==null || manager.getMode() == mode;
+	}
+	
+	public void setMode(Mode interactableMode, ModeManager manager)
+	{
+		this.manager = manager;
+		this.mode = interactableMode;
+	}
+	
 	public boolean handleClick(float x, float y, Matrix model)
 	{
-		if(!enabled)
+		if(!enabled || !modeEnabled())
 		{
 			return false;
 		}
-		Matrix translation = model.dot(this.translation);
+		Matrix nextModel = model.dot(this.model);
 		for(Entity e: children)
 		{
-			e.handleClick(x, y, translation);
+			e.handleClick(x, y, nextModel);
 		}
 		for(ClickableArea a: clickable)
 		{
-			if(a.contains(x, y, translation))
+			if(a.contains(x, y, nextModel))
 			{
-				a.handleClick(x,y,translation);
+				a.handleClick(x,y,nextModel);
 				return true;
 			}
 		}
 		if(root!=null)
 		{
-			if(root.contains(x,y,translation))
+			if(root.contains(x,y,nextModel))
 			{
-				root.handleClick(x, y, translation);
+				root.handleClick(x, y, nextModel);
 				return true;
 			}
 		}
@@ -131,22 +170,22 @@ public class Entity implements Comparable<Entity>, Actable
 	
 	public void handleMove(float x, float y, MouseoverContext context, Matrix model)
 	{
-		if(!enabled)
+		if(!enabled || !modeEnabled())
 		{
 			return;
 		}
-		Matrix translation = model.dot(this.translation);
+		Matrix nextModel = model.dot(this.model);
 		for(Entity e: children)
 		{
-			e.handleMove(x, y, context, translation);
+			e.handleMove(x, y, context, nextModel);
 		}
 		for(ClickableArea a:clickable)
 		{
-			a.handleMove(x, y, translation, context);
+			a.handleMove(x, y, nextModel, context);
 		}
 		if(root!=null)
 		{
-			root.handleMove(x, y, translation, context);
+			root.handleMove(x, y, nextModel, context);
 		}
 	}
 	
@@ -169,6 +208,7 @@ public class Entity implements Comparable<Entity>, Actable
 	{
 		if(c.equals(Color.white))
 		{
+			colored = false;
 			return;
 		}
 		else
@@ -194,6 +234,7 @@ public class Entity implements Comparable<Entity>, Actable
 	public void updateTranslation()
 	{
 		this.translation = Matrix.translation(x,y,0);
+		this.model = translation.dot(scale);
 	}
 	
 	public void act(int dt)
@@ -226,7 +267,7 @@ public class Entity implements Comparable<Entity>, Actable
 		this.targetZ=this.z=z;
 	}
 	
-	public final void render(Context c)
+	public void render(Context c)
 	{
 		if(!enabled || !visible)
 		{
@@ -237,16 +278,17 @@ public class Entity implements Comparable<Entity>, Actable
 			c.setColor(color);
 		}
 		c.pushTransform();
-		c.prependTransform(translation);
+		c.prependTransform(model);
 		
 		renderBase(c);
 		
-		children.render(c);
-		c.popTransform();
 		if(colored)
 		{
 			c.resetColor();
 		}
+		
+		children.render(c);
+		c.popTransform();
 	}
 	
 	public void renderBase(Context c)
@@ -280,6 +322,11 @@ public class Entity implements Comparable<Entity>, Actable
 	public void setRoot(ClickableArea root)
 	{
 		this.root = root;
+	}
+	
+	public void enableRoot()
+	{
+		this.root = new ClickableArea(0,0,getWidth(),getHeight());
 	}
 	
 	public int compareTo(Entity r)
