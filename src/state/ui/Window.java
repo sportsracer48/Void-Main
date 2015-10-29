@@ -1,7 +1,7 @@
 package state.ui;
 
-import state.workbench.DragArea;
-import state.workbench.DragContext;
+import state.workbench.conroller.DragArea;
+import state.workbench.conroller.DragContext;
 import graphics.Sprite;
 import graphics.entity.Entity;
 

@@ -1,6 +1,7 @@
-package state.workbench;
+package state.workbench.graphics;
 
 import state.ui.ClickableArea;
+import state.workbench.WiringMode;
 import util.Color;
 import game.item.Pin;
 import game.item.Wire;
@@ -36,6 +37,7 @@ public class PinHighlight extends AnimatedEntity
 		super(x,y,y,highlight);
 		this.pin = pin;
 		this.mode = mode;
+		setColor(new Color(1,1,1,center));
 		if(interactable)
 		{
 			pin.highlight = this;
@@ -95,6 +97,7 @@ public class PinHighlight extends AnimatedEntity
 		if(pin != null && pin.getAttatched() != null)
 		{
 			wire.setVisible(true);
+			mask.setVisible(true);
 			preview.setVisible(false);
 			wireFade.setColor(pin.getAttatched().getColor());
 			if(!pin.getAttatched().isAttatchedOnBothSides())
@@ -114,6 +117,7 @@ public class PinHighlight extends AnimatedEntity
 		else if(wire!=null)
 		{
 			wire.setVisible(false);
+			mask.setVisible(false);
 		}
 		
 		if(area!=null && area.ownsMouse())

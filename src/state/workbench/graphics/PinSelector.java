@@ -1,5 +1,6 @@
-package state.workbench;
+package state.workbench.graphics;
 
+import state.workbench.WiringMode;
 import game.item.Item;
 import graphics.Sprite;
 import graphics.entity.FluidEntity;

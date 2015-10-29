@@ -29,4 +29,16 @@ public class GLU
 		}
 		return String.format("Unknown error %s", Integer.toHexString(glError));
 	}
+	
+	public static void print2DArray(float[][] array)
+	{
+		for(int y = 0; y<array[0].length; y++)
+		{
+			for(int x = 0; x<array.length; x++)
+			{
+				System.out.format("%.0f\t", array[x][y]);
+			}
+			System.out.println();
+		}
+	}
 }

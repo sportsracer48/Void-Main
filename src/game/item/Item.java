@@ -3,8 +3,8 @@ package game.item;
 import java.util.ArrayList;
 import java.util.List;
 
-import state.workbench.PinHighlight;
 import state.workbench.WiringMode;
+import state.workbench.graphics.PinHighlight;
 import graphics.Sprite;
 import graphics.entity.Entity;
 
@@ -16,7 +16,7 @@ public class Item
 	public Item(ItemType type)
 	{
 		this.type = type;
-		pins = type.getPins();
+		pins = type.getPins(this);
 	}
 	
 	public Entity getInvEntity()
@@ -50,6 +50,14 @@ public class Item
 		return getWorldSprite()!=null;
 	}
 	
+	public void stripPins()
+	{
+		for(Pin p:pins)
+		{
+			p.strip();
+		}
+	}
+	
 	public List<PinHighlight> getPinHighlights(WiringMode mode)
 	{
 		List<PinHighlight> toReturn = new ArrayList<>();
@@ -63,5 +71,10 @@ public class Item
 		});
 		
 		return toReturn;
+	}
+
+	public List<Pin> getPins()
+	{
+		return pins;
 	}
 }

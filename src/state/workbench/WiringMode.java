@@ -6,6 +6,7 @@ import game.item.Wire;
 import graphics.entity.FluidEntity;
 import state.GameState;
 import state.Mode;
+import state.workbench.graphics.PinSelector;
 import util.Color;
 
 public class WiringMode extends Mode
@@ -32,14 +33,19 @@ public class WiringMode extends Mode
 
 	public void showSelector(Item i)
 	{
+		setSelector(new PinSelector(i,screenWidth,screenHeight,25,this));
+	}
+	
+	public void setSelector(PinSelector selector)
+	{
 		if(this.selector != null)
 		{
-			root.removeUI(selector);
+			root.removeUI(this.selector);
 		}
-		this.selector = new PinSelector(i,screenWidth,screenHeight,0,this);
+		this.selector = selector;
 		if(this.selector != null)
 		{
-			root.addUI(selector);
+			root.addUI(this.selector);
 		}
 	}
 	

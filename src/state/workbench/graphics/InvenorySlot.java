@@ -1,6 +1,8 @@
-package state.workbench;
+package state.workbench.graphics;
 
 import state.ui.HighlightArea;
+import state.workbench.conroller.ItemAcceptor;
+import state.workbench.conroller.ItemManipulator;
 import util.Color;
 import game.item.Item;
 import graphics.Sprite;
@@ -35,6 +37,7 @@ public class InvenorySlot extends Entity
 
 			public void accept(Item i)
 			{
+				i.stripPins();
 				contents = i;
 				itemEntity = i.getInvEntity();
 				//itemEntity.setPos(3, 3);

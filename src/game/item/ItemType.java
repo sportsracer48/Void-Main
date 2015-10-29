@@ -157,11 +157,11 @@ public class ItemType //kinda reflexive, but hey, whatever
 		this.wireFade = defaultWireFade;
 		this.pinMask = pinMask;
 	}
-	public List<Pin> getPins()
+	public List<Pin> getPins(Item instance)
 	{
 		List<Pin> toReturn = new ArrayList<Pin>();
 		pinLocations.forEach(c->{
-			toReturn.add(new Pin(c.x,c.y));
+			toReturn.add(new Pin(instance,c.x,c.y));
 		});
 		return toReturn;
 	}

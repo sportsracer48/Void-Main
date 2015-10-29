@@ -1,4 +1,4 @@
-package state.workbench;
+package state.workbench.conroller;
 
 import graphics.entity.Entity;
 import state.ui.ClickableArea;
@@ -6,7 +6,7 @@ import state.ui.ClickableArea;
 public class DragArea extends ClickableArea
 {
 	DragContext context;
-	Entity target;
+	private Entity target;
 	
 	public DragArea(float x, float y, float width, float height, DragContext context, Entity target)
 	{
@@ -25,5 +25,10 @@ public class DragArea extends ClickableArea
 	public void move(float x, float y)
 	{
 		target.moveTo(x, y);
+	}
+
+	public Entity getTarget()
+	{
+		return target;
 	}
 }

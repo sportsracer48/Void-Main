@@ -55,12 +55,19 @@ public class Entity implements Comparable<Entity>, Actable
 	
 	public void setScale(float scale)
 	{
-		this.scale = Matrix.scaling(scale,scale,scale);
+		this.scale = Matrix.scaling(scale,scale,1);
 		this.scaleX = scale;
 		this.scaleY = scale;
 		this.model = translation.dot(this.scale);
 	}
 	
+	public void setScale(float xScale, float yScale)
+	{
+		this.scale = Matrix.scaling(xScale,yScale,1);
+		this.scaleX = xScale;
+		this.scaleY = yScale;
+		this.model = translation.dot(this.scale);
+	}
 	
 	public float getSpriteWidth()
 	{
@@ -90,6 +97,11 @@ public class Entity implements Comparable<Entity>, Actable
 	public void removeChild(Entity child)
 	{
 		children.remove(child);
+	}
+	
+	public void clearChildren()
+	{
+		children.clear();
 	}
 	
 	public void addClickableArea(ClickableArea area)

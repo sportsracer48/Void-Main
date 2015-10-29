@@ -23,7 +23,10 @@ import state.ui.Button.ButtonTheme;
 import state.ui.ClickableArea;
 import state.ui.MouseoverContext;
 import state.ui.Window;
+import state.workbench.conroller.DragContext;
+import state.workbench.conroller.ItemManipulator;
 import state.workbench.game.ChassisGrid;
+import state.workbench.graphics.InvenorySlot;
 import util.Color;
 import util.Grid;
 
@@ -94,6 +97,24 @@ public class WorkbenchState extends GameState
 	
 	public void keyPressed(int key)
 	{
+		if(key == GLFW.GLFW_KEY_ESCAPE)
+		{
+			if(manager.getMode() == wiring)
+			{
+				if(wiring.getSelector() != null)
+				{
+					wiring.setSelector(null);
+				}
+				else
+				{
+					manager.setMode(edit);
+				}
+			}
+			else
+			{
+				systemExit();
+			}
+		}
 		if(key == GLFW.GLFW_KEY_E)
 		{
 			manager.setMode(wiring);
@@ -192,11 +213,11 @@ public class WorkbenchState extends GameState
 		mouseContext.setFrozen(false);
 		itemManip.act(dt);
 		
-		if(grabContext.grabbed != null)
+		if(grabContext.getGrabbed() != null)
 		{
-			if(uiList.getList().contains(grabContext.grabbed.target))
+			if(uiList.getList().contains(grabContext.getGrabbed().getTarget()))
 			{
-				uiList.floatToTop(grabContext.grabbed.target);
+				uiList.floatToTop(grabContext.getGrabbed().getTarget());
 			}
 		}
 	}
@@ -334,13 +355,15 @@ public class WorkbenchState extends GameState
 		});
 		toolButtons[0].setOnPress(()->inventory.setEnabled(true));
 		toolButtons[1].setOnPress(()->partMounting.setEnabled(true));
-		toolButtons[2].setOnPress(()->{
+		toolButtons[3].setOnPress(()->{
 			manager.setMode(wiring);
 		});
 	
 		
 		tools.addChild(new Entity(48,119,0,sprites.getSprite("icons.png")));
-		grid = new ChassisGrid(40,20,1,sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring);
+		grid = new ChassisGrid(40,20,1,
+				sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring,
+				sprites.getSprite("wire segment x.png"),sprites.getSprite("wire segment y.png"),sprites.getSprite("wire segment z.png"));
 		
 		add(grid);
 		addUI(partMounting);

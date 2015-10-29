@@ -34,6 +34,11 @@ public class RenderList implements Iterable<Entity>
 		toRemove.add(r);
 	}
 	
+	public void clear()
+	{
+		toRemove.addAll(renderList);
+	}
+	
 	public void update()
 	{
 		renderList.removeAll(toRemove);

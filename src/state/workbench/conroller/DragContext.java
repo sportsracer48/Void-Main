@@ -1,10 +1,10 @@
-package state.workbench;
+package state.workbench.conroller;
 
 import state.ui.ClickableArea;
 
 public class DragContext
 {
-	DragArea grabbed;
+	private DragArea grabbed;
 	float xOffset,yOffset;
 	
 	public void setGrabbed(DragArea grabbed, float xOffset, float yOffset)
@@ -32,5 +32,9 @@ public class DragContext
 		{
 			grabbed.move(x-xOffset,y-yOffset);
 		}
+	}
+	public DragArea getGrabbed()
+	{
+		return grabbed;
 	}
 }

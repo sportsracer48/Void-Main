@@ -1,10 +1,11 @@
 package state.workbench.game;
 
 import state.ModeManager;
-import state.workbench.GrabBound;
-import state.workbench.ItemAcceptor;
-import state.workbench.ItemManipulator;
 import state.workbench.WiringMode;
+import state.workbench.conroller.GrabBound;
+import state.workbench.conroller.ItemAcceptor;
+import state.workbench.conroller.ItemManipulator;
+import state.workbench.graphics.WireRenderer;
 import util.Grid;
 import util.Grid.Coord;
 import util.Color;
@@ -21,6 +22,7 @@ public class ChassisGrid extends Entity
 	ItemAcceptor[][] slots;
 	FluidEntity preview;
 	FluidEntity returnPreview;
+	WireRenderer wireRenderer;
 	Coord previewCoord;
 	GrabBound<Coord> grabbedSquare = new GrabBound<>();
 	GrabBound<Boolean> showReturnPreview = new GrabBound<>();
@@ -31,12 +33,13 @@ public class ChassisGrid extends Entity
 	WiringMode wiring;
 	
 	
-	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring)
+	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring, Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
 	{
-		this(10,10,21,38,55,36,x,y,z,base, manip,manager,wiring);
+		this(10,10,21,38,55,36,x,y,z,base, manip,manager,wiring,wireSegmentX,wireSegmentY,wireSegmentZ);
 	}
 	
-	private ChassisGrid(int width, int height, float offsetX, float offsetY, float xStep, float yStep, float x, float y, float z, Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring)
+	private ChassisGrid(int width, int height, float offsetX, float offsetY, float xStep, float yStep, float x, float y, float z, 
+			Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring, Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
 	{
 		super(x,y,z,base);
 		
@@ -60,8 +63,11 @@ public class ChassisGrid extends Entity
 		returnPreview = new FluidEntity(0,0,height+3);
 		returnPreview.setVisible(false);
 		
+		wireRenderer = new WireRenderer(height+5,grid,contents,wireSegmentX,wireSegmentY,wireSegmentZ);
+		
 		addChild(preview);
 		addChild(returnPreview);
+		addChild(wireRenderer);
 		
 		this.width = width;
 		this.height = height;

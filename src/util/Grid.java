@@ -80,6 +80,15 @@ public class Grid
 		return this.y+yStep*y;
 	}
 	
+	public float getTotalWidth()
+	{
+		return getX(cols+1);
+	}
+	public float getTotalHeight()
+	{
+		return getY(rows+1);
+	}
+	
 	@FunctionalInterface
 	public static interface QuadConsumer<T1, T2, T3, T4>
 	{
@@ -97,6 +106,37 @@ public class Grid
 		public boolean equals(int x, int y)
 		{
 			return x==this.x && y==this.y;
+		}
+		public boolean equals(Object o)
+		{
+			if(o instanceof Coord)
+			{
+				Coord c= (Coord) o;
+				return x==c.x && y==c.y;
+			}
+			return false;
+		}
+		public String toString()
+		{
+			return String.format("(%d,%d)",x,y);
+		}
+	}
+	
+	public static class FloatCoord
+	{
+		public final float x, y;
+		public FloatCoord(float x, float y)
+		{
+			this.x=x;
+			this.y=y;
+		}
+		public boolean equals(float x, float y)
+		{
+			return x==this.x && y==this.y;
+		}
+		public Coord toCoord()
+		{
+			return new Coord((int)x,(int)y);
 		}
 	}
 }

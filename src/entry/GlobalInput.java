@@ -54,15 +54,15 @@ public class GlobalInput
 	{
 		return globalState.wHeight;
 	}
+	public void systemExit()
+	{
+		globalState.running = false;
+	}
 	
 	private GLFWKeyCallback key = new GLFWKeyCallback()
 	{
 		public void invoke(long window, int key, int scancode, int action,int mods)
 		{
-			if(action == GLFW.GLFW_PRESS && key == GLFW.GLFW_KEY_ESCAPE)
-			{
-				globalState.running = false;
-			}
 			if(key<0 || key>GLFW.GLFW_KEY_LAST)
 			{
 				return;

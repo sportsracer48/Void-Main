@@ -65,6 +65,10 @@ public abstract class GameState
 	{
 		return input.isButtonPressed(button);
 	}
+	public void systemExit()
+	{
+		input.systemExit();
+	}
 	
 	public void add(Entity t)
 	{

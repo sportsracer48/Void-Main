@@ -1,4 +1,4 @@
-package state.workbench;
+package state.workbench.conroller;
 
 import game.item.Item;
 import graphics.entity.Entity;
