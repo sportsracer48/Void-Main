@@ -332,6 +332,17 @@ public class Matrix
 		return rotation(Math.toRadians(degrees));
 	}
 	
+	public static Matrix yToZ()
+	{
+		float[] mat = {
+				1,0,0,0,
+				0,0,0,0,
+				0,1,0,0,
+				0,0,0,1
+		};
+		return new Matrix(mat,4);
+	}
+	
 	public static Matrix scaling(float...scales)
 	{
 		int size = scales.length;
@@ -353,6 +364,18 @@ public class Matrix
 				0,				0,					0,				1f
 		};
 		return new Matrix(mat,4);
+	}
+	public static Matrix rpgOrtho(float left, float right, float bottom, float top, float near, float far)
+	{
+		Matrix ortho = gluOrtho(left,right,bottom,top,near,far);
+		float[] mat = {
+				1,0,0,0,
+				0,1,-1,0,
+				0,1,1,0,
+				0,0,0,1,
+		};
+		Matrix rpg = new Matrix(mat,4);
+		return ortho.dot(rpg);
 	}
 	
 	public static void uniformMatrix(Matrix matrix, Uniform location)

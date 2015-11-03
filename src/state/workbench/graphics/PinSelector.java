@@ -2,6 +2,7 @@ package state.workbench.graphics;
 
 import state.workbench.WiringMode;
 import game.item.Item;
+import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.FluidEntity;
 
@@ -22,5 +23,7 @@ public class PinSelector extends FluidEntity
 		setPos(x,y);
 		
 		i.getPinHighlights(mode).forEach(c->addChild(c));
+		
+		setGroupAlpha(.9f);
 	}
 }

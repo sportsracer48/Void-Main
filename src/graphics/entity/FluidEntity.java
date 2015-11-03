@@ -7,6 +7,7 @@ public class FluidEntity extends Entity
 {
 	float width, height, xOffset, yOffset;
 	Sprite body;
+	Entity self;
 	
 	public FluidEntity(float x, float y, float z, float width, float height)
 	{
@@ -47,6 +48,10 @@ public class FluidEntity extends Entity
 	
 	public void setSpriteAndSize(Sprite body)
 	{
+		if(self!=null)
+		{
+			removeChild(self);
+		}
 		setSprite(body);
 		if(body == null)
 		{
@@ -58,6 +63,13 @@ public class FluidEntity extends Entity
 			setWidth(body.imWidth);
 			setHeight(body.imHeight);
 		}
+	}
+	
+	public void setTo(Entity e)
+	{
+		setSpriteAndSize(null);
+		addChild(e);
+		this.self = e;
 	}
 	
 	public void renderBase(Context c)

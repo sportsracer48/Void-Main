@@ -63,11 +63,11 @@ public class Item
 		List<PinHighlight> toReturn = new ArrayList<>();
 		
 		pins.forEach(c->{
-			toReturn.add(new PinHighlight(c.x-1,c.y-1,type.highlight,type.wireEnd,type.wireFade,type.pinMask,mode,c));
+			toReturn.add(new PinHighlight(c.x-1,c.y-1,type.highlight,type.wireEndOpaque,type.wireFade,type.pinMask,mode,c));
 		});
 		
 		type.stripEndLocations.forEach(c->{
-			toReturn.add(new PinHighlight(c.x-1,c.y-1,type.endCap,type.wireEnd,type.wireFade,type.pinMask,null,mode,false));
+			toReturn.add(new PinHighlight(c.x-1,c.y-1,type.endCap,type.wireEndOpaque,type.wireFade,type.pinMask,null,mode,false));
 		});
 		
 		return toReturn;

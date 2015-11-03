@@ -9,13 +9,14 @@ import graphics.Sprite;
 
 public class ItemType //kinda reflexive, but hey, whatever
 {
-	public static Sprite defaultEndCap, defaultHighlight, defaultWireEnd, defaultWireFade;
+	public static Sprite defaultEndCap, defaultHighlight, defaultWireEnd, defaultWireEndOpaque, defaultWireFade;
 	
-	public static void setDefaultWireSprites(Sprite endCap, Sprite highlight, Sprite wireEnd, Sprite wireFade)
+	public static void setDefaultWireSprites(Sprite endCap, Sprite highlight, Sprite wireEnd, Sprite wireEndOpaque, Sprite wireFade)
 	{
 		defaultEndCap = endCap;
 		defaultHighlight = highlight;
 		defaultWireEnd = wireEnd;
+		defaultWireEndOpaque = wireEndOpaque;
 		defaultWireFade = wireFade;
 	}
 	
@@ -26,7 +27,7 @@ public class ItemType //kinda reflexive, but hey, whatever
 	List<Coord> pinLocations = new ArrayList<>();
 	List<Coord> stripEndLocations = new ArrayList<>();
 	
-	Sprite endCap, highlight, wireEnd,  wireFade, pinMask;
+	Sprite endCap, highlight, wireEnd, wireEndOpaque,  wireFade, pinMask;
 	
 	public Sprite getEndCap()
 	{
@@ -51,6 +52,14 @@ public class ItemType //kinda reflexive, but hey, whatever
 	public void setWireEnd(Sprite wireEnd)
 	{
 		this.wireEnd = wireEnd;
+	}
+	public Sprite getWireEndOpaque()
+	{
+		return wireEndOpaque;
+	}
+	public void setWireEndOpaque(Sprite wireEndOpaque)
+	{
+		this.wireEndOpaque = wireEndOpaque;
 	}
 	public Sprite getWireFade()
 	{
@@ -141,11 +150,12 @@ public class ItemType //kinda reflexive, but hey, whatever
 	{
 		return stripEndLocations;
 	}
-	public void setWireSprites(Sprite endCap, Sprite highlight, Sprite wireEnd, Sprite wireFade, Sprite pinMask)
+	public void setWireSprites(Sprite endCap, Sprite highlight, Sprite wireEnd, Sprite wireEndOpaque, Sprite wireFade, Sprite pinMask)
 	{
 		this.endCap = endCap;
 		this.highlight = highlight;
 		this.wireEnd = wireEnd;
+		this.wireEndOpaque = wireEndOpaque;
 		this.wireFade = wireFade;
 		this.pinMask = pinMask;
 	}
@@ -154,6 +164,7 @@ public class ItemType //kinda reflexive, but hey, whatever
 		this.endCap = defaultEndCap;
 		this.highlight = defaultHighlight;
 		this.wireEnd = defaultWireEnd;
+		this.wireEndOpaque = defaultWireEndOpaque;
 		this.wireFade = defaultWireFade;
 		this.pinMask = pinMask;
 	}

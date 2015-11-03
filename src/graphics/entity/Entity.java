@@ -30,12 +30,15 @@ public class Entity implements Comparable<Entity>, Actable
 	Sprite base;
 	Matrix translation;
 	Matrix scale = Matrix.identity(4);
+	Matrix rotation = Matrix.identity(4);
 	float scaleX=1,scaleY=1;
 	Matrix model;
 	boolean enabled = true;
 	boolean visible = true;
 	Matrix color = Color.white;
+	float groupAlpha = 1;
 	boolean colored = false;
+	boolean translateZ = false;
 	Mode mode;
 	ModeManager manager;
 	
@@ -50,7 +53,7 @@ public class Entity implements Comparable<Entity>, Actable
 		this.targetZ=z;
 		this.base=base;
 		this.translation = Matrix.translation(x,y,0);
-		this.model = translation;
+		updateModel();
 	}
 	
 	public void setScale(float scale)
@@ -58,7 +61,7 @@ public class Entity implements Comparable<Entity>, Actable
 		this.scale = Matrix.scaling(scale,scale,1);
 		this.scaleX = scale;
 		this.scaleY = scale;
-		this.model = translation.dot(this.scale);
+		updateModel();
 	}
 	
 	public void setScale(float xScale, float yScale)
@@ -66,7 +69,25 @@ public class Entity implements Comparable<Entity>, Actable
 		this.scale = Matrix.scaling(xScale,yScale,1);
 		this.scaleX = xScale;
 		this.scaleY = yScale;
-		this.model = translation.dot(this.scale);
+		updateModel();
+	}
+	
+	public void setScale(float xScale, float yScale, float zScale)
+	{
+		this.scale = Matrix.scaling(xScale,yScale,zScale);
+		this.scaleX = xScale;
+		this.scaleY = yScale;
+		updateModel();
+	}
+	
+	public void setRotation(Matrix rot)
+	{
+		this.rotation = rot;
+	}
+	
+	protected final void updateModel()
+	{
+		this.model = translation.dot(this.scale.dot(this.rotation));
 	}
 	
 	public float getSpriteWidth()
@@ -230,6 +251,21 @@ public class Entity implements Comparable<Entity>, Actable
 		}
 	}
 	
+	public Matrix getColor()
+	{
+		return color;
+	}
+	
+	public float getGroupAlpha()
+	{
+		return groupAlpha;
+	}
+
+	public void setGroupAlpha(float groupAlpha)
+	{
+		this.groupAlpha = groupAlpha;
+	}
+
 	public void moveTo(float x, float y)
 	{
 		targetX=x;
@@ -243,12 +279,21 @@ public class Entity implements Comparable<Entity>, Actable
 		updateTranslation();
 	}
 	
-	public void updateTranslation()
+	protected void updateTranslation()
 	{
-		this.translation = Matrix.translation(x,y,0);
-		this.model = translation.dot(scale);
+		this.translation = Matrix.translation(x,y,translateZ?getZ():0);
+		updateModel();
 	}
 	
+	public void setTranslateZ(boolean translateZ)
+	{
+		if(translateZ != this.translateZ)
+		{
+			this.translateZ = translateZ;
+			updateTranslation();
+		}
+	}
+
 	public void act(int dt)
 	{
 		if(x!=targetX || y!=targetY)
@@ -285,9 +330,17 @@ public class Entity implements Comparable<Entity>, Actable
 		{
 			return;
 		}
+		if(groupAlpha!=1)
+		{
+			c.setAlpha(groupAlpha);
+		}
 		if(colored)
 		{
-			c.setColor(color);
+			c.setColor(new Color(color.r(),color.g(),color.b(),color.a()*c.getAlpha()));
+		}
+		else if(c.getAlpha() != 1)
+		{
+			c.setColor(new Color(1,1,1,c.getAlpha()));
 		}
 		c.pushTransform();
 		c.prependTransform(model);
@@ -298,9 +351,17 @@ public class Entity implements Comparable<Entity>, Actable
 		{
 			c.resetColor();
 		}
-		
-		children.render(c);
+		renderChildren(c);
+		if(groupAlpha!=1)
+		{
+			c.setAlpha(1);
+		}
 		c.popTransform();
+	}
+	
+	public void renderChildren(Context c)
+	{
+		children.render(c);
 	}
 	
 	public void renderBase(Context c)

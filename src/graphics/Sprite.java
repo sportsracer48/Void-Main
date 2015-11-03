@@ -41,6 +41,7 @@ public class Sprite
 	int pTex;
 	public Matrix modelMatrix;
 	public Matrix stMatrix;
+	public Matrix stPre = Matrix.identity(4);
 	public int imWidth,imHeight;
 	
 	public Sprite(int atlas, float x, float y, float width, float height, int imwidth, int imheight)
@@ -64,16 +65,18 @@ public class Sprite
 	public Sprite reverseH()
 	{
 		Sprite toReturn = new Sprite(pTex,x,y,width,height,imWidth,imHeight);
-		Matrix stPre = Matrix.translation(1,0,0).dot(Matrix.scaling(-1,1,1));
+		Matrix stPre = this.stPre.dot(Matrix.translation(1,0,0).dot(Matrix.scaling(-1,1,1)));
 		toReturn.stMatrix = toReturn.stMatrix.dot(stPre);
+		toReturn.stPre = stPre;
 		return toReturn;
 	}
 	
 	public Sprite reverseV()
 	{
 		Sprite toReturn = new Sprite(pTex,x,y,width,height,imWidth,imHeight);
-		Matrix stPre = Matrix.translation(0,1,0).dot(Matrix.scaling(1,-1,1));
+		Matrix stPre = this.stPre.dot(Matrix.translation(0,1,0).dot(Matrix.scaling(1,-1,1)));
 		toReturn.stMatrix = toReturn.stMatrix.dot(stPre);
+		toReturn.stPre = stPre;
 		return toReturn;
 	}
 	

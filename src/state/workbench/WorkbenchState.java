@@ -12,8 +12,10 @@ import game.item.Item;
 import game.item.ItemType;
 import graphics.Context;
 import graphics.Sprite;
+import graphics.entity.BoxEntity;
 import graphics.entity.Entity;
 import graphics.entity.FluidEntity;
+import graphics.entity.TextEntity;
 import graphics.registry.SpriteAtlas;
 import state.GameState;
 import state.Mode;
@@ -266,6 +268,7 @@ public class WorkbenchState extends GameState
 				sprites.getSprite("pin highlight end.png"),
 				sprites.getSprite("pin highlight.png"),
 				sprites.getSprite("wire end.png"),
+				sprites.getSprite("wire end opaque.png"),
 				sprites.getSprite("wire fade.png"));
 		
 		Sprite invHighlight = sprites.getSprite("inv-slot highlight.png");
@@ -290,6 +293,7 @@ public class WorkbenchState extends GameState
 		breadboard.setWorkbenchSize(2,2);
 		breadboard.setWireSpritesToDefault(null);
 		breadboard.setWireEnd(sprites.getSprite("wire end no pin.png"));
+		breadboard.setWireEndOpaque(sprites.getSprite("wire end no pin opaque.png"));
 		breadboard.addPins(new Grid(7,14,3,3,5,30));
 		breadboard.addPins(new Grid(7,38,3,3,5,30));
 		new Grid(10,4,18,3,1,5).forEach((x2,y2)->{
@@ -371,8 +375,21 @@ public class WorkbenchState extends GameState
 		addUI(tools);
 		Entity laptop = new Entity(700,100,1, sprites.getSprite("laptop.png"));
 		addRenderable(laptop);
+		BoxEntity tooltipBg = new BoxEntity(0,0,0,
+				sprites.getSprite("fade corner.png"),
+				sprites.getSprite("fade top.png"),
+				sprites.getSprite("fade left.png"),
+				sprites.getSprite("fade center.png"));
+		
+		
+		
+		addActable(mouseCompanion);
+		TextEntity tooltip = new TextEntity(0,0,0,"Hello world!\nAnnother line!");
+		tooltip.setBackGround(tooltipBg);
+		mouseCompanion.setTo(tooltip);
 		
 		sprites.resetNamespace();
+
 	}
 	
 }

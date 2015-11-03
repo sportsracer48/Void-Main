@@ -3,12 +3,15 @@ package state.workbench.graphics;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lwjgl.opengl.GL11;
+
 import util.Grid;
 import util.Grid.Coord;
 import util.Grid.FloatCoord;
 import game.item.Item;
 import game.item.ItemType;
 import game.item.Pin;
+import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
 
@@ -34,6 +37,15 @@ public class WireRenderer extends Entity
 		this.wireSegmentZ = wireSegmentZ;
 	}
 	
+	public void renderChildren(Context c)
+	{
+		c.setProjection(1);
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glDepthFunc(GL11.GL_GREATER);
+		super.renderChildren(c);
+		GL11.glDisable(GL11.GL_DEPTH_TEST);
+		c.setProjection(0);
+	}
 	
 	public void act(int dt)
 	{
@@ -120,11 +132,13 @@ public class WireRenderer extends Entity
 				getPinLocation(start).toCoord(),
 				getPinLocation(end).toCoord(),
 				start.p.getAttatched().getColor(),
-				5,
+				10,
 				z,
 				wireSegmentX, 
 				wireSegmentY,  
-				wireSegmentZ);
+				wireSegmentZ,
+				start.item.i,
+				end.item.i);
 		
 		addDepthInfo(p);
 		

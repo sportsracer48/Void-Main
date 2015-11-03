@@ -13,8 +13,12 @@ public class Context
 	Uniform model,view,projection,st,color;
 	Uniform[] flags;
 	Matrix modelMat;
-	
+	Matrix viewMat;
+	Matrix projectionMat;
+	float alpha=1;
+	List<Matrix> projections = new ArrayList<Matrix>();
 	List<Matrix> stack = new ArrayList<>();
+	int projectionIndex = 0;
 	
 	public Context(Uniform model, Uniform view, Uniform projection,Uniform st, Uniform color, Uniform... flags)
 	{
@@ -71,12 +75,45 @@ public class Context
 	
 	public void setView(Matrix matrix)
 	{
+		viewMat = matrix;
 		Matrix.uniformMatrix(matrix, view);
 	}
 	
 	public void setProjection(Matrix matrix)
 	{
+		projectionMat = matrix;
 		Matrix.uniformMatrix(matrix, projection);
+		if(projections.size()==0)
+		{
+			projections.add(matrix);
+		}
+		else
+		{
+			projections.set(0, matrix);
+		}
+	}
+	public void addProjection(Matrix matrix)
+	{
+		projections.add(matrix);
+	}
+	public void setProjection(int index)
+	{
+		if(index != projectionIndex)
+		{
+			projectionIndex = index;
+			projectionMat = projections.get(projectionIndex);
+			Matrix.uniformMatrix(projectionMat, projection);
+		}
+	}
+	
+	public Matrix testProjection(Matrix m)
+	{
+		return projectionMat.dot(viewMat.dot(modelMat.dot(m)));
+	}
+	
+	public Matrix testView(Matrix m)
+	{
+		return viewMat.dot(modelMat.dot(m));
 	}
 
 	public void updateModelMatrix()
@@ -96,5 +133,15 @@ public class Context
 	public void resetColor()
 	{
 		Matrix.uniformVector(Color.white, this.color);
+	}
+
+	public float getAlpha()
+	{
+		return alpha;
+	}
+
+	public void setAlpha(float alpha)
+	{
+		this.alpha = alpha;
 	}
 }

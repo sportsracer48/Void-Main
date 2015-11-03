@@ -2,10 +2,12 @@ package entry;
 
 import static org.lwjgl.opengl.GL11.*;
 import graphics.Context;
+import graphics.registry.RegisteredFont;
 import graphics.registry.SpriteAtlas;
 import graphics.shader.Program;
 import graphics.shader.Shader;
 
+import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
 
@@ -82,6 +84,7 @@ public class Driver
 		System.out.println(GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE));
 		
 		glClearColor(0, 0, 0, 0);
+		glClearDepth(0);
 		glEnable(GL_BLEND);
 		GL14.glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ZERO,GL_ZERO);
 		GL20.glBlendEquationSeparate(GL14.GL_FUNC_ADD,GL14.GL_FUNC_ADD);
@@ -90,6 +93,8 @@ public class Driver
 	public void initSprites()
 	{
 		spriteAtlas = new SpriteAtlas(new File("res/sprite/workbench/"));
+		RegisteredFont defaultFont = spriteAtlas.addFont(new File("res/font/TERMINALVECTOR.TTF"), Font.PLAIN, 12);
+		RegisteredFont.setDefault(defaultFont);
 		spriteAtlas.build();
 	}
 	
@@ -120,6 +125,10 @@ public class Driver
 				0, wWidth, 
 				wHeight, 0, 
 				100, -100));
+		context.addProjection(Matrix.rpgOrtho(
+				0, wWidth, 
+				wHeight, 0, 
+				1000, -1000));
 	}
 	
 	public void initGame()

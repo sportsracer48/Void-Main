@@ -17,5 +17,9 @@ void main(void) {
 	{
 		internalColor.a *= pow(pass_TextureCoord.y,4);
 	}
+	if(internalColor.a == 0)
+	{
+		discard;
+	}
 	out_Color = internalColor;
 }

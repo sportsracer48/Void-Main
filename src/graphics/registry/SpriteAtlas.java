@@ -2,6 +2,11 @@ package graphics.registry;
 
 import graphics.Sprite;
 
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
@@ -13,6 +18,7 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -52,17 +58,77 @@ public class SpriteAtlas
 		}
 	}
 	
+	public RegisteredFont addFont(String family, int type, int size)
+	{
+		return addFont(new Font(family,type,size));
+	}
+	
+	public RegisteredFont addFont(File file,int type, float size)
+	{
+		try(FileInputStream in = new FileInputStream(file))
+		{
+			Font f = Font.createFont(Font.TRUETYPE_FONT, in).deriveFont(size);
+			return addFont(f);
+		}
+		catch (IOException | FontFormatException e)
+		{
+			System.err.println("Font "+file.getPath()+" could not be loaded");
+			throw new RuntimeException();
+		}
+	}
+	
+	public RegisteredFont addFont(Font f)
+	{
+		Canvas dummy = new Canvas();
+		FontMetrics metrics = dummy.getFontMetrics(f);
+		for(int c = 0; c<=256; c++)
+		{
+			addChar(f,metrics,f.getFamily(),(char)c);
+		}
+		return new RegisteredFont(f.getFamily(),metrics,this);
+	}
+	public void addChar(Font f, FontMetrics m, String name, char c)
+	{
+		if(m.charWidth(c)<=0)
+		{
+			return;
+		}
+		BufferedImage temp = new BufferedImage(m.charWidth(c)+4,m.getAscent()+m.getDescent()+4,BufferedImage.TYPE_INT_ARGB);
+		Graphics g = temp.getGraphics();
+		g.setFont(f);
+		g.setColor(Color.black);
+		for(int dx = -1; dx<=1; dx++)
+		{
+			for(int dy = -1; dy<=1; dy++)
+			{
+				if(dx == 0 && dy ==0)
+				{
+					continue;
+				}
+				g.drawString(String.valueOf(c), 2+dx, 2+dy+m.getAscent());
+			}
+		}
+		g.setColor(Color.white);
+		g.drawString(String.valueOf(c), 2, 2+m.getAscent());
+		addImage(temp,name+"/"+c);
+	}
+	
 	public void addImage(File f)
 	{
 		try
 		{
-			images.add(ImageIO.read(f));
-			names.add(f.getPath());
+			addImage(ImageIO.read(f),f.getPath());
 		}
 		catch(IOException e)
 		{
 			System.err.println(f.getPath() +" could not be loaded");
 		}
+	}
+	
+	public void addImage(BufferedImage i, String name)
+	{
+		images.add(i);
+		names.add(name);
 	}
 	
 	public void build()
@@ -173,6 +239,11 @@ public class SpriteAtlas
 	public Sprite getSprite(String name)
 	{
 		return spriteTable.get(namespace + name);
+	}
+	
+	public Sprite getSpriteGlobal(String name)
+	{
+		return spriteTable.get(name);
 	}
 	
 	static class Rectangle
