@@ -94,7 +94,6 @@ public class WorkbenchState extends GameState
 		}
 	};
 	
-	
 	ModeManager manager = new ModeManager(edit);
 	
 	List<Entity> ui;
@@ -204,7 +203,7 @@ public class WorkbenchState extends GameState
 	public void mouseMoved(float x, float y)
 	{
 		Matrix worldMouse = worldMouse();
-		mouseCompanion.setPos(x+16, y+16);
+		mouseCompanion.setPos(Math.round(x+16), Math.round(y+16));
 		globalClickArea.handleMove(x, y, Matrix.identity(4), mouseContext);
 		itemManip.resetAcceptor();
 		grabContext.mouseMoved(x,y);//for now, the only grabable things will be ui elements.
