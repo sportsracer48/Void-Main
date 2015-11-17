@@ -89,6 +89,17 @@ public class Grid
 		return getY(rows+1);
 	}
 	
+
+	public int getCols()
+	{
+		return cols;
+	}
+	
+	public int getRows()
+	{
+		return rows;
+	}
+	
 	@FunctionalInterface
 	public static interface QuadConsumer<T1, T2, T3, T4>
 	{
@@ -138,5 +149,15 @@ public class Grid
 		{
 			return new Coord((int)x,(int)y);
 		}
+	}
+
+	public float getXStep()
+	{
+		return xStep;
+	}
+	
+	public float getYStep()
+	{
+		return yStep;
 	}
 }

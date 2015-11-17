@@ -106,6 +106,7 @@ public abstract class GameState
 	public void removeUI(Entity r)
 	{
 		uiList.remove(r);
+		actList.remove(r);
 	}
 	
 	public void removeActable(Actable a)
@@ -132,6 +133,8 @@ public abstract class GameState
 	
 	public abstract void init(SpriteAtlas sprites);
 	public abstract void renderAll(Context c);
+	
+	public String getPerformanceString(){return "";}
 	
 	public void update(int dt)
 	{

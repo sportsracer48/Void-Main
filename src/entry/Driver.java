@@ -64,7 +64,7 @@ public class Driver
 		GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
 		wWidth = vidmode.getWidth();
 		wHeight = vidmode.getHeight();
-
+		
 		window = GLFW.glfwCreateWindow(wWidth, wHeight, "Void Main", fullScreen?GLFW.glfwGetPrimaryMonitor():MemoryUtil.NULL, MemoryUtil.NULL);
 
 		if (window == MemoryUtil.NULL)
@@ -75,6 +75,8 @@ public class Driver
 		input = new GlobalInput(this);
 		GLFW.glfwMakeContextCurrent(window);
 		GLFW.glfwShowWindow(window);
+		
+		//GLFW.glfwSetInputMode(window,GLFW.GLFW_CURSOR,GLFW.GLFW_CURSOR_DISABLED);
 	}
 	
 	public void initGL()
@@ -128,7 +130,7 @@ public class Driver
 		context.addProjection(Matrix.rpgOrtho(
 				0, wWidth, 
 				wHeight, 0, 
-				1000, -1000));
+				10000, -10000));
 	}
 	
 	public void initGame()
@@ -166,6 +168,8 @@ public class Driver
 		
 
 		int framesRendered = 0;
+		long renderTime = 0;
+		long updateTime = 0;
 		long lastUpdate = System.currentTimeMillis();
 		long lastTime = System.currentTimeMillis();
 		
@@ -178,14 +182,25 @@ public class Driver
 				dt = 0;
 			}
 			lastTime = System.currentTimeMillis();
+			long beforeTime = System.currentTimeMillis();
 			update(dt);
+			updateTime += System.currentTimeMillis()-beforeTime;
+			beforeTime = System.currentTimeMillis();
 			render();
+			renderTime += System.currentTimeMillis()-beforeTime;
 			checkError();
 			framesRendered++;
 			long timeSinceUpdate = System.currentTimeMillis()-lastUpdate;
 			if(timeSinceUpdate>=1000)
 			{
-				System.out.format("%d FPS%n", framesRendered);
+				long sleepTime = timeSinceUpdate - renderTime-updateTime;
+				System.out.format("%d FPS (%.2f update, %.2f render, %.2f sleep) %s%n", framesRendered,
+						(double)updateTime/timeSinceUpdate,
+						(double)renderTime/timeSinceUpdate,
+						(double)sleepTime/timeSinceUpdate,
+						currentState.getPerformanceString());
+				renderTime = 0;
+				updateTime = 0;
 				framesRendered=0;
 				lastUpdate = System.currentTimeMillis();
 			}

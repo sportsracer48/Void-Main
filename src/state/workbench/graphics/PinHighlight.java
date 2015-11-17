@@ -1,10 +1,11 @@
 package state.workbench.graphics;
 
+import org.lwjgl.glfw.GLFW;
+
 import state.ui.ClickableArea;
-import state.workbench.WiringMode;
+import state.workbench.game.WiringMode;
 import util.Color;
 import game.item.Pin;
-import game.item.Wire;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.AnimatedEntity;
@@ -43,7 +44,7 @@ public class PinHighlight extends AnimatedEntity
 			pin.highlight = this;
 			area = new ClickableArea(0,0,3,3)
 			{
-				public void onClick(float x, float y)
+				public void onClick(float x, float y, int button)
 				{
 					if(pin.getAttatched()==null)
 					{
@@ -51,10 +52,14 @@ public class PinHighlight extends AnimatedEntity
 					}
 					else
 					{
-						Wire w = pin.getAttatched();
-						w.extractFrom(pin);
-						mode.reset();
-						mode.setCurrent(w);
+						if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
+						{
+							mode.unbind(pin);
+						}
+						else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT)
+						{
+							mode.unbind(pin.getAttatched());
+						}
 					}
 				}
 			};

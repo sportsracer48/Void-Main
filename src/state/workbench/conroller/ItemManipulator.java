@@ -18,6 +18,7 @@ public class ItemManipulator
 	ItemAcceptor acceptor;
 	ItemAcceptor source;
 	List<GrabBound<?>> grabBound = new ArrayList<>();
+	List<Runnable> onDrop = new ArrayList<>();
 	
 	public ItemManipulator(DragContext core, GameState root, ClickableArea globalArea)
 	{
@@ -62,6 +63,13 @@ public class ItemManipulator
 		for(GrabBound<?> b: grabBound)
 		{
 			b.reset();
+		}
+	}
+	private void runOnDrops()
+	{
+		for(Runnable r: onDrop)
+		{
+			r.run();
 		}
 	}
 
@@ -121,6 +129,7 @@ public class ItemManipulator
 			root.removeActable(world);
 			held = null;
 			resetGrabBound();
+			runOnDrops();
 		}
 		else
 		{
@@ -131,5 +140,9 @@ public class ItemManipulator
 	public void addGrabBound(GrabBound<?> grabBound)
 	{
 		this.grabBound.add(grabBound);
+	}
+	public void addOnSuccessfulDrop(Runnable r)
+	{
+		this.onDrop.add(r);
 	}
 }

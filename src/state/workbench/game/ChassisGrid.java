@@ -1,10 +1,18 @@
 package state.workbench.game;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+
+import org.lwjgl.glfw.GLFW;
+
 import state.ModeManager;
-import state.workbench.WiringMode;
+import state.ui.ClickableArea;
 import state.workbench.conroller.GrabBound;
 import state.workbench.conroller.ItemAcceptor;
 import state.workbench.conroller.ItemManipulator;
+import state.workbench.graphics.InventorySlot;
 import state.workbench.graphics.WireRenderer;
 import util.Grid;
 import util.Grid.Coord;
@@ -20,6 +28,7 @@ public class ChassisGrid extends Entity
 	Item[][] contents;
 	Entity[][] entities;
 	ItemAcceptor[][] slots;
+	List<ExternalBreakout> breakouts;
 	FluidEntity preview;
 	FluidEntity returnPreview;
 	WireRenderer wireRenderer;
@@ -31,15 +40,16 @@ public class ChassisGrid extends Entity
 	ItemManipulator manip;
 	ModeManager manager;
 	WiringMode wiring;
+	EditHistory history;
 	
-	
-	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring, Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
+	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring, EditHistory history, Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
 	{
-		this(10,10,21,38,55,36,x,y,z,base, manip,manager,wiring,wireSegmentX,wireSegmentY,wireSegmentZ);
+		this(10,10,21,37,55,36,x,y,z,base, manip,manager,wiring,history,wireSegmentX,wireSegmentY,wireSegmentZ);
 	}
 	
 	private ChassisGrid(int width, int height, float offsetX, float offsetY, float xStep, float yStep, float x, float y, float z, 
-			Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring, Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
+			Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring, EditHistory history,
+			Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
 	{
 		super(x,y,z,base);
 		
@@ -48,12 +58,17 @@ public class ChassisGrid extends Entity
 		showReturnPreview.setDefault(false);
 		manip.addGrabBound(grabbedSquare);
 		manip.addGrabBound(showReturnPreview);
+		manip.addOnSuccessfulDrop(history::saveState);
+		
+		//register this as the view of the edit history
+		this.history = history;
+		history.view = this;
 		
 		//a grid to be iterated over
 		grid = new Grid(offsetX,offsetY,xStep,yStep,width,height);
 		
 		//initialize arrays
-		contents = new Item[width][height];
+		contents = new Item[width][height+1];
 		entities = new Entity[width][height];
 		slots = new ItemAcceptor[width][height];
 		
@@ -93,7 +108,7 @@ public class ChassisGrid extends Entity
 
 				public boolean displayedItem(Item i)
 				{
-					return true;
+					return i.existsInWorld();
 				}
 
 				public void preview(Item i) 
@@ -106,29 +121,131 @@ public class ChassisGrid extends Entity
 				}
 			};
 			slots[col][row] = a;
-			a.getArea().addOnClick((i,j)->{
-				Item item = contents[col][row];
-				if(item == null)
+			a.getArea().addOnClick((i,j,button)->{
+				if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
 				{
-					return;
-				}
-				if(manager.getMode()!=wiring)
-				{
-					Coord c = getCoords(item);
-					Coord squareGrabbed = new Coord(col-c.x,row-c.y);
-					remove(item);
-					manip.grabItem(item, 16, 16, getSlot(c));
-					enableReturnPreview(item,col-squareGrabbed.x,row-squareGrabbed.y);
-					showReturnPreview.setValue(true);
-					grabbedSquare.setValue(squareGrabbed);
-				}
-				else
-				{
-					wiring.showSelector(item);
+					Item item = contents[col][row];
+					if(item == null)
+					{
+						return;
+					}
+					if(manager.getMode()!=wiring)
+					{
+						Coord c = getCoords(item);
+						Coord squareGrabbed = new Coord(col-c.x,row-c.y);
+						remove(item);
+						manip.grabItem(item, 16, 16, getSlot(c));
+						enableReturnPreview(item,col-squareGrabbed.x,row-squareGrabbed.y);
+						showReturnPreview.setValue(true);
+						grabbedSquare.setValue(squareGrabbed);
+					}
+					else
+					{
+						wiring.showSelector(item);
+					}	
 				}
 			});
 			addChild(a);
 		});
+	}
+	
+	public void addExternalBreakouts(ItemType breakoutType,Sprite pinSprite, Sprite bgSprite, InventorySlot[] topSlots, InventorySlot[] botSlots, InventorySlot[] leftSlots, InventorySlot[] rightSlots, InventorySlot[] frontSlots, InventorySlot[] backSlots)
+	{
+		ExternalBreakout top =   new ExternalBreakout(pinSprite,bgSprite,breakoutType,wiring,topSlots);
+		ExternalBreakout bot =   new ExternalBreakout(pinSprite,bgSprite,breakoutType,wiring,botSlots);
+		ExternalBreakout left =  new ExternalBreakout(pinSprite,bgSprite,breakoutType,wiring,leftSlots);
+		ExternalBreakout right = new ExternalBreakout(pinSprite,bgSprite,breakoutType,wiring,rightSlots);
+		ExternalBreakout front = new ExternalBreakout(pinSprite,bgSprite,breakoutType,wiring,frontSlots);
+		ExternalBreakout back =  new ExternalBreakout(pinSprite,bgSprite,breakoutType,wiring,backSlots);
+		
+		breakouts = new ArrayList<>();
+		breakouts.add(top);
+		breakouts.add(bot);
+		breakouts.add(left);
+		breakouts.add(right);
+		breakouts.add(front);
+		breakouts.add(back);
+		
+		int x = 0;
+		for(ExternalBreakout b: breakouts)
+		{
+			Entity e = b.getEntity(grid.getX(x), grid.getY(10), 0);
+			contents[x][10] = b.itemInterface;
+			x++;
+			if(x==2 || x==6)
+			{
+				x+=2;
+			}
+			e.addClickableArea(new ClickableArea(0,0,grid.getXStep(),grid.getYStep()){
+				public void onLeftClick(float x, float y)
+				{
+					if(manager.getMode()==wiring)
+					{
+						wiring.showSelector(b.itemInterface);
+					}
+				}
+			});
+			addChild(e);
+		}
+		
+		history.init();
+	}
+	
+	public List<ExternalBreakout> getBreakouts()
+	{
+		return breakouts;
+	}
+	
+	public Item[][] createCopy()
+	{
+		Item[][] copy = new Item[contents.length][contents[0].length];
+		for(int x = 0; x<width; x++)
+		{
+			copy[x] = Arrays.copyOf(contents[x], contents[x].length);
+		}
+		return copy;
+	}
+	
+	
+	
+	public void revalidateEntities()
+	{
+		grid.forEachWithIndicies((i,j,x,y)->
+		{
+			if(entities[x][y] !=null)
+			{
+				removeChild(entities[x][y]);
+				entities[x][y] = null;
+			}
+		});
+		HashSet<Item> found = new HashSet<>();
+		grid.forEachWithIndicies((wx,wy,x,y)->
+		{
+			if(contents[x][y] !=null)
+			{
+				if(!found.contains(contents[x][y]))
+				{
+					Item i =contents[x][y];
+					ItemType type = i.getType();
+					Entity newEntity = i.getWorldEntity();
+					newEntity.setPos(wx-type.getOffsetX(), wy-type.getOffsetY());
+					newEntity.setZ(y);
+					addChild(newEntity);
+					found.add(i);
+					for(int col = 0; col<type.getWorkbenchWidth(); col++)
+					{
+						for(int row = 0; row<type.getWorkbenchHeight(); row++)
+						{
+							entities[x+col][y+row] = newEntity;
+						}
+					}
+				}
+			}
+		});
+		if(wiring.getSelector() != null && !found.contains(wiring.getSelector().getItem()))
+		{
+			wiring.setSelector(null);
+		}
 	}
 	
 	public boolean canPlace(Item i, int x, int y)

@@ -3,7 +3,7 @@ package game.item;
 import java.util.ArrayList;
 import java.util.List;
 
-import state.workbench.WiringMode;
+import state.workbench.game.WiringMode;
 import state.workbench.graphics.PinHighlight;
 import graphics.Sprite;
 import graphics.entity.Entity;
@@ -52,7 +52,7 @@ public class Item
 	
 	public void stripPins()
 	{
-		for(Pin p:pins)
+		for(Pin p:getPins())
 		{
 			p.strip();
 		}
@@ -62,7 +62,7 @@ public class Item
 	{
 		List<PinHighlight> toReturn = new ArrayList<>();
 		
-		pins.forEach(c->{
+		getPins().forEach(c->{
 			toReturn.add(new PinHighlight(c.x-1,c.y-1,type.highlight,type.wireEndOpaque,type.wireFade,type.pinMask,mode,c));
 		});
 		

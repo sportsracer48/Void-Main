@@ -1,5 +1,10 @@
 package state.workbench.graphics;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.lwjgl.glfw.GLFW;
+
 import state.ui.HighlightArea;
 import state.workbench.conroller.ItemAcceptor;
 import state.workbench.conroller.ItemManipulator;
@@ -9,7 +14,7 @@ import graphics.Sprite;
 import graphics.entity.Entity;
 import graphics.entity.FluidEntity;
 
-public class InvenorySlot extends Entity
+public class InventorySlot extends Entity
 {
 	public static final float BORDER = 3;
 	HighlightArea area;
@@ -18,8 +23,9 @@ public class InvenorySlot extends Entity
 	FluidEntity preview;
 	Item contents;
 	float width, height;
+	List<Runnable> onChange = new ArrayList<>();
 	
-	public InvenorySlot(float x, float y, Sprite highlightSprite, Item contains, ItemManipulator manip)
+	public InventorySlot(float x, float y, Sprite highlightSprite, Item contains, ItemManipulator manip)
 	{
 		super(x, y, 0, null);
 		
@@ -37,11 +43,7 @@ public class InvenorySlot extends Entity
 
 			public void accept(Item i)
 			{
-				i.stripPins();
-				contents = i;
-				itemEntity = i.getInvEntity();
-				//itemEntity.setPos(3, 3);
-				addChild(itemEntity);
+				setContents(i);
 			}
 
 			public boolean displayedItem(Item i)
@@ -77,15 +79,48 @@ public class InvenorySlot extends Entity
 		}
 		addChild(preview);
 		addChild(this.area);
-		area.getArea().addOnClick((x2,y2)->
+		area.getArea().addOnClick((x2,y2,button)->
 		{
-			if(contents == null)
+			if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
 			{
-				return;
+				if(contents == null)
+				{
+					return;
+				}
+				manip.grabItem(contents, 16, 16, acceptor);
+				setContents(null);
 			}
-			manip.grabItem(contents, 16, 16, acceptor);
-			removeChild(itemEntity);
-			contents = null;
 		});
+	}
+	public void addOnChange(Runnable r)
+	{
+		onChange.add(r);
+	}
+	public void setContents(Item i)
+	{
+		if(i==contents)
+		{
+			return;
+		}
+		if(contents != null)
+		{
+			removeChild(itemEntity);
+		}
+		contents = i;
+		if(i!=null)
+		{
+			i.stripPins();
+			itemEntity = i.getInvEntity();
+			itemEntity.setPos(3, 3);
+			addChild(itemEntity);
+		}
+		for(Runnable r: onChange)
+		{
+			r.run();
+		}
+	}
+	public Item getContents()
+	{
+		return contents;
 	}
 }

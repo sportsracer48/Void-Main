@@ -43,15 +43,16 @@ public class FluidEntity extends Entity
 	
 	public void setSprite(Sprite body)
 	{
+		if(self!=null)
+		{
+			super.removeChild(self);
+			self=null;
+		}
 		this.body = body;
 	}
 	
 	public void setSpriteAndSize(Sprite body)
 	{
-		if(self!=null)
-		{
-			removeChild(self);
-		}
 		setSprite(body);
 		if(body == null)
 		{
@@ -65,11 +66,33 @@ public class FluidEntity extends Entity
 		}
 	}
 	
+	public void removeChild(Entity e)
+	{
+		if(e==self)
+		{
+			return;
+		}
+		super.removeChild(e);
+	}
+	public void clearChildren()
+	{
+		super.clearChildren();
+		if(self!=null)
+		{
+			addChild(self);
+		}
+	}
+	
 	public void setTo(Entity e)
 	{
 		setSpriteAndSize(null);
-		addChild(e);
 		this.self = e;
+		if(e!=null)
+		{
+			addChild(e);
+			setWidth(e.getWidth());
+			setHeight(e.getHeight());
+		}
 	}
 	
 	public void renderBase(Context c)

@@ -26,8 +26,26 @@ public class ItemType //kinda reflexive, but hey, whatever
 	
 	List<Coord> pinLocations = new ArrayList<>();
 	List<Coord> stripEndLocations = new ArrayList<>();
+	int numBreakoutPins;
 	
 	Sprite endCap, highlight, wireEnd, wireEndOpaque,  wireFade, pinMask;
+	
+	public ItemType(Sprite workbench, Sprite inventory)
+	{
+		this.workbench = workbench;
+		this.inventory = inventory;
+	}
+	
+	public ItemType(Sprite inventory)
+	{
+		this.inventory = inventory;
+	}
+	
+	public ItemType(Sprite inventory, int externalPins)
+	{
+		this.inventory = inventory;
+		this.numBreakoutPins = externalPins;
+	}
 	
 	public Sprite getEndCap()
 	{
@@ -76,11 +94,6 @@ public class ItemType //kinda reflexive, but hey, whatever
 	public void setPinMask(Sprite pinMask)
 	{
 		this.pinMask = pinMask;
-	}
-	public ItemType(Sprite workbench, Sprite inventory)
-	{
-		this.workbench = workbench;
-		this.inventory = inventory;
 	}
 	public void setOffsetX(float offsetX)
 	{
@@ -175,5 +188,13 @@ public class ItemType //kinda reflexive, but hey, whatever
 			toReturn.add(new Pin(instance,c.x,c.y));
 		});
 		return toReturn;
+	}
+	public int getNumBreakoutPins()
+	{
+		return numBreakoutPins;
+	}
+	public void setNumBreakoutPins(int numBreakoutPins)
+	{
+		this.numBreakoutPins = numBreakoutPins;
 	}
 }

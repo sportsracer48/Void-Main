@@ -30,8 +30,8 @@ public class WireRenderer extends Entity
 		super(0,0,z,null);
 		this.items = items;
 		this.spacing = spacing;
-		this.width = items[0].length;
-		this.height = items.length;
+		this.width = items.length;
+		this.height = items[0].length;
 		this.wireSegmentX = wireSegmentX;
 		this.wireSegmentY = wireSegmentY;
 		this.wireSegmentZ = wireSegmentZ;
@@ -79,28 +79,46 @@ public class WireRenderer extends Entity
 				}
 			}
 		}
-		while(pinSet.size()>1)
+		while(pinSet.size()>0)
 		{
-			PlacedPin p0;
-			
-			do
+			PlacedPin p0  = pinSet.remove(0);
+			if(p0.p.getAttatched()!=null)
 			{
-				p0  = pinSet.remove(0);
-			}while(!p0.p.getAttatched().isAttatchedOnBothSides());
-			
-			Pin other = p0.p.getAttatched().getOtherEnd(p0.p);
-			PlacedPin p1 = pinSet.stream().filter(placedPin -> placedPin.p==other).findAny().orElse(null);
-			if(p1!=null)
-			{
-				pinSet.remove(p1);
-				RenderedWire testWire = new RenderedWire(p0,p1);
-				if(wires.contains(testWire))
+				boolean flag = true;
+				if(p0.p.getAttatched().isAttatchedOnBothSides())
 				{
-					oldWires.add(testWire);
+					flag = false;
+					Pin other = p0.p.getAttatched().getOtherEnd(p0.p);
+					PlacedPin p1 = pinSet.stream().filter(placedPin -> placedPin.p==other).findAny().orElse(null);
+					if(p1!=null)
+					{
+						pinSet.remove(p1);
+						RenderedWire testWire = new RenderedWire(p0,p1);
+						if(wires.contains(testWire))
+						{
+							oldWires.add(testWire);
+						}
+						else
+						{
+							newWires.add(testWire);
+						}
+					}
+					else
+					{
+						flag = true;
+					}
 				}
-				else
+				if(flag) // p0.p is not attached on both sides, or it is attached to something not in the grid.
 				{
-					newWires.add(testWire);
+					RenderedWire testWire = new RenderedWire(p0,null);
+					if(wires.contains(testWire))
+					{
+						oldWires.add(testWire);
+					}
+					else
+					{
+						newWires.add(testWire);
+					}
 				}
 			}
 		}
@@ -117,7 +135,14 @@ public class WireRenderer extends Entity
 		}
 		for(RenderedWire w:newWires)
 		{
-			w.setWirePath(addWire(w.start,w.end));
+			if(w.end != null)
+			{
+				w.setWirePath(addWire(w.start,w.end));
+			}
+			else
+			{
+				w.setWirePath(addUnfinishedWire(w.start));
+			}
 		}
 		
 		wires.retainAll(oldWires);
@@ -146,6 +171,28 @@ public class WireRenderer extends Entity
 		{
 			addChild(e);
 		}
+		return p;
+	}
+	
+	public WirePath addUnfinishedWire(PlacedPin start)
+	{
+		WirePath p = new WirePath(
+				getPinLocation(start).toCoord(),
+				start.p.getAttatched().getColor(),
+				10,
+				z,
+				wireSegmentY,  
+				wireSegmentZ,
+				start.item.i
+				);
+		
+		addDepthInfo(p);
+		
+		for(Entity e:p.getEntites())
+		{
+			addChild(e);
+		}
+		
 		return p;
 	}
 	
@@ -261,9 +308,13 @@ public class WireRenderer extends Entity
 			if(other instanceof RenderedWire)
 			{
 				RenderedWire w = (RenderedWire)other;
-				return start.equals(w.end) && end.equals(w.start) || start.equals(w.start) && end.equals(w.end);
+				return placedPinsEqual(start,w.end) && placedPinsEqual(end,w.start) || placedPinsEqual(start,w.start) && placedPinsEqual(end,w.end);
 			}
 			return false;
+		}
+		private boolean placedPinsEqual(PlacedPin p0, PlacedPin p1)
+		{
+			return p0 == null?p1==null:p0.equals(p1);
 		}
 	}
 }

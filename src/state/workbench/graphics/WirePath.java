@@ -32,23 +32,39 @@ public class WirePath implements Iterable<Coord>
 		init(start,end,zStart,z);
 	}
 	
+	public WirePath(Coord start, Color wireColor, float zStart, float[][] z, Sprite segmentY,Sprite segmentZ, Item startItem)
+	{
+		this.segmentY = segmentY;
+		this.segmentZ = segmentZ;
+		this.wireColor = wireColor;
+		this.startItem = startItem;
+		initUnfinished(start,zStart,z);
+	}
+	
+	private void initUnfinished(Coord start, float zStart, float[][] z)
+	{
+		this.zCoord = Math.max(z[start.x][start.y]+1,zStart);
+		segments = new ArrayList<>();
+		path = new ArrayList<>();
+		
+		segments.add(new VSegment(start,0,segmentY));
+		
+		for(Segment s: segments)
+		{
+			for(Coord c:s.getLocations())
+			{
+				path.add(c);
+			}
+		}
+		segments.add(new ZSegment(start,(int)zCoord,segmentZ,startItem));
+	}
+	
 	private void init(Coord start, Coord end, float zStart, float[][] z)
 	{
 		this.zCoord=zStart;
 		segments = new ArrayList<>();
 		path = new ArrayList<>();
-		
-		int width = Math.abs(start.x-end.x);
-		int height = Math.abs(start.y-end.y);
-		
-		if(width>height)
-		{
-			initSegments(start,end,zStart,z);
-		}
-		else
-		{
-			initSegments(start,end,zStart,z);
-		}
+		initSegments(start,end,zStart,z);
 		
 		for(Segment s: segments)
 		{
@@ -94,6 +110,10 @@ public class WirePath implements Iterable<Coord>
 		if(Math.abs(dy)>0)
 		{
 			segments.add(new VSegment(start,end.y-start.y,segmentY));
+		}
+		if(Math.abs(dx)>0 && Math.abs(dy)>0)
+		{
+			System.err.println("Wire segment is diagonal");
 		}
 	}
 	
@@ -177,7 +197,6 @@ public class WirePath implements Iterable<Coord>
 				right = b;
 			}
 			int size = (right.x-left.x)+1;
-			//TODO
 			Entity toReturn = new HorizWireEntity(left.x,left.y,z,
 					segment);
 			toReturn.setScale(size,1);
@@ -223,7 +242,6 @@ public class WirePath implements Iterable<Coord>
 				bottom = b;
 			}
 			int size = (bottom.y-top.y)+1;
-			//TODO
 			Entity toReturn = new ForwardWireEntity(top.x,top.y,z,
 					segment);
 			toReturn.setScale(1,size);
@@ -255,7 +273,6 @@ public class WirePath implements Iterable<Coord>
 		
 		public Entity getEntity(float z, Color c)
 		{
-			//TODO
 			Entity toReturn = new Entity(0,0,0,null);
 			
 			Entity wire = new VertWireEntity(start.x,start.y,0,

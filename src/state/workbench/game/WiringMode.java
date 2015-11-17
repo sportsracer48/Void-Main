@@ -1,4 +1,4 @@
-package state.workbench;
+package state.workbench.game;
 
 import game.item.Item;
 import game.item.Pin;
@@ -16,14 +16,18 @@ public class WiringMode extends Mode
 	FluidEntity mouseCompanion;
 	PinSelector selector;
 	GameState root;
+	EditHistory history;
 	int screenWidth, screenHeight;
+	Wire current;
 	
-	public WiringMode(FluidEntity mouseCompanion, GameState root, int screenWidth, int screenHeight)
+	public WiringMode(FluidEntity mouseCompanion, GameState root, EditHistory history, int screenWidth, int screenHeight)
 	{
 		this.mouseCompanion = mouseCompanion;
 		this.root = root;
+		this.history = history;
 		this.screenWidth = screenWidth;
 		this.screenHeight = screenHeight;
+		history.wireEditor = this;
 	}
 	
 	public PinSelector getSelector()
@@ -57,7 +61,6 @@ public class WiringMode extends Mode
 		color = (color + 1)%colors.length;
 		return toReturn;
 	}
-	Wire current;
 	
 	public void enable()
 	{
@@ -104,7 +107,6 @@ public class WiringMode extends Mode
 		{
 			nextWire();
 		}
-		
 		if(current.getStart() == null)
 		{
 			current.setStart(p);
@@ -117,13 +119,34 @@ public class WiringMode extends Mode
 		{
 			current = null;
 			bind(p);
+			return;
 		}
-		
-		
-		if(current.getStart() != null && current.getEnd()!=null)
+		if(current.isAttatchedOnBothSides())
 		{
 			nextWire();
+			history.saveState();
 		}
+	}
+
+	public void unbind(Pin pin)
+	{
+		Wire w = pin.getAttatched();
+		if(w!=current)
+		{
+			reset();
+		}
+		w.extractFrom(pin);
+		setCurrent(w);
+		if(current.isAttatchedOnNoSide())
+		{
+			history.saveState();
+		}
+	}
+
+	public void unbind(Wire w)
+	{
+		w.reset();
+		history.saveState();
 	}
 	
 }

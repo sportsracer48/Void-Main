@@ -92,12 +92,20 @@ public class Entity implements Comparable<Entity>, Actable
 	
 	public float getSpriteWidth()
 	{
-		return base.imWidth;
+		if(base != null)
+		{
+			return base.imWidth;
+		}
+		return 0;
 	}
 	
 	public float getSpriteHeight()
 	{
-		return base.imHeight;
+		if(base != null)
+		{
+			return base.imHeight;
+		}
+		return 0;
 	}
 	
 	public float getWidth()
@@ -141,7 +149,7 @@ public class Entity implements Comparable<Entity>, Actable
 		this.mode = interactableMode;
 	}
 	
-	public boolean handleClick(float x, float y, Matrix model)
+	public boolean handleClick(float x, float y, int button, Matrix model)
 	{
 		if(!enabled || !modeEnabled())
 		{
@@ -150,13 +158,13 @@ public class Entity implements Comparable<Entity>, Actable
 		Matrix nextModel = model.dot(this.model);
 		for(Entity e: children)
 		{
-			e.handleClick(x, y, nextModel);
+			e.handleClick(x, y, button, nextModel);
 		}
 		for(ClickableArea a: clickable)
 		{
 			if(a.contains(x, y, nextModel))
 			{
-				a.handleClick(x,y,nextModel);
+				a.handleClick(x,y,button,nextModel);
 				return true;
 			}
 		}
@@ -164,16 +172,16 @@ public class Entity implements Comparable<Entity>, Actable
 		{
 			if(root.contains(x,y,nextModel))
 			{
-				root.handleClick(x, y, nextModel);
+				root.handleClick(x, y, button, nextModel);
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	public boolean handleClick(float x, float y)
+	public boolean handleClick(float x, float y, int button)
 	{
-		return(handleClick(x,y,Matrix.identity(4)));
+		return(handleClick(x,y,button,Matrix.identity(4)));
 	}
 	
 	public void handleRelease()
@@ -399,7 +407,7 @@ public class Entity implements Comparable<Entity>, Actable
 	
 	public void enableRoot()
 	{
-		this.root = new ClickableArea(0,0,getWidth(),getHeight());
+		this.root = new ClickableArea(0,0,getSpriteWidth(),getSpriteHeight());
 	}
 	
 	public int compareTo(Entity r)

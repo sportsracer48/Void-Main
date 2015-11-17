@@ -3,6 +3,8 @@ package state.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lwjgl.glfw.GLFW;
+
 import math.Matrix;
 import math.Rectangle;
 
@@ -63,17 +65,21 @@ public class ClickableArea
 		
 	}
 	
-	public void handleClick(float x, float y, Matrix model)
+	public void handleClick(float x, float y, int button, Matrix model)
 	{
 		Rectangle worldBounds = bounds.transform(model);
 		float xLocal = x - worldBounds.x;
 		float yLocal = y - worldBounds.y;
 		for(ClickListener c: onClick)
 		{
-			c.onClick(xLocal,yLocal);
+			c.onClick(xLocal,yLocal,button);
 		}
-		onClick(xLocal,yLocal);
-		mouseHeld = true;
+		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
+		{
+			mouseHeld = true;
+			onLeftClick(xLocal,yLocal);
+		}
+		onClick(xLocal,yLocal,button);
 	}
 	
 	public void handleRelease()
@@ -98,7 +104,8 @@ public class ClickableArea
 	
 	public void mouseEntered(){}
 	public void mouseExited(){}
-	public void onClick(float x, float y){}
+	public void onLeftClick(float x, float y){}
+	public void onClick(float x, float y, int button){}
 	public void onRelease(){}
 	public void onAnyRelease(){}
 	public void onAnyMove(){}

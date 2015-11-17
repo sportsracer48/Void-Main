@@ -16,7 +16,7 @@ public class DragArea extends ClickableArea
 		target.addClickableArea(this);
 	}
 
-	public void onClick(float x, float y)
+	public void onLeftClick(float x, float y)
 	{
 		context.setGrabbed(this, x+this.getX(), y+this.getY());
 		

@@ -44,16 +44,22 @@ public class Wire
 		if(start!=null)
 		{
 			start.setAttatched(null);
+			start = null;
 		}
 		if(end!=null)
 		{
 			end.setAttatched(null);
+			end = null;
 		}
 	}
 	
 	public boolean isAttatchedOnBothSides()
 	{
 		return end!=null && start!=null;
+	}
+	public boolean isAttatchedOnNoSide()
+	{
+		return end==null && start == null;
 	}
 
 	public void extractFrom(Pin pin)
@@ -82,5 +88,54 @@ public class Wire
 		}
 		return null;
 	}
+
+	public void attachSelf()
+	{
+		if(start!=null)
+		{
+			start.setAttatched(this);
+		}
+		if(end != null)
+		{
+			end.setAttatched(this);
+		}
+	}
 	
+	public Wire clone()
+	{
+		Wire w = new Wire(c);
+		w.start = start;
+		w.end = end;
+		return w;
+	}
+	public boolean equals(Object o)
+	{
+		if(o instanceof Wire)
+		{
+			Wire w = (Wire)o;
+			return w.start == start && w.end == end || w.start == end && w.end == start;
+		}
+		return false;
+	}
+	public int hashCode()
+	{
+		int hash = 17;
+		if(start!=null)
+		{
+			hash = hash*23 + start.hashCode();
+		}
+		else
+		{
+			hash*=23;
+		}
+		if(end!=null)
+		{
+			hash = hash*23 + end.hashCode();
+		}
+		else
+		{
+			hash*=23;
+		}
+		return hash;
+	}
 }
