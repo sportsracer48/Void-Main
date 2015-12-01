@@ -58,6 +58,11 @@ public class Item
 		}
 	}
 	
+	public List<String> getTooltips()
+	{
+		return type.getTooltips();
+	}
+	
 	public List<PinHighlight> getPinHighlights(WiringMode mode)
 	{
 		List<PinHighlight> toReturn = new ArrayList<>();
@@ -65,6 +70,15 @@ public class Item
 		getPins().forEach(c->{
 			toReturn.add(new PinHighlight(c.x-1,c.y-1,type.highlight,type.wireEndOpaque,type.wireFade,type.pinMask,mode,c));
 		});
+		List<String> tooltips = getTooltips();
+		
+		if(toReturn.size() == tooltips.size())
+		{
+			for(int i = 0; i<toReturn.size(); i++)
+			{
+				toReturn.get(i).setTooltip(tooltips.get(i));
+			}
+		}
 		
 		type.stripEndLocations.forEach(c->{
 			toReturn.add(new PinHighlight(c.x-1,c.y-1,type.endCap,type.wireEndOpaque,type.wireFade,type.pinMask,null,mode,false));

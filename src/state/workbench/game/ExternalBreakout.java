@@ -48,6 +48,27 @@ public class ExternalBreakout
 				}
 				return pins;
 			}
+			
+			public List<String> getTooltips()
+			{
+				List<String> tooltips = new ArrayList<>();
+				for(int y = 0; y<grid.getRows(); y++)
+				{
+					int x=0;
+					Item i = slots[y].getContents();
+					if(i!=null)
+					{
+						ItemType type = i.getType();
+						List<String> itemTooltips = type.getTooltips();
+						for(;x<type.getNumBreakoutPins(); x++)
+						{
+							tooltips.add(itemTooltips.get(x));
+						}
+					}
+				}
+				return tooltips;
+			}
+			
 			public Entity getWorldEntity()
 			{
 				return getEntity(0,0,0);

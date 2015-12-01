@@ -25,6 +25,7 @@ public class ItemType //kinda reflexive, but hey, whatever
 	Sprite workbench, inventory;
 	
 	List<Coord> pinLocations = new ArrayList<>();
+	List<String> pinTooltips = new ArrayList<>();
 	List<Coord> stripEndLocations = new ArrayList<>();
 	int numBreakoutPins;
 	
@@ -45,6 +46,36 @@ public class ItemType //kinda reflexive, but hey, whatever
 	{
 		this.inventory = inventory;
 		this.numBreakoutPins = externalPins;
+	}
+	
+	public void setTooltips(String... tooltips)
+	{
+		for(String s: tooltips)
+		{
+			pinTooltips.add(s);
+		}
+	}
+	public void setDebugTooltips()
+	{
+		for(int i = 0; i<pinLocations.size(); i++)
+		{
+			pinTooltips.add(String.valueOf(i));
+		}
+		for(int i = 0; i<numBreakoutPins; i++)
+		{
+			pinTooltips.add(String.valueOf(i));
+		}
+	}
+	public void fillDebugTooltips()
+	{
+		for(int i = pinTooltips.size(); i<pinLocations.size(); i++)
+		{
+			pinTooltips.add(String.valueOf(i));
+		}
+		while(pinTooltips.size()>pinLocations.size())
+		{
+			pinTooltips.remove(pinTooltips.size()-1);
+		}
 	}
 	
 	public Sprite getEndCap()
@@ -196,5 +227,10 @@ public class ItemType //kinda reflexive, but hey, whatever
 	public void setNumBreakoutPins(int numBreakoutPins)
 	{
 		this.numBreakoutPins = numBreakoutPins;
+	}
+
+	public List<String> getTooltips()
+	{
+		return pinTooltips;
 	}
 }

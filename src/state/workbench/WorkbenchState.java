@@ -43,7 +43,7 @@ public class WorkbenchState extends GameState
 		screen = renderList.getList();
 		globalClickArea.setDesiresMouse(false);
 	}
-	Camera camera = new Camera(0,0,2);
+	Camera camera = new Camera(screenWidth()/4,screenHeight()/4,screenWidth(),screenHeight(),2);
 	
 	Matrix uiView = Matrix.identity(4);
 	
@@ -228,7 +228,7 @@ public class WorkbenchState extends GameState
 	
 	public void afterInput(int dt)
 	{
-		float cameraSpeed = .5f;//pixels per millisecond
+		float cameraSpeed = 1f/camera.scale;//pixels per millisecond
 		if(
 				(isKeyPressed(GLFW.GLFW_KEY_W) ^ isKeyPressed(GLFW.GLFW_KEY_S)) &&
 				(isKeyPressed(GLFW.GLFW_KEY_A) ^ isKeyPressed(GLFW.GLFW_KEY_D))
@@ -253,28 +253,42 @@ public class WorkbenchState extends GameState
 			camera.x += dt*cameraSpeed;
 		}
 		
+		if(camera.getLeftX()<0)
+		{
+			camera.setLeftX(0);
+		}
+		if(camera.getTopY()<0)
+		{
+			camera.setTopY(0);
+		}
 		
-		if(camera.x*camera.scale > worldWidth*camera.scale-screenWidth())
+		if(camera.getRightX()>worldWidth)
 		{
-			camera.x = (worldWidth*camera.scale-screenWidth())/camera.scale;
+			camera.setRightX(worldWidth);
 		}
-		if(camera.y*camera.scale > worldHeight*camera.scale-screenHeight())
+		if(camera.getBottomY()>worldHeight)
 		{
-			camera.y = (worldHeight*camera.scale-screenHeight())/camera.scale;
+			camera.setBottomY(worldHeight);
 		}
-		if(camera.x<0)
+		
+		if(camera.getScreenHeight()>worldHeight)
 		{
-			camera.x = 0;
+			camera.y=worldHeight/2;
 		}
-		if(camera.y<0)
+		if(camera.getScreenWidth()>worldWidth)
 		{
-			camera.y = 0;
+			camera.x=worldWidth/2;
 		}
+		
 
 		
 		mouseMoved(getMouseX(),getMouseY());
 		mouseContext.setFrozen(false);
 		itemManip.act(dt);
+		if(mouseContext.hasMouseHolder() && mouseContext.getMouseHolder().getTooltip() != null)
+		{
+			mouseCompanion.setTo(new TextEntity(0,0,0,mouseContext.getMouseHolder().getTooltip()));
+		}
 		
 		if(grabContext.getGrabbed() != null)
 		{
@@ -302,6 +316,8 @@ public class WorkbenchState extends GameState
 	{
 		sprites.setNamespace("res/sprite/workbench/");
 		
+		// style init
+		
 		Entity bg = new Entity(0, 0, 0, sprites.getSprite("background.png"));
 		addRenderable(bg);
 		ButtonTheme close = new ButtonTheme(
@@ -317,12 +333,14 @@ public class WorkbenchState extends GameState
 		Button closeButton3 = close.build();
 		closeButton3.setEnabled(false);
 		
+		// root children init
+		
 		partMounting = new Window(1300,40,sprites.getSprite("part mounting ui.png"), close.build(),grabContext);
 		partMounting.setEnabled(false);
-		//partMounting.setMode(edit, manager);
+		
 		inventory = new Window(1300,440,sprites.getSprite("Inventory UI.png"),close.build(),grabContext);
 		inventory.setEnabled(false);
-		//inventory.setMode(edit, manager);
+		
 		tools = new Window(650,screenHeight()-200,sprites.getSprite("Tools.png"),closeButton3,grabContext);
 		
 		grid = new ChassisGrid(40,5,1,
@@ -330,6 +348,8 @@ public class WorkbenchState extends GameState
 				sprites.getSprite("wire segment x.png"),sprites.getSprite("wire segment y.png"),sprites.getSprite("wire segment z.png"));
 		
 		wireSymbol = sprites.getSprite("wire symbol.png");
+		
+		//item type init
 		
 		ItemType.setDefaultWireSprites(
 				sprites.getSprite("pin highlight end.png"),
@@ -346,8 +366,18 @@ public class WorkbenchState extends GameState
 		ItemType antenna = new ItemType(sprites.getSprite("antenna ic.png"),sprites.getSprite("antenna item.png"));
 		ItemType breadboard = new ItemType(sprites.getSprite("breadboard.png"),sprites.getSprite("breadboard item.png"));
 		ItemType poweredWheel = new ItemType(sprites.getSprite("wheel item.png"),2);
+		
+		poweredWheel.setTooltips("+12v","GND");
+		
 		antenna.setOffsets(-1, -1);
+		antenna.addPins(new Grid(4,3,3,3,1,3));
+		antenna.setWireSpritesToDefault(sprites.getSprite("pin mask.png"));
+		
+		
 		battery.setOffsets(-1, -1);
+		battery.addPins(new Grid(9,18,3,3,1,2));
+		battery.addPins(new Grid(18,18,3,3,1,2));
+		battery.setWireSpritesToDefault(sprites.getSprite("pin mask.png"));
 		
 		
 		microController.setOffsets(0, 7);
@@ -357,6 +387,9 @@ public class WorkbenchState extends GameState
 		microController.addPinStrip(72, 1, 8);
 		microController.addPinStrip(50, 62, 8);
 		microController.addPinStrip(81, 62, 5);
+		microController.setTooltips("","","AREF","GND","13","12","~11","~10","~9","8",           "7","~6","~5","4","~3","2","TXD>1","RXD<0",
+									"","IOREF","RESET","3v","5v","GND","GND","VIN",              "A0","A1","A2","A3","A4","A5");
+		microController.fillDebugTooltips();
 		
 		
 		breadboard.setOffsets(-2, 5);
@@ -379,6 +412,7 @@ public class WorkbenchState extends GameState
 		});
 		
 		
+		//ui controller init
 		
 		BiConsumer<Float,Float> addToInventory = (x2,y2) ->
 		{
@@ -477,12 +511,16 @@ public class WorkbenchState extends GameState
 		toolButtons[7].setOnPress(history::undo);
 		toolButtons[8].setOnPress(history::redo);
 		
+		//scene init
+		
 		add(grid);
 		addUI(partMounting);
 		addUI(inventory);
 		addUI(tools);
 		Entity laptop = new Entity(700,100,1, sprites.getSprite("laptop.png"));
 		addRenderable(laptop);
+		
+		//misc TODO
 		BoxEntity tooltipBg = new BoxEntity(0,0,0,
 				sprites.getSprite("fade corner.png"),
 				sprites.getSprite("fade top.png"),

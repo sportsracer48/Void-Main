@@ -25,6 +25,7 @@ public class PinHighlight extends AnimatedEntity
 	Entity mask;
 	Entity wire;
 	Entity wireFade;
+	String tooltip = "";
 	Pin pin;
 	WiringMode mode;
 	
@@ -93,6 +94,14 @@ public class PinHighlight extends AnimatedEntity
 			mask.setVisible(false);
 			preview.setVisible(false);
 		}
+	}
+	
+
+
+	public void setTooltip(String tooltip)
+	{
+		this.tooltip = tooltip;
+		area.setTooltip(tooltip);
 	}
 	
 	public void animate(int dt)
