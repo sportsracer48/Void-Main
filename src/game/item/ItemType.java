@@ -1,11 +1,14 @@
 package game.item;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import util.Grid;
 import util.Grid.Coord;
 import graphics.Sprite;
+import graphics.entity.Entity;
 
 public class ItemType //kinda reflexive, but hey, whatever
 {
@@ -28,6 +31,8 @@ public class ItemType //kinda reflexive, but hey, whatever
 	List<String> pinTooltips = new ArrayList<>();
 	List<Coord> stripEndLocations = new ArrayList<>();
 	int numBreakoutPins;
+	
+	BiConsumer<List<Pin>,ItemEntity> pinUpdate;
 	
 	Sprite endCap, highlight, wireEnd, wireEndOpaque,  wireFade, pinMask;
 	
@@ -164,6 +169,11 @@ public class ItemType //kinda reflexive, but hey, whatever
 	{
 		return workbenchHeight;
 	}
+	public Entity getWorldEntity(Item instance)
+	{
+		return new ItemEntity(-offsetX,-offsetY,0,instance);
+	}
+	
 	public void setWorkbenchHeight(int workbenchHeight)
 	{
 		this.workbenchHeight = workbenchHeight;
@@ -184,6 +194,28 @@ public class ItemType //kinda reflexive, but hey, whatever
 	{
 		g.forEach((x2,y2)->{
 			addPinLocation(x2.intValue(),y2.intValue());
+		});
+	}
+	public void sortPins()
+	{
+		Collections.sort(pinLocations,(c1,c2)->{
+			if(c1.y<c2.y)
+			{
+				return -1;
+			}
+			if(c1.y>c2.y)
+			{
+				return 1;
+			}
+			if(c1.x<c2.x)
+			{
+				return -1;
+			}
+			if(c1.x>c2.x)
+			{
+				return 1;
+			}
+			return 0;
 		});
 	}
 	public List<Coord> getPinLocations()
@@ -232,5 +264,15 @@ public class ItemType //kinda reflexive, but hey, whatever
 	public List<String> getTooltips()
 	{
 		return pinTooltips;
+	}
+
+	public BiConsumer<List<Pin>, ItemEntity> getPinUpdate()
+	{
+		return pinUpdate;
+	}
+
+	public void setPinUpdate(BiConsumer<List<Pin>, ItemEntity> pinUpdate)
+	{
+		this.pinUpdate = pinUpdate;
 	}
 }

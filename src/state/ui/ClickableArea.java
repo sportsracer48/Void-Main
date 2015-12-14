@@ -21,18 +21,6 @@ public class ClickableArea
 	List<Runnable> onAnyRelease = new ArrayList<>();
 	List<Runnable> onAnyMove = new ArrayList<>();
 	
-	String tooltip = null;
-	
-	public void setTooltip(String tooltip)
-	{
-		this.tooltip = tooltip;
-	}
-	
-	public String getTooltip()
-	{
-		return tooltip;
-	}
-	
 	public ClickableArea(float x, float y, float width, float height)
 	{
 		bounds = new Rectangle(x,y,width,height);

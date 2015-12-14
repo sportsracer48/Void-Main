@@ -1,10 +1,19 @@
 package graphics.entity;
 
 import util.Color;
+import graphics.Context;
+import graphics.Sprite;
 import graphics.registry.RegisteredFont;
 
 public class TextEntity extends ColoredEntity
 {
+	static Sprite[] defaultBgSprites;
+	
+	public static void setDefaultBgSprites(Sprite... bgSprites)
+	{
+		defaultBgSprites = bgSprites;
+	}
+	
 	float height = 0;
 	float width = 0;
 	RegisteredFont font;
@@ -12,6 +21,13 @@ public class TextEntity extends ColoredEntity
 	public TextEntity(float x, float y, float z, String text)
 	{
 		this(x,y,z,text,RegisteredFont.defaultFont);
+	}
+	public void render(Context c)
+	{
+		c.pushTransform();
+		c.setModel(c.getModel().onlyTranslate(getX(),getY(),0));
+		super.render(c);
+		c.popTransform();
 	}
 	public TextEntity(float x, float y, float z, String text, RegisteredFont font)
 	{
@@ -44,7 +60,10 @@ public class TextEntity extends ColoredEntity
 		height += font.metrics.getDescent();
 		setColor(new Color(0xFFFFF0));
 	}
-	
+	public void setBackgroundToDefault()
+	{
+		setBackGround(new BoxEntity(0, 0, 0, defaultBgSprites[0], defaultBgSprites[1], defaultBgSprites[2], defaultBgSprites[3]));
+	}
 	public float getSpriteWidth()
 	{
 		return width;

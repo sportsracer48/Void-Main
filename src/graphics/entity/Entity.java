@@ -83,6 +83,7 @@ public class Entity implements Comparable<Entity>, Actable
 	public void setRotation(Matrix rot)
 	{
 		this.rotation = rot;
+		updateModel();
 	}
 	
 	protected final void updateModel()

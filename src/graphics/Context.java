@@ -144,4 +144,9 @@ public class Context
 	{
 		this.alpha = alpha;
 	}
+
+	public Matrix getModel()
+	{
+		return modelMat;
+	}
 }

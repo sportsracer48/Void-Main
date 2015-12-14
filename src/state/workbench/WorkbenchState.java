@@ -1,18 +1,18 @@
 package state.workbench;
 
 import java.util.List;
-import java.util.function.BiConsumer;
 
 import math.Matrix;
 
 import org.lwjgl.glfw.GLFW;
 
+import breadboard.BreadboardUtil;
+import program.ArduinoEnvironment;
 import entry.GlobalInput;
 import game.item.Item;
 import game.item.ItemType;
 import graphics.Context;
 import graphics.Sprite;
-import graphics.entity.BoxEntity;
 import graphics.entity.Entity;
 import graphics.entity.FluidEntity;
 import graphics.entity.TextEntity;
@@ -33,6 +33,7 @@ import state.workbench.game.WiringMode;
 import state.workbench.graphics.InventorySlot;
 import util.Color;
 import util.Grid;
+import util.Grid.QuadConsumer;
 
 public class WorkbenchState extends GameState
 {
@@ -285,10 +286,6 @@ public class WorkbenchState extends GameState
 		mouseMoved(getMouseX(),getMouseY());
 		mouseContext.setFrozen(false);
 		itemManip.act(dt);
-		if(mouseContext.hasMouseHolder() && mouseContext.getMouseHolder().getTooltip() != null)
-		{
-			mouseCompanion.setTo(new TextEntity(0,0,0,mouseContext.getMouseHolder().getTooltip()));
-		}
 		
 		if(grabContext.getGrabbed() != null)
 		{
@@ -349,6 +346,10 @@ public class WorkbenchState extends GameState
 		
 		wireSymbol = sprites.getSprite("wire symbol.png");
 		
+		//Test program init
+		
+		ArduinoEnvironment testEnvironment = new ArduinoEnvironment();
+		
 		//item type init
 		
 		ItemType.setDefaultWireSprites(
@@ -359,6 +360,8 @@ public class WorkbenchState extends GameState
 				sprites.getSprite("wire fade.png"));
 		
 		Sprite invHighlight = sprites.getSprite("inv-slot highlight.png");
+		final Sprite ledOn = sprites.getSprite("led on.png");
+		final Sprite ledOff = sprites.getSprite("led off.png");
 		
 		ItemType breakout = new ItemType(null);
 		ItemType microController = new ItemType(sprites.getSprite("ouino.png"),sprites.getSprite("ouino item.png"));
@@ -366,6 +369,23 @@ public class WorkbenchState extends GameState
 		ItemType antenna = new ItemType(sprites.getSprite("antenna ic.png"),sprites.getSprite("antenna item.png"));
 		ItemType breadboard = new ItemType(sprites.getSprite("breadboard.png"),sprites.getSprite("breadboard item.png"));
 		ItemType poweredWheel = new ItemType(sprites.getSprite("wheel item.png"),2);
+		ItemType ledOutput = new ItemType(ledOff, sprites.getSprite("led item.png"));
+		
+		
+		ledOutput.setOffsets(-1, -1);
+		ledOutput.addPins(new Grid(6,4,3,3,1,2));
+		ledOutput.setWireSpritesToDefault(sprites.getSprite("pin mask.png"));
+		ledOutput.setTooltips("+5v","GND");
+		ledOutput.setPinUpdate((pins,entity)->{
+			if(pins.get(0).getReceivedPotential()==1024 && pins.get(1).isGrounded())
+			{
+				entity.setSpriteAndSize(ledOn);
+			}
+			else
+			{
+				entity.setSpriteAndSize(ledOff);
+			}
+		});
 		
 		poweredWheel.setTooltips("+12v","GND");
 		
@@ -378,6 +398,11 @@ public class WorkbenchState extends GameState
 		battery.addPins(new Grid(9,18,3,3,1,2));
 		battery.addPins(new Grid(18,18,3,3,1,2));
 		battery.setWireSpritesToDefault(sprites.getSprite("pin mask.png"));
+		battery.setTooltips("+12v out","GND out","+12v in","GND in");
+		battery.setPinUpdate((pins,entity)->{
+			pins.get(0).setPotential(1024);
+			pins.get(1).setGrounded(true);
+		});
 		
 		
 		microController.setOffsets(0, 7);
@@ -387,9 +412,8 @@ public class WorkbenchState extends GameState
 		microController.addPinStrip(72, 1, 8);
 		microController.addPinStrip(50, 62, 8);
 		microController.addPinStrip(81, 62, 5);
-		microController.setTooltips("","","AREF","GND","13","12","~11","~10","~9","8",           "7","~6","~5","4","~3","2","TXD>1","RXD<0",
-									"","IOREF","RESET","3v","5v","GND","GND","VIN",              "A0","A1","A2","A3","A4","A5");
-		microController.fillDebugTooltips();
+		microController.setTooltips("","","AREF","GND"," 13"," 12","~11","~10","~9"," 8",      " 7","~6","~5"," 4","~3"," 2","TXD>1","RXD<0",
+									"","","RESET","3v","5v","GND","GND","VIN",              "A0","A1","A2","A3","A4");
 		
 		
 		breadboard.setOffsets(-2, 5);
@@ -399,32 +423,56 @@ public class WorkbenchState extends GameState
 		breadboard.setWireEndOpaque(sprites.getSprite("wire end no pin opaque.png"));
 		breadboard.addPins(new Grid(7,14,3,3,5,30));
 		breadboard.addPins(new Grid(7,38,3,3,5,30));
-		
-		breakout.setWireSpritesToDefault(null);
-		breakout.setWireEnd(sprites.getSprite("wire end no pin.png"));
-		breakout.setWireEndOpaque(sprites.getSprite("wire end no pin opaque.png"));
-		
 		new Grid(10,4,18,3,1,5).forEach((x2,y2)->{
 			breadboard.addPins(new Grid(x2,y2,3,3,2,5));
 		});
 		new Grid(10,57,18,3,1,5).forEach((x2,y2)->{
 			breadboard.addPins(new Grid(x2,y2,3,3,2,5));
 		});
+		breadboard.sortPins();
+		breadboard.setPinUpdate((pins,entity)->{
+			BreadboardUtil.linkHoriz(pins, 0, 25);
+			BreadboardUtil.linkHoriz(pins, 25, 25);
+			BreadboardUtil.linkHoriz(pins, 350, 25);
+			BreadboardUtil.linkHoriz(pins, 375, 25);
+			for(int start = 50; start<80; start++)
+			{
+				BreadboardUtil.linkVert(pins, start, 5, 30);
+			}
+			for(int start = 200; start<230; start++)
+			{
+				BreadboardUtil.linkVert(pins, start, 5, 30);
+			}
+		});
+		
+		
+		breakout.setWireSpritesToDefault(null);
+		breakout.setWireEnd(sprites.getSprite("wire end no pin.png"));
+		breakout.setWireEndOpaque(sprites.getSprite("wire end no pin opaque.png"));
+		
+		
 		
 		
 		//ui controller init
 		
-		BiConsumer<Float,Float> addToInventory = (x2,y2) ->
+		QuadConsumer<Float,Float,Integer,Integer> addToInventory = (x2,y2,i,j) ->
 		{
 			InventorySlot slot;
+			
 			double rand = Math.random();
-			if(rand<.25)
+			if(i==0 && j == 0)
+			{
+				Item specialArduino = new Item(microController);
+				specialArduino.setProgramThread(testEnvironment.getScript(),testEnvironment.getPinModes());
+				slot = new InventorySlot(x2,y2,invHighlight,specialArduino,itemManip);
+			}
+			else if(rand<.25)
 			{
 				slot = new InventorySlot(x2,y2,invHighlight,new Item(microController),itemManip);
 			}
 			else if(rand<.5)
 			{
-				slot = new InventorySlot(x2,y2,invHighlight,new Item(antenna),itemManip);
+				slot = new InventorySlot(x2,y2,invHighlight,new Item(ledOutput),itemManip);
 			}
 			else if(rand<.75)
 			{
@@ -446,7 +494,7 @@ public class WorkbenchState extends GameState
 		InventorySlot[] front = new InventorySlot[4];
 		InventorySlot[] back = new InventorySlot[4];
 		new Grid(48,76,43,43,7,10).//grid for inventory window
-		forEach(addToInventory);
+		forEachWithIndicies(addToInventory);
 		
 		new Grid(178,65,43,42*2,4,4).//grid for top, left, right, bottom
 		forEachWithIndicies((x2,y2,row,col)->{
@@ -521,18 +569,15 @@ public class WorkbenchState extends GameState
 		addRenderable(laptop);
 		
 		//misc TODO
-		BoxEntity tooltipBg = new BoxEntity(0,0,0,
-				sprites.getSprite("fade corner.png"),
-				sprites.getSprite("fade top.png"),
-				sprites.getSprite("fade left.png"),
-				sprites.getSprite("fade center.png"));
 		
 		
 		
 		addActable(mouseCompanion);
-		TextEntity tooltip = new TextEntity(0,0,0,"Hello world!\nAnnother line!");
-		tooltip.setBackGround(tooltipBg);
-		mouseCompanion.setTo(tooltip);
+		TextEntity.setDefaultBgSprites(
+				sprites.getSprite("fade corner.png"),
+				sprites.getSprite("fade top.png"),
+				sprites.getSprite("fade left.png"),
+				sprites.getSprite("fade center.png"));
 		
 		sprites.resetNamespace();
 

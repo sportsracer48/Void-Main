@@ -1,5 +1,7 @@
 package state.workbench.graphics;
 
+import math.Matrix;
+
 import org.lwjgl.glfw.GLFW;
 
 import state.ui.ClickableArea;
@@ -10,6 +12,7 @@ import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.AnimatedEntity;
 import graphics.entity.Entity;
+import graphics.entity.TextEntity;
 
 public class PinHighlight extends AnimatedEntity
 {
@@ -25,6 +28,7 @@ public class PinHighlight extends AnimatedEntity
 	Entity mask;
 	Entity wire;
 	Entity wireFade;
+	Entity tooltipEntity;
 	String tooltip = "";
 	Pin pin;
 	WiringMode mode;
@@ -95,13 +99,22 @@ public class PinHighlight extends AnimatedEntity
 			preview.setVisible(false);
 		}
 	}
-	
-
 
 	public void setTooltip(String tooltip)
 	{
 		this.tooltip = tooltip;
-		area.setTooltip(tooltip);
+		//TIME FOR A DIRTY HACK!!!!
+		if(pin.getParent().getType().getWorkbenchHeight()==1)
+		{
+			this.tooltipEntity = new TextEntity(2.5f,3,100,tooltip);
+		}
+		else
+		{
+			this.tooltipEntity = new TextEntity(3,3,100,tooltip);
+		}
+		//THAT'S BAD
+		tooltipEntity.setRotation(Matrix.rotationd(90));
+		addChild(tooltipEntity);
 	}
 	
 	public void animate(int dt)

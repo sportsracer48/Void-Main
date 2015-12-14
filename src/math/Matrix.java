@@ -200,6 +200,19 @@ public class Matrix
 		return adjoint().scale(1/det());
 	}
 	
+	public Matrix onlyTranslate(float x, float y, float z)
+	{
+		float[] newMat = {
+				1,0,0,mat[3]+mat[0]*x,
+				0,1,0,mat[7]+mat[5]*y,
+				0,0,1,mat[11]+mat[10]*z,
+				0,0,0,1,
+		};
+		
+		return new Matrix(newMat,4);
+		
+	}
+	
 	public String toString()
 	{
 		StringBuilder out = new StringBuilder();
