@@ -6,8 +6,9 @@ import math.Matrix;
 
 import org.lwjgl.glfw.GLFW;
 
+import program.OuinoEnvironment;
+import program.ProgramCoordinator;
 import breadboard.BreadboardUtil;
-import program.ArduinoEnvironment;
 import entry.GlobalInput;
 import game.item.Item;
 import game.item.ItemType;
@@ -32,6 +33,7 @@ import state.workbench.game.EditHistory;
 import state.workbench.game.WiringMode;
 import state.workbench.graphics.InventorySlot;
 import util.Color;
+import util.FileLoader;
 import util.Grid;
 import util.Grid.QuadConsumer;
 
@@ -58,10 +60,14 @@ public class WorkbenchState extends GameState
 	ClickableArea globalClickArea = new ClickableArea(0,0,0,0);
 	ItemManipulator itemManip = new ItemManipulator(grabContext,this,globalClickArea);
 	EditHistory history = new EditHistory();
+	ProgramCoordinator coordinator;
 	
 	FluidEntity mouseCompanion = new FluidEntity(0,0,0);
 	
 	Sprite wireSymbol;
+	
+	Item specialArduino;
+	OuinoEnvironment testEnvironment;
 	
 	Mode edit = new Mode()
 	{
@@ -286,6 +292,7 @@ public class WorkbenchState extends GameState
 		mouseMoved(getMouseX(),getMouseY());
 		mouseContext.setFrozen(false);
 		itemManip.act(dt);
+		coordinator.act(dt);
 		
 		if(grabContext.getGrabbed() != null)
 		{
@@ -346,9 +353,9 @@ public class WorkbenchState extends GameState
 		
 		wireSymbol = sprites.getSprite("wire symbol.png");
 		
-		//Test program init
+		//Program thread coordinator init
 		
-		ArduinoEnvironment testEnvironment = new ArduinoEnvironment();
+		coordinator = new ProgramCoordinator();
 		
 		//item type init
 		
@@ -462,8 +469,9 @@ public class WorkbenchState extends GameState
 			double rand = Math.random();
 			if(i==0 && j == 0)
 			{
-				Item specialArduino = new Item(microController);
-				specialArduino.setProgramThread(testEnvironment.getScript(),testEnvironment.getPinModes());
+				specialArduino = new Item(microController);
+				testEnvironment = new OuinoEnvironment(specialArduino.getPins());
+				coordinator.addEnvironment(testEnvironment);
 				slot = new InventorySlot(x2,y2,invHighlight,specialArduino,itemManip);
 			}
 			else if(rand<.25)
@@ -553,6 +561,17 @@ public class WorkbenchState extends GameState
 		
 		toolButtons[0].setOnPress(()->inventory.setEnabled(true));
 		toolButtons[1].setOnPress(()->partMounting.setEnabled(true));
+		toolButtons[2].setOnPress(()->{
+			try
+			{
+				String program = FileLoader.getFileContents("blink.py");
+				testEnvironment.uplode(program);
+			} 
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		});
 		toolButtons[3].setOnPress(()->{
 			manager.setMode(wiring);
 		});

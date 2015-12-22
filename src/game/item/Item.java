@@ -2,9 +2,7 @@ package game.item;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
-import program.ProgramThread;
 import state.workbench.game.WiringMode;
 import state.workbench.graphics.PinHighlight;
 import graphics.Sprite;
@@ -14,7 +12,6 @@ public class Item
 {
 	ItemType type;
 	List<Pin> pins;
-	ProgramThread thread;
 	
 	public Item(ItemType type)
 	{
@@ -58,16 +55,6 @@ public class Item
 		{
 			p.strip();
 		}
-	}
-	
-	public void setProgramThread(Consumer<List<Pin>> script,int[] pinModes)
-	{
-		thread = new ProgramThread(this,script,pinModes);
-		thread.start();
-	}
-	public ProgramThread getProgramThread()
-	{
-		return thread;
 	}
 	
 	public List<String> getTooltips()

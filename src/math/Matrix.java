@@ -200,17 +200,42 @@ public class Matrix
 		return adjoint().scale(1/det());
 	}
 	
-	public Matrix onlyTranslate(float x, float y, float z)
+	public Matrix removeScaling()
 	{
-		float[] newMat = {
-				1,0,0,mat[3]+mat[0]*x,
-				0,1,0,mat[7]+mat[5]*y,
-				0,0,1,mat[11]+mat[10]*z,
-				0,0,0,1,
-		};
+		float[] norms = new float[3];
+		for(int i = 0; i<norms.length; i++)
+		{
+			for(int j = 0; j<4; j++)
+			{
+				norms[i] += mat[i+j*4]*mat[i+j*4];
+			}
+			norms[i] = invSqrt(norms[i]);
+		}
+		float[] newMat = new float[16];
+		for(int i = 0; i<norms.length; i++)
+		{
+			for(int j = 0; j<4; j++)
+			{
+				newMat[i+j*4] = mat[i+j*4]*norms[i];
+			}
+		}
+		for(int j = 0; j<4; j++)
+		{
+			newMat[3+j*4] = mat[3+j*4];
+		}
+		
 		
 		return new Matrix(newMat,4);
 		
+	}
+	public static float invSqrt(float x) 
+	{
+	    float xhalf = 0.5f*x;
+	    int i = Float.floatToIntBits(x);
+	    i = 0x5f3759df - (i>>1);
+	    x = Float.intBitsToFloat(i);
+	    x = x*(1.5f - xhalf*x*x);
+	    return x;
 	}
 	
 	public String toString()

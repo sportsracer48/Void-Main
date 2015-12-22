@@ -19,10 +19,6 @@ public class ItemEntity extends AnimatedEntity
 		{
 			type.getPinUpdate().accept(item.getPins(),this);
 		}
-		if(item.getProgramThread()!=null)
-		{
-			item.getProgramThread().act(dt);
-		}
 	}
 
 }

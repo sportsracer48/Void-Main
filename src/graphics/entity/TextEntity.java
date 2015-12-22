@@ -22,18 +22,20 @@ public class TextEntity extends ColoredEntity
 	{
 		this(x,y,z,text,RegisteredFont.defaultFont);
 	}
-	public void render(Context c)
+	
+	public void renderChildren(Context c)
 	{
 		c.pushTransform();
-		c.setModel(c.getModel().onlyTranslate(getX(),getY(),0));
-		super.render(c);
+		c.setModel(c.getModel().removeScaling());
+		super.renderChildren(c);
 		c.popTransform();
 	}
+	
 	public TextEntity(float x, float y, float z, String text, RegisteredFont font)
 	{
 		super(x,y,z,null);
 		float charX = 0;
-		float charY = font.metrics.getAscent();
+		float charY = 0;
 		float lineWidth = 0;
 		this.font = font;
 		height = font.metrics.getAscent()+font.metrics.getDescent();

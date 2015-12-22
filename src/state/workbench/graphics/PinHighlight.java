@@ -28,7 +28,7 @@ public class PinHighlight extends AnimatedEntity
 	Entity mask;
 	Entity wire;
 	Entity wireFade;
-	Entity tooltipEntity;
+	TextEntity tooltipEntity;
 	String tooltip = "";
 	Pin pin;
 	WiringMode mode;
@@ -103,16 +103,7 @@ public class PinHighlight extends AnimatedEntity
 	public void setTooltip(String tooltip)
 	{
 		this.tooltip = tooltip;
-		//TIME FOR A DIRTY HACK!!!!
-		if(pin.getParent().getType().getWorkbenchHeight()==1)
-		{
-			this.tooltipEntity = new TextEntity(2.5f,3,100,tooltip);
-		}
-		else
-		{
-			this.tooltipEntity = new TextEntity(3,3,100,tooltip);
-		}
-		//THAT'S BAD
+		tooltipEntity = new TextEntity(2,4,100,tooltip);
 		tooltipEntity.setRotation(Matrix.rotationd(90));
 		addChild(tooltipEntity);
 	}
