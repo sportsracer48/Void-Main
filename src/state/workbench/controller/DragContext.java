@@ -1,4 +1,4 @@
-package state.workbench.conroller;
+package state.workbench.controller;
 
 import state.ui.ClickableArea;
 

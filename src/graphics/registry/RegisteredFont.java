@@ -11,15 +11,40 @@ public class RegisteredFont
 	public final String name;
 	public final FontMetrics metrics;
 	public final SpriteAtlas atlas;
+	
+	private Sprite[] commonCharacters = new Sprite[255];
+	private boolean accelerated = false;
+	
 	public RegisteredFont(String name, FontMetrics metrics, SpriteAtlas atlas)
 	{
 		this.name = name;
 		this.metrics = metrics;
 		this.atlas = atlas;
 	}
-	public Sprite getSprite(char c)
+	private Sprite getSpriteSlow(char c)
 	{
 		return atlas.getSpriteGlobal(name+"/"+c);
+	}
+	private void accelerate()
+	{
+		for(int i = 0; i<commonCharacters.length; i++)
+		{
+			commonCharacters[i] = getSpriteSlow((char) i);
+		}
+		accelerated = true;
+	}
+	
+	public Sprite getSprite(char c)
+	{
+		if(!accelerated)
+		{
+			accelerate();
+		}
+		if(c<256)
+		{
+			return commonCharacters[c];
+		}
+		return getSpriteSlow(c);
 	}
 	
 	public static void setDefault(RegisteredFont f)

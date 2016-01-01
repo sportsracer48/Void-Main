@@ -22,7 +22,7 @@ public abstract class GameState
 	public RenderList uiList = new RenderList(false);
 	public ActList actList = new ActList();
 	protected GlobalInput input;
-	private long window;
+	long window;
 	
 	public GameState(GlobalInput input, long window)
 	{
@@ -37,6 +37,11 @@ public abstract class GameState
 	public void showCursor()
 	{
 		GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+	}
+	
+	public String getClipboardString()
+	{
+		return GLFW.glfwGetClipboardString(window);
 	}
 	
 	public int screenWidth()

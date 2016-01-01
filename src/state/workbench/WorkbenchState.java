@@ -8,10 +8,8 @@ import org.lwjgl.glfw.GLFW;
 
 import program.OuinoEnvironment;
 import program.ProgramCoordinator;
-import breadboard.BreadboardUtil;
 import entry.GlobalInput;
 import game.item.Item;
-import game.item.ItemType;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
@@ -21,21 +19,15 @@ import graphics.registry.SpriteAtlas;
 import state.GameState;
 import state.Mode;
 import state.ModeManager;
-import state.ui.Button;
-import state.ui.Button.ButtonTheme;
 import state.ui.ClickableArea;
 import state.ui.MouseoverContext;
-import state.ui.Window;
-import state.workbench.conroller.DragContext;
-import state.workbench.conroller.ItemManipulator;
+import state.workbench.controller.DragContext;
+import state.workbench.controller.ItemManipulator;
 import state.workbench.game.ChassisGrid;
 import state.workbench.game.EditHistory;
 import state.workbench.game.WiringMode;
-import state.workbench.graphics.InventorySlot;
 import util.Color;
-import util.FileLoader;
-import util.Grid;
-import util.Grid.QuadConsumer;
+import static state.workbench.ItemTypes.*;
 
 public class WorkbenchState extends GameState
 {
@@ -60,7 +52,7 @@ public class WorkbenchState extends GameState
 	ClickableArea globalClickArea = new ClickableArea(0,0,0,0);
 	ItemManipulator itemManip = new ItemManipulator(grabContext,this,globalClickArea);
 	EditHistory history = new EditHistory();
-	ProgramCoordinator coordinator;
+	ProgramCoordinator coordinator = new ProgramCoordinator();
 	
 	FluidEntity mouseCompanion = new FluidEntity(0,0,0);
 	
@@ -324,262 +316,33 @@ public class WorkbenchState extends GameState
 		
 		Entity bg = new Entity(0, 0, 0, sprites.getSprite("background.png"));
 		addRenderable(bg);
-		ButtonTheme close = new ButtonTheme(
-				sprites.getSprite("Button raised.png"),
-				sprites.getSprite("Button pressed selected.png"),
-				sprites.getSprite("Button pressed unselected.png"));
-		ButtonTheme inv = new ButtonTheme(
-				sprites.getSprite("Inv Button Raised.png"),
-				sprites.getSprite("Inv Button Pressed.png"),
-				sprites.getSprite("Inv Button Gray.png")
-				);
+		ButtonThemes.init(sprites);
 		
-		Button closeButton3 = close.build();
-		closeButton3.setEnabled(false);
+		// initialize all the item types
+		ItemTypes.init(sprites);
 		
 		// root children init
 		
-		partMounting = new Window(1300,40,sprites.getSprite("part mounting ui.png"), close.build(),grabContext);
-		partMounting.setEnabled(false);
+		WindowBuilder windowBuilder = new WindowBuilder(sprites, itemManip, grabContext, coordinator, screenHeight());
 		
-		inventory = new Window(1300,440,sprites.getSprite("Inventory UI.png"),close.build(),grabContext);
-		inventory.setEnabled(false);
+		partMounting = windowBuilder.partMounting;
 		
-		tools = new Window(650,screenHeight()-200,sprites.getSprite("Tools.png"),closeButton3,grabContext);
+		inventory = windowBuilder.inventory;
+		
+		tools = windowBuilder.tools;
 		
 		grid = new ChassisGrid(40,5,1,
 				sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring,history,
 				sprites.getSprite("wire segment x.png"),sprites.getSprite("wire segment y.png"),sprites.getSprite("wire segment z.png"));
 		
-		wireSymbol = sprites.getSprite("wire symbol.png");
+		grid.addExternalBreakouts(breakout,sprites.getSprite("extern pin.png"),sprites.getSprite("breakout bg.png"), 
+				windowBuilder.top, windowBuilder.bot, windowBuilder.left, windowBuilder.right, windowBuilder.front, windowBuilder.back);
 		
-		//Program thread coordinator init
+		testEnvironment = new OuinoEnvironment(windowBuilder.specialArduino.getPins());
 		
-		coordinator = new ProgramCoordinator();
-		
-		//item type init
-		
-		ItemType.setDefaultWireSprites(
-				sprites.getSprite("pin highlight end.png"),
-				sprites.getSprite("pin highlight.png"),
-				sprites.getSprite("wire end.png"),
-				sprites.getSprite("wire end opaque.png"),
-				sprites.getSprite("wire fade.png"));
-		
-		Sprite invHighlight = sprites.getSprite("inv-slot highlight.png");
-		final Sprite ledOn = sprites.getSprite("led on.png");
-		final Sprite ledOff = sprites.getSprite("led off.png");
-		
-		ItemType breakout = new ItemType(null);
-		ItemType microController = new ItemType(sprites.getSprite("ouino.png"),sprites.getSprite("ouino item.png"));
-		ItemType battery = new ItemType(sprites.getSprite("battery.png"),sprites.getSprite("battery item.png"));
-		ItemType antenna = new ItemType(sprites.getSprite("antenna ic.png"),sprites.getSprite("antenna item.png"));
-		ItemType breadboard = new ItemType(sprites.getSprite("breadboard.png"),sprites.getSprite("breadboard item.png"));
-		ItemType poweredWheel = new ItemType(sprites.getSprite("wheel item.png"),2);
-		ItemType ledOutput = new ItemType(ledOff, sprites.getSprite("led item.png"));
-		
-		
-		ledOutput.setOffsets(-1, -1);
-		ledOutput.addPins(new Grid(6,4,3,3,1,2));
-		ledOutput.setWireSpritesToDefault(sprites.getSprite("pin mask.png"));
-		ledOutput.setTooltips("+5v","GND");
-		ledOutput.setPinUpdate((pins,entity)->{
-			if(pins.get(0).getReceivedPotential()==1024 && pins.get(1).isGrounded())
-			{
-				entity.setSpriteAndSize(ledOn);
-			}
-			else
-			{
-				entity.setSpriteAndSize(ledOff);
-			}
-		});
-		
-		poweredWheel.setTooltips("+12v","GND");
-		
-		antenna.setOffsets(-1, -1);
-		antenna.addPins(new Grid(4,3,3,3,1,3));
-		antenna.setWireSpritesToDefault(sprites.getSprite("pin mask.png"));
-		
-		
-		battery.setOffsets(-1, -1);
-		battery.addPins(new Grid(9,18,3,3,1,2));
-		battery.addPins(new Grid(18,18,3,3,1,2));
-		battery.setWireSpritesToDefault(sprites.getSprite("pin mask.png"));
-		battery.setTooltips("+12v out","GND out","+12v in","GND in");
-		battery.setPinUpdate((pins,entity)->{
-			pins.get(0).setPotential(1024);
-			pins.get(1).setGrounded(true);
-		});
-		
-		
-		microController.setOffsets(0, 7);
-		microController.setWorkbenchSize(2,2);
-		microController.setWireSpritesToDefault(sprites.getSprite("pin mask.png"));
-		microController.addPinStrip(35, 1, 10);
-		microController.addPinStrip(72, 1, 8);
-		microController.addPinStrip(50, 62, 8);
-		microController.addPinStrip(81, 62, 5);
-		microController.setTooltips("","","AREF","GND"," 13"," 12","~11","~10","~9"," 8",      " 7","~6","~5"," 4","~3"," 2","TXD>1","RXD<0",
-									"","","RESET","3v","5v","GND","GND","VIN",              "A0","A1","A2","A3","A4");
-		
-		
-		breadboard.setOffsets(-2, 5);
-		breadboard.setWorkbenchSize(2,2);
-		breadboard.setWireSpritesToDefault(null);
-		breadboard.setWireEnd(sprites.getSprite("wire end no pin.png"));
-		breadboard.setWireEndOpaque(sprites.getSprite("wire end no pin opaque.png"));
-		breadboard.addPins(new Grid(7,14,3,3,5,30));
-		breadboard.addPins(new Grid(7,38,3,3,5,30));
-		new Grid(10,4,18,3,1,5).forEach((x2,y2)->{
-			breadboard.addPins(new Grid(x2,y2,3,3,2,5));
-		});
-		new Grid(10,57,18,3,1,5).forEach((x2,y2)->{
-			breadboard.addPins(new Grid(x2,y2,3,3,2,5));
-		});
-		breadboard.sortPins();
-		breadboard.setPinUpdate((pins,entity)->{
-			BreadboardUtil.linkHoriz(pins, 0, 25);
-			BreadboardUtil.linkHoriz(pins, 25, 25);
-			BreadboardUtil.linkHoriz(pins, 350, 25);
-			BreadboardUtil.linkHoriz(pins, 375, 25);
-			for(int start = 50; start<80; start++)
-			{
-				BreadboardUtil.linkVert(pins, start, 5, 30);
-			}
-			for(int start = 200; start<230; start++)
-			{
-				BreadboardUtil.linkVert(pins, start, 5, 30);
-			}
-		});
-		
-		
-		breakout.setWireSpritesToDefault(null);
-		breakout.setWireEnd(sprites.getSprite("wire end no pin.png"));
-		breakout.setWireEndOpaque(sprites.getSprite("wire end no pin opaque.png"));
-		
-		
-		
-		
-		//ui controller init
-		
-		QuadConsumer<Float,Float,Integer,Integer> addToInventory = (x2,y2,i,j) ->
-		{
-			InventorySlot slot;
-			
-			double rand = Math.random();
-			if(i==0 && j == 0)
-			{
-				specialArduino = new Item(microController);
-				testEnvironment = new OuinoEnvironment(specialArduino.getPins());
-				coordinator.addEnvironment(testEnvironment);
-				slot = new InventorySlot(x2,y2,invHighlight,specialArduino,itemManip);
-			}
-			else if(rand<.25)
-			{
-				slot = new InventorySlot(x2,y2,invHighlight,new Item(microController),itemManip);
-			}
-			else if(rand<.5)
-			{
-				slot = new InventorySlot(x2,y2,invHighlight,new Item(ledOutput),itemManip);
-			}
-			else if(rand<.75)
-			{
-				slot = new InventorySlot(x2,y2,invHighlight,new Item(battery),itemManip);
-			}
-			else
-			{
-				slot = new InventorySlot(x2,y2,invHighlight,new Item(breadboard),itemManip);
-			}
-			
-			inventory.addChild(slot);
-		};
-		
-		InventorySlot[] top = new InventorySlot[4];
-		InventorySlot[] bot = new InventorySlot[4];
-		InventorySlot[] left = new InventorySlot[4];
-		InventorySlot[] right = new InventorySlot[4];
-		InventorySlot[][] hGrid = {top,right,left,bot};
-		InventorySlot[] front = new InventorySlot[4];
-		InventorySlot[] back = new InventorySlot[4];
-		new Grid(48,76,43,43,7,10).//grid for inventory window
-		forEachWithIndicies(addToInventory);
-		
-		new Grid(178,65,43,42*2,4,4).//grid for top, left, right, bottom
-		forEachWithIndicies((x2,y2,row,col)->{
-			InventorySlot slot = new InventorySlot(x2,y2,invHighlight,null,itemManip);;
-			partMounting.addChild(slot);
-			hGrid[col][row] = slot;
-		});
-		
-		new Grid(112,149,43,42,4,1).//grid for front
-		forEachWithIndicies((x2,y2,row,col)->{
-			InventorySlot slot = new InventorySlot(x2,y2,invHighlight,null,itemManip);;
-			partMounting.addChild(slot);
-			front[col] = slot;
-		});
-
-		new Grid(373,149,43,42,4,1).//grid for back
-		forEachWithIndicies((x2,y2,row,col)->{
-			InventorySlot slot = new InventorySlot(x2,y2,invHighlight,null,itemManip);;
-			partMounting.addChild(slot);
-			back[col] = slot;
-		});
-		
-		new Grid(48,76,43,43,1,10).
-		forEach((x2,y2)->{
-			InventorySlot slot = new InventorySlot(x2,y2,invHighlight,null,itemManip);
-			tools.addChild(slot);
-		});
-		
-		for(InventorySlot s:left)
-		{
-			s.setContents(new Item(poweredWheel));
-		}
-		for(InventorySlot s:right)
-		{
-			s.setContents(new Item(poweredWheel));
-		}
-		
-		
-		grid.addExternalBreakouts(breakout,sprites.getSprite("extern pin.png"),sprites.getSprite("breakout bg.png"), top, bot, left, right, front, back);
-		
-		
-		
-		Button[] toolButtons = new Button[10];
-		
-		new Grid(48,119,43,43,1,10).
-		forEachWithIndicies((x2,y2,i,j)->{
-			Button b = inv.build();
-			b.setPos(x2, y2);
-			toolButtons[i] = b;
-			tools.addChild(b);
-		});
-	
-		
-		tools.addChild(new Entity(48,119,0,sprites.getSprite("icons.png")));
-		
-		
-		toolButtons[0].setOnPress(()->inventory.setEnabled(true));
-		toolButtons[1].setOnPress(()->partMounting.setEnabled(true));
-		toolButtons[2].setOnPress(()->{
-			try
-			{
-				String program = FileLoader.getFileContents("blink.py");
-				testEnvironment.uplode(program);
-			} 
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-		});
-		toolButtons[3].setOnPress(()->{
-			manager.setMode(wiring);
-		});
-		toolButtons[7].setOnPress(history::undo);
-		toolButtons[8].setOnPress(history::redo);
+		ToolInitializer.init(tools, sprites, inventory, partMounting, testEnvironment, manager, wiring, history);
 		
 		//scene init
-		
 		add(grid);
 		addUI(partMounting);
 		addUI(inventory);
@@ -587,10 +350,7 @@ public class WorkbenchState extends GameState
 		Entity laptop = new Entity(700,100,1, sprites.getSprite("laptop.png"));
 		addRenderable(laptop);
 		
-		//misc TODO
-		
-		
-		
+		wireSymbol = sprites.getSprite("wire symbol.png");
 		addActable(mouseCompanion);
 		TextEntity.setDefaultBgSprites(
 				sprites.getSprite("fade corner.png"),
@@ -601,10 +361,6 @@ public class WorkbenchState extends GameState
 		sprites.resetNamespace();
 
 	}
-	
-	public void initInventory()
-	{
-		
-	}
+
 	
 }

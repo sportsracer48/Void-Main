@@ -91,7 +91,7 @@ public class Entity implements Comparable<Entity>, Actable
 		this.model = translation.dot(this.scale.dot(this.rotation));
 	}
 	
-	public float getSpriteWidth()
+	public float getUnscaledWidth()
 	{
 		if(base != null)
 		{
@@ -100,7 +100,7 @@ public class Entity implements Comparable<Entity>, Actable
 		return 0;
 	}
 	
-	public float getSpriteHeight()
+	public float getUnscaledHeight()
 	{
 		if(base != null)
 		{
@@ -111,12 +111,12 @@ public class Entity implements Comparable<Entity>, Actable
 	
 	public float getWidth()
 	{
-		return getSpriteWidth()*scaleX;
+		return getUnscaledWidth()*scaleX;
 	}
 	
 	public float getHeight()
 	{
-		return getSpriteHeight()*scaleY;
+		return getUnscaledHeight()*scaleY;
 	}
 	
 	public void addChild(Entity child)
@@ -408,7 +408,7 @@ public class Entity implements Comparable<Entity>, Actable
 	
 	public void enableRoot()
 	{
-		this.root = new ClickableArea(0,0,getSpriteWidth(),getSpriteHeight());
+		this.root = new ClickableArea(0,0,getUnscaledWidth(),getUnscaledHeight());
 	}
 	
 	public int compareTo(Entity r)

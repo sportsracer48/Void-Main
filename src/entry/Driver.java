@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 import graphics.Context;
 import graphics.registry.RegisteredFont;
 import graphics.registry.SpriteAtlas;
+import graphics.registry.UtilSprites;
 import graphics.shader.Program;
 import graphics.shader.Shader;
 
@@ -23,7 +24,8 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.system.MemoryUtil;
 
 import state.GameState;
-import state.workbench.WorkbenchState;
+import state.programming.ProgrammingState;
+//import state.workbench.WorkbenchState;
 import util.GLU;
 
 public class Driver
@@ -83,8 +85,6 @@ public class Driver
 	{
 		GL.createCapabilities();
 		
-		System.out.println(GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE));
-		
 		glClearColor(0, 0, 0, 0);
 		glClearDepth(0);
 		glEnable(GL_BLEND);
@@ -95,9 +95,11 @@ public class Driver
 	public void initSprites()
 	{
 		spriteAtlas = new SpriteAtlas(new File("res/sprite/workbench/"));
+		spriteAtlas.addAllChildren(new File("res/sprite/util/"));
 		RegisteredFont defaultFont = spriteAtlas.addFont(new File("res/font/TERMINALVECTOR.TTF"), Font.PLAIN, 12);
 		RegisteredFont.setDefault(defaultFont);
 		spriteAtlas.build();
+		UtilSprites.init(spriteAtlas);
 	}
 	
 	public void initShaders()
@@ -135,7 +137,7 @@ public class Driver
 	
 	public void initGame()
 	{
-		currentState = new WorkbenchState(input,window);
+		currentState = new ProgrammingState(input,window);
 		currentState.init(spriteAtlas);
 	}
 	

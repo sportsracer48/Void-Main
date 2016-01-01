@@ -66,11 +66,11 @@ public class TextEntity extends ColoredEntity
 	{
 		setBackGround(new BoxEntity(0, 0, 0, defaultBgSprites[0], defaultBgSprites[1], defaultBgSprites[2], defaultBgSprites[3]));
 	}
-	public float getSpriteWidth()
+	public float getUnscaledWidth()
 	{
 		return width;
 	}
-	public float getSpriteHeight()
+	public float getUnscaledHeight()
 	{
 		return height;
 	}

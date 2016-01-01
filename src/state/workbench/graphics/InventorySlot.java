@@ -6,8 +6,8 @@ import java.util.List;
 import org.lwjgl.glfw.GLFW;
 
 import state.ui.HighlightArea;
-import state.workbench.conroller.ItemAcceptor;
-import state.workbench.conroller.ItemManipulator;
+import state.workbench.controller.ItemAcceptor;
+import state.workbench.controller.ItemManipulator;
 import util.Color;
 import game.item.Item;
 import graphics.Sprite;

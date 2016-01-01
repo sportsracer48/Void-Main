@@ -117,7 +117,7 @@ public class SpriteAtlas
 	{
 		try
 		{
-			addImage(ImageIO.read(f),f.getPath());
+			addImage(ImageIO.read(f),f.getPath().replace(File.separatorChar, '/'));
 		}
 		catch(IOException e)
 		{
@@ -217,8 +217,10 @@ public class SpriteAtlas
 			float sheight = (float)r.height/height;
 			Sprite s = new Sprite(pTex,x,y,swidth,sheight,r.width,r.height);
 			sprites.add(s);
-			spriteTable.put(r.name.replace(File.separatorChar, '/'), s);
+			spriteTable.put(r.name, s);
 		}
+		
+		//System.out.println(spriteTable.keySet().stream().sorted().reduce((a,b)->a+"\n"+b).orElse(""));
 	}
 	
 	public void bind()

@@ -9,9 +9,9 @@ import org.lwjgl.glfw.GLFW;
 
 import state.ModeManager;
 import state.ui.ClickableArea;
-import state.workbench.conroller.GrabBound;
-import state.workbench.conroller.ItemAcceptor;
-import state.workbench.conroller.ItemManipulator;
+import state.workbench.controller.GrabBound;
+import state.workbench.controller.ItemAcceptor;
+import state.workbench.controller.ItemManipulator;
 import state.workbench.graphics.InventorySlot;
 import state.workbench.graphics.WireRenderer;
 import util.Grid;
