@@ -110,7 +110,15 @@ public class SpriteAtlas
 		}
 		g.setColor(Color.white);
 		g.drawString(String.valueOf(c), 2, 2+m.getAscent());
+		addImage(temp,name+"$o/"+c);
+		
+		temp = new BufferedImage(m.charWidth(c),m.getAscent()+m.getDescent(),BufferedImage.TYPE_INT_ARGB);
+		g = temp.getGraphics();
+		g.setColor(Color.white);
+		g.setFont(f);
+		g.drawString(String.valueOf(c), 0, m.getAscent());
 		addImage(temp,name+"/"+c);
+		
 	}
 	
 	public void addImage(File f)

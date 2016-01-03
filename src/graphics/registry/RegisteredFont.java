@@ -7,12 +7,13 @@ import java.awt.FontMetrics;
 public class RegisteredFont
 {
 	public static RegisteredFont defaultFont;
+	public static RegisteredFont defaultFontOutline;
 	
 	public final String name;
 	public final FontMetrics metrics;
 	public final SpriteAtlas atlas;
 	
-	private Sprite[] commonCharacters = new Sprite[255];
+	private Sprite[] commonCharacters = new Sprite[256];
 	private boolean accelerated = false;
 	
 	public RegisteredFont(String name, FontMetrics metrics, SpriteAtlas atlas)
@@ -50,6 +51,10 @@ public class RegisteredFont
 	public static void setDefault(RegisteredFont f)
 	{
 		defaultFont = f;
+	}
+	public static void setDefaultOutline(RegisteredFont f)
+	{
+		defaultFontOutline = f;
 	}
 	
 }

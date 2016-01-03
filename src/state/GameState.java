@@ -1,5 +1,12 @@
 package state;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
+
 import org.lwjgl.glfw.GLFW;
 
 import entry.GlobalInput;
@@ -41,7 +48,21 @@ public abstract class GameState
 	
 	public String getClipboardString()
 	{
-		return GLFW.glfwGetClipboardString(window);
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		Transferable t = clipboard.getContents(this);
+		if(t.isDataFlavorSupported(DataFlavor.stringFlavor))
+		{
+			try
+			{
+				return t.getTransferData(DataFlavor.stringFlavor).toString();
+			} 
+			catch (UnsupportedFlavorException | IOException e)
+			{
+				e.printStackTrace();
+				return "";
+			}
+		}
+		return "";
 	}
 	
 	public int screenWidth()

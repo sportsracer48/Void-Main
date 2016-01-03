@@ -97,7 +97,9 @@ public class Driver
 		spriteAtlas = new SpriteAtlas(new File("res/sprite/workbench/"));
 		spriteAtlas.addAllChildren(new File("res/sprite/util/"));
 		RegisteredFont defaultFont = spriteAtlas.addFont(new File("res/font/TERMINALVECTOR.TTF"), Font.PLAIN, 12);
+		RegisteredFont defaultFontOutline = new RegisteredFont("res/font/TERMINALVECTOR.TTF$o", defaultFont.metrics, spriteAtlas);
 		RegisteredFont.setDefault(defaultFont);
+		RegisteredFont.setDefaultOutline(defaultFontOutline);
 		spriteAtlas.build();
 		UtilSprites.init(spriteAtlas);
 	}
@@ -137,6 +139,7 @@ public class Driver
 	
 	public void initGame()
 	{
+		PythonInit.init();
 		currentState = new ProgrammingState(input,window);
 		currentState.init(spriteAtlas);
 	}

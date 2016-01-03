@@ -10,6 +10,8 @@ import graphics.registry.SpriteAtlas;
 import state.GameState;
 import state.workbench.Camera;
 
+import static state.programming.Modifiers.*;
+
 public class ProgrammingState extends GameState
 {
 	ConsoleEntity console;
@@ -27,16 +29,23 @@ public class ProgrammingState extends GameState
 		addUI(console);
 	}
 	
+	public int getModFlags()
+	{
+		return (isShiftDown()?SHIFT_FLAG:0) | 
+			   (isControlDown()?CONTROL_FLAG:0) | 
+			   (isAltDown()?ALT_FLAG:0);
+	}
+	
 	public void keyPressed(int key)
 	{
 		if(key == GLFW.GLFW_KEY_ESCAPE)
 		{
 			systemExit();
 		}
-		console.keyPressed(key);
+		console.keyPressed(key, getModFlags());
 		if(isControlDown() && key == GLFW.GLFW_KEY_V)
 		{
-			console.pasteTextAtCursor(getClipboardString().replaceAll("\r\n", "\n"));
+			console.paste(getClipboardString().replaceAll("\r\n", "\n"));
 		}
 	}
 	
@@ -44,6 +53,29 @@ public class ProgrammingState extends GameState
 	{
 		console.charTyped(c);
 	}
+	public void mousePressed(int button)
+	{
+		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
+		{
+			console.handleClick(getMouseX(), getMouseY(), button);
+		}
+	}
+	public void mouseMoved(float x, float y)
+	{
+		if(isButtonPressed(GLFW.GLFW_MOUSE_BUTTON_LEFT))
+		{
+			console.handleMove(x, y);
+		}
+	}
+	public void mouseReleased(int button)
+	{
+		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
+		{
+			console.handleRelease();
+		}
+	}
+	
+	
 	boolean isShiftDown()
 	{
 		return isKeyPressed(GLFW.GLFW_KEY_LEFT_SHIFT)||isKeyPressed(GLFW.GLFW_KEY_RIGHT_SHIFT);
@@ -69,5 +101,4 @@ public class ProgrammingState extends GameState
 		context.resetColor();
 		renderUI(context);
 	}
-	
 }

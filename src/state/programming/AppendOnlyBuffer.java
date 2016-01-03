@@ -1,5 +1,7 @@
 package state.programming;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +16,17 @@ public class AppendOnlyBuffer
 	public AppendOnlyBuffer(int width)
 	{
 		this.width = width;
+	}
+	
+	public OutputStream getOuputStream()
+	{
+		return new OutputStream()
+		{
+			public void write(int b) throws IOException
+			{
+				append((char)b);
+			}
+		};
 	}
 	
 	public void append(char c)
@@ -47,6 +60,15 @@ public class AppendOnlyBuffer
 		{
 			append(s.charAt(i));
 		}
+	}
+	public void appendln(String s)
+	{
+		append(s);
+		appendln();
+	}
+	public void appendln()
+	{
+		append('\n');
 	}
 	public int getLineStart(int line)
 	{

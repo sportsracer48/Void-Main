@@ -20,7 +20,7 @@ public class TextEntity extends ColoredEntity
 	
 	public TextEntity(float x, float y, float z, String text)
 	{
-		this(x,y,z,text,RegisteredFont.defaultFont);
+		this(x,y,z,text,RegisteredFont.defaultFontOutline);
 	}
 	
 	public void renderChildren(Context c)
