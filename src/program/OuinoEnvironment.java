@@ -1,5 +1,6 @@
 package program;
 
+import entry.GlobalState;
 import game.item.Pin;
 
 import java.util.List;
@@ -281,8 +282,14 @@ public class OuinoEnvironment implements Environment
 	
 	public boolean powered()
 	{
-		return true;
-		//return vIn.getReceivedPotential()>0 && isGrounded();
+		if(GlobalState.DEBUG)
+		{
+			return true;
+		}
+		else
+		{
+			return vIn.getReceivedPotential()>0 && isGrounded();
+		}
 	}
 	public void updatePower()
 	{

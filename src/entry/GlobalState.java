@@ -6,6 +6,8 @@ import computer.system.Computer;
 
 public class GlobalState
 {
+	public static final boolean DEBUG = true;
+
 	public static Computer laptop;
 	
 	public static WorkbenchState currentWorkbench;

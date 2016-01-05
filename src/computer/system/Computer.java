@@ -34,7 +34,6 @@ public class Computer
 			return;
 		}
 		rootPath = root.getAbsolutePath();
-		System.out.println(rootPath);
 	}
 	public void upload(String source)
 	{
