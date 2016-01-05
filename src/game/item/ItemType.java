@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 import program.Environment;
+import program.ProgramCoordinator;
 import util.Grid;
 import util.Grid.Coord;
 import graphics.Sprite;
@@ -277,7 +278,7 @@ public class ItemType //kinda reflexive, but hey, whatever
 		this.pinUpdate = pinUpdate;
 	}
 
-	public Environment getEnvironmentFor(List<Pin> pins)
+	public Environment getEnvironmentFor(List<Pin> pins, ProgramCoordinator coordinator)
 	{
 		return null;
 	}

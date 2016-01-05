@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.lwjgl.glfw.GLFW;
 
+import program.ProgramCoordinator;
 import entry.GlobalState;
 import state.Mode;
 import state.ModeManager;
@@ -45,13 +46,15 @@ public class ChassisGrid extends Entity
 	Mode programming;
 	EditHistory history;
 	
-	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring, Mode programmingMode, EditHistory history, Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
+	public ChassisGrid(float x, float y, float z, 
+			Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring, Mode programmingMode, EditHistory history, ProgramCoordinator coordinator,
+			Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
 	{
-		this(10,10,21,37,55,36,x,y,z,base, manip,manager,wiring,programmingMode,history,wireSegmentX,wireSegmentY,wireSegmentZ);
+		this(10,10,21,37,55,36,x,y,z,base, manip,manager,wiring,programmingMode,history,coordinator,wireSegmentX,wireSegmentY,wireSegmentZ);
 	}
 	
 	private ChassisGrid(int width, int height, float offsetX, float offsetY, float xStep, float yStep, float x, float y, float z, 
-			Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring, Mode programmingMode, EditHistory history,
+			Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring, Mode programmingMode, EditHistory history, ProgramCoordinator coordinator,
 			Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
 	{
 		super(x,y,z,base);
@@ -140,7 +143,7 @@ public class ChassisGrid extends Entity
 					else if(manager.getMode()==programming)
 					{
 						//TODO
-						GlobalState.laptop.setConnected(item.getEnvironment());
+						GlobalState.laptop.setConnected(item.getEnvironment(coordinator));
 						GlobalState.currentWorkbench.changeTo(GlobalState.currentProgramming);
 					}
 					else

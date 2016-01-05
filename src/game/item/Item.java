@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import program.Environment;
+import program.ProgramCoordinator;
 import state.workbench.game.WiringMode;
 import state.workbench.graphics.PinHighlight;
 import graphics.Sprite;
@@ -93,13 +94,13 @@ public class Item
 		return pins;
 	}
 
-	public Environment getEnvironment()
+	public Environment getEnvironment(ProgramCoordinator coordinator)
 	{
-		if(env!=null)
+		if(env != null)
 		{
 			return env;
 		}
-		env = type.getEnvironmentFor(getPins());
+		env = type.getEnvironmentFor(getPins(),coordinator);
 		return env;
 	}
 }

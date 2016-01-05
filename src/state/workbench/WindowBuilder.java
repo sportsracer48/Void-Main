@@ -6,8 +6,6 @@ import game.item.Item;
 import graphics.Sprite;
 import graphics.entity.Entity;
 import graphics.registry.SpriteAtlas;
-import program.OuinoEnvironment;
-import program.ProgramCoordinator;
 import state.ui.Button;
 import state.ui.Window;
 import state.workbench.controller.DragContext;
@@ -18,8 +16,6 @@ import util.Grid.QuadConsumer;
 
 public class WindowBuilder
 {
-	Item specialArduino;
-	OuinoEnvironment testEnvironment;
 	Entity inventory,partMounting,tools;
 	
 	InventorySlot[] top = new InventorySlot[4];
@@ -30,7 +26,7 @@ public class WindowBuilder
 	InventorySlot[] front = new InventorySlot[4];
 	InventorySlot[] back = new InventorySlot[4];
 	
-	public WindowBuilder(SpriteAtlas sprites, ItemManipulator itemManip, DragContext grabContext,ProgramCoordinator coordinator, int screenHeight)
+	public WindowBuilder(SpriteAtlas sprites, ItemManipulator itemManip, DragContext grabContext, int screenHeight)
 	{
 		Sprite invHighlight = sprites.getSprite("inv-slot highlight.png");
 		inventory = new Window(1300,440,sprites.getSprite("Inventory UI.png"),close.build(),grabContext);
@@ -49,14 +45,7 @@ public class WindowBuilder
 			InventorySlot slot;
 			
 			double rand = Math.random();
-			if(i==0 && j == 0)
-			{
-				specialArduino = new Item(microController);
-				testEnvironment = new OuinoEnvironment(specialArduino.getPins());
-				coordinator.addEnvironment(testEnvironment);
-				slot = new InventorySlot(x2,y2,invHighlight,specialArduino,itemManip);
-			}
-			else if(rand<.25)
+			if(rand<.25)
 			{
 				slot = new InventorySlot(x2,y2,invHighlight,new Item(microController),itemManip);
 			}

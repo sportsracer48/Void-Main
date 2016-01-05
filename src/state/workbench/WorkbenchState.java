@@ -6,10 +6,8 @@ import math.Matrix;
 
 import org.lwjgl.glfw.GLFW;
 
-import program.OuinoEnvironment;
 import program.ProgramCoordinator;
 import entry.GlobalInput;
-import game.item.Item;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
@@ -58,9 +56,6 @@ public class WorkbenchState extends GameState
 	
 	Sprite wireSymbol;
 	Sprite programmingSymbol;
-	
-	Item specialArduino;
-	OuinoEnvironment testEnvironment;
 	
 	Mode edit = new Mode()
 	{
@@ -344,7 +339,7 @@ public class WorkbenchState extends GameState
 		
 		// root children init
 		
-		WindowBuilder windowBuilder = new WindowBuilder(sprites, itemManip, grabContext, coordinator, screenHeight());
+		WindowBuilder windowBuilder = new WindowBuilder(sprites, itemManip, grabContext, screenHeight());
 		
 		partMounting = windowBuilder.partMounting;
 		
@@ -353,15 +348,14 @@ public class WorkbenchState extends GameState
 		tools = windowBuilder.tools;
 		
 		grid = new ChassisGrid(40,5,1,
-				sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring,programming,history,
+				sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring,programming,history,coordinator,
 				sprites.getSprite("wire segment x.png"),sprites.getSprite("wire segment y.png"),sprites.getSprite("wire segment z.png"));
 		
 		grid.addExternalBreakouts(breakout,sprites.getSprite("extern pin.png"),sprites.getSprite("breakout bg.png"), 
 				windowBuilder.top, windowBuilder.bot, windowBuilder.left, windowBuilder.right, windowBuilder.front, windowBuilder.back);
 		
-		testEnvironment = new OuinoEnvironment(windowBuilder.specialArduino.getPins());
 		
-		ToolInitializer.init(tools, sprites, inventory, partMounting, testEnvironment, manager, wiring, programming, history);
+		ToolInitializer.init(tools, sprites, inventory, partMounting, manager, wiring, programming, history);
 		
 		//scene init
 		add(grid);

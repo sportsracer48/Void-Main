@@ -4,6 +4,7 @@ import java.util.List;
 
 import program.Environment;
 import program.OuinoEnvironment;
+import program.ProgramCoordinator;
 import util.Grid;
 import breadboard.BreadboardUtil;
 import game.item.ItemType;
@@ -36,9 +37,11 @@ public class ItemTypes
 		breakout = new ItemType(null);
 		microController = new ItemType(sprites.getSprite("ouino.png"),sprites.getSprite("ouino item.png"))
 		{
-			public Environment getEnvironmentFor(List<Pin> pins)
+			public Environment getEnvironmentFor(List<Pin> pins, ProgramCoordinator coordinator)
 			{
-				return new OuinoEnvironment(pins);
+				Environment e = new OuinoEnvironment(pins);
+				coordinator.addEnvironment(e);
+				return e;
 			}
 		};
 		battery = new ItemType(sprites.getSprite("battery.png"),sprites.getSprite("battery item.png"));

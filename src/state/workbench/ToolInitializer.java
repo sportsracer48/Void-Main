@@ -1,7 +1,6 @@
 package state.workbench;
 
 import static state.workbench.ButtonThemes.inv;
-import program.Environment;
 import graphics.entity.Entity;
 import graphics.registry.SpriteAtlas;
 import state.Mode;
@@ -12,7 +11,7 @@ import util.Grid;
 
 public class ToolInitializer
 {
-	public static void init(Entity tools, SpriteAtlas sprites, Entity inventory, Entity partMounting, Environment testEnvironment, ModeManager manager, Mode wiring, Mode programming,EditHistory history)
+	public static void init(Entity tools, SpriteAtlas sprites, Entity inventory, Entity partMounting, ModeManager manager, Mode wiring, Mode programming,EditHistory history)
 	{
 		Button[] toolButtons = new Button[10];
 		
