@@ -1,11 +1,13 @@
-package computer;
+package computer.program;
+
+import computer.system.Computer;
 
 import state.programming.AppendOnlyBuffer;
 
 public class RepeatEcho implements InteractiveExecutable
 {
 	AppendOnlyBuffer out;
-	public void setup(String[] args, AppendOnlyBuffer out)
+	public void setup(String[] args, AppendOnlyBuffer out, Computer system)
 	{
 		this.out = out;
 	}

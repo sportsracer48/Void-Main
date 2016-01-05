@@ -63,9 +63,10 @@ public class ClickableArea
 		}
 		onAnyMove();
 		
-		//TODO
-		Matrix coords = model.inverse().dot(new Matrix(new float[]{x,y,0,1}));
-		onMouseMove(coords.x(),coords.y());
+		Rectangle worldBounds = bounds.transform(model);
+		float xLocal = x - worldBounds.x;
+		float yLocal = y - worldBounds.y;
+		onMouseMove(xLocal,yLocal);
 	}
 	
 	public void handleClick(float x, float y, int button, Matrix model)

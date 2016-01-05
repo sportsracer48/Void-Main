@@ -11,9 +11,10 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
 
-import computer.ExecutableHolder;
-import computer.InteractiveExecutable;
-import computer.RenderedExecutable;
+import computer.program.ExecutableHolder;
+import computer.program.InteractiveExecutable;
+import computer.program.RenderedExecutable;
+import computer.system.Computer;
 import state.ui.ClickableArea;
 import util.Color;
 import graphics.Context;
@@ -50,21 +51,26 @@ public class ConsoleEntity extends Entity
 	RenderedExecutable renderedProgram;
 	CommandParser parser;
 	
-	public ConsoleEntity(float x, float y, float z, float width, float height)
+	Computer computer;
+	
+	public ConsoleEntity(float x, float y, float z, float width, float height, Computer computer)
 	{
 		super(x, y, z, null);
 		
-		this.addClickableArea(new ClickableArea(x, y, width, height)
+		this.addClickableArea(new ClickableArea(0, 0, width, height)
 		{
 			public void onLeftClick(float x, float y)
 			{
 				if(runningRenderedProgram)
 				{
-					renderedProgram.mouseClicked
-					(
-							(int)(x/charWidth),
-							(int)(y/charHeight)-appendOnly.height()+startLine+1
-					);
+					int charX = (int)(x/charWidth);
+					int charY = (int)(y/charHeight);
+					
+					int realCharY = charY-appendOnly.height()+startLine+1;
+					if(charX>=0 && charY>=0 && charX<cols && charY<rows)
+					{
+						renderedProgram.mouseClicked(charX,realCharY);
+					}
 				}
 			}
 			public void onMouseMove(float x, float y)
@@ -87,6 +93,8 @@ public class ConsoleEntity extends Entity
 			}
 		});
 		
+		this.computer = computer;
+		
 		font = RegisteredFont.defaultFont;
 		this.width = width;
 		this.height = height;
@@ -103,7 +111,7 @@ public class ConsoleEntity extends Entity
 		appendOnly = new AppendOnlyBuffer(cols);
 		parser = new CommandParser(appendOnly);
 		
-		appendOnly.append("Login fake@fake-pc\n\n");
+		appendOnly.append("Login admin@"+computer.getName()+"\n\n");
 		newPrompt();
 	}
 	public void act(int dt)
@@ -162,10 +170,17 @@ public class ConsoleEntity extends Entity
 	{
 		if(blinkTime<blinkPeriod/2)
 		{
+			GL11.glPushAttrib(GL11.GL_COLOR_BUFFER_BIT);
+			GL14.glBlendFuncSeparate(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ZERO, GL11.GL_ZERO, GL11.GL_ZERO);
+			GL20.glBlendEquationSeparate(GL14.GL_FUNC_ADD, GL14.GL_FUNC_ADD);
+			
+			c.resetColor();
 			c.pushTransform();
 			c.appendTransform(Matrix.translation(x,y,0));
 			font.getSprite(getCursorChar()).render(c);
 			c.popTransform();
+			
+			GL11.glPopAttrib();
 		}
 	}
 	
@@ -236,22 +251,10 @@ public class ConsoleEntity extends Entity
 			{
 				if(row>=0)
 				{
-					Sprite s = font.getSprite(character);
+					renderChar(c,character,x,y);
 					if(i==cursor)
 					{
 						renderCursor(x,y,c);
-					}
-					if(s!=null)
-					{
-						GL11.glPushAttrib(GL11.GL_COLOR_BUFFER_BIT);
-						
-						GL14.glBlendFuncSeparate(GL11.GL_ONE,GL11.GL_DST_COLOR,GL11.GL_ZERO,GL11.GL_ZERO);
-						GL20.glBlendEquationSeparate(GL14.GL_FUNC_SUBTRACT,GL14.GL_FUNC_ADD);
-						c.pushTransform();
-						c.appendTransform(Matrix.translation(x,y,0));
-						s.render(c);
-						c.popTransform();
-						GL11.glPopAttrib();
 					}
 				}
 				x+=charWidth;
@@ -275,6 +278,17 @@ public class ConsoleEntity extends Entity
 		if(cursor==editable.length() && row<rows && row>=0)
 		{
 			renderCursor(x,y,c);
+		}
+	}
+	private void renderChar(Context c,char character, int x, int y)
+	{
+		Sprite s = font.getSprite(character);
+		if(s!=null)
+		{
+			c.pushTransform();
+			c.appendTransform(Matrix.translation(x,y,0));
+			s.render(c);
+			c.popTransform();
 		}
 	}
 	
@@ -394,14 +408,33 @@ public class ConsoleEntity extends Entity
 			}
 			if(holder!=null)
 			{
-				holder.init(tokens, appendOnly, editable, font, cols, rows, this::makeVisible);
-				if(!holder.isInteractive() && !holder.isRendered())
+				holder.init(tokens, appendOnly, editable, font, cols, rows, this::makeVisible, computer);
+				if(!runningProgram())
 				{
+					runningInteractiveProgram = false;
+					interactiveProgram = null;
+					runningRenderedProgram = false;
+					renderedProgram = null;
+					appendOnly.append(editable.toString());
+					appendOnly.append('\n');
 					newPrompt();
 				}
 			}
 		}
 		
+	}
+	
+	public boolean runningProgram()
+	{
+		if(runningRenderedProgram)
+		{
+			return renderedProgram.isRunning();
+		}
+		else if(runningInteractiveProgram)
+		{
+			return interactiveProgram.isRunning();
+		}
+		return false;
 	}
 	
 	public void insertCharAtCursor(char c)
@@ -473,20 +506,20 @@ public class ConsoleEntity extends Entity
 	{
 		if(key == GLFW.GLFW_KEY_PAGE_UP)
 		{
-			startLine--;
+			startLine-=rows;
 		}
 		else if(key == GLFW.GLFW_KEY_PAGE_DOWN)
 		{
-			startLine++;
+			startLine+=rows;
 		}
 		
 		if(runningRenderedProgram)
 		{
 			if(key == GLFW.GLFW_KEY_END)
 			{
+				renderedProgram.stop();
 				appendOnly.append(editable.toString());
 				appendOnly.append('\n');
-				renderedProgram.stop();
 				runningRenderedProgram = false;
 				renderedProgram = null;
 				newPrompt();
@@ -570,6 +603,17 @@ public class ConsoleEntity extends Entity
 		else
 		{
 			overwriteCharAtCursor(c);
+		}
+	}
+	public void scroll(int dy, int modFlags)
+	{
+		if(Modifiers.isShiftDown(modFlags))
+		{
+			startLine -= dy*20;
+		}
+		else
+		{
+			startLine -= dy*3;
 		}
 	}
 }

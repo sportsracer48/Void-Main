@@ -3,11 +3,13 @@ package state.programming;
 import java.util.ArrayList;
 import java.util.List;
 
-import computer.Echo;
-import computer.ExecutableHolder;
-import computer.PythonExecutable;
-import computer.RepeatEcho;
-import computer.Vi;
+import computer.program.Echo;
+import computer.program.ExecutableHolder;
+import computer.program.Exit;
+import computer.program.PythonExecutable;
+import computer.program.RepeatEcho;
+import computer.program.Upload;
+import computer.program.Vi;
 
 public class CommandParser
 {
@@ -27,23 +29,27 @@ public class CommandParser
 		}
 		if(tokens[0].equals("echo"))
 		{
-			Echo test = new Echo();
-			return new ExecutableHolder(test);
+			return new ExecutableHolder(new Echo());
 		}
 		else if(tokens[0].equals("cons"))
 		{
-			RepeatEcho test = new RepeatEcho();
-			return new ExecutableHolder(test);
+			return new ExecutableHolder(new RepeatEcho());
 		}
 		else if(tokens[0].equals("python"))
 		{
-			PythonExecutable test = new PythonExecutable();
-			return new ExecutableHolder(test);
+			return new ExecutableHolder(new PythonExecutable());
 		}
 		else if(tokens[0].equals("vi"))
 		{
-			Vi test = new Vi();
-			return new ExecutableHolder(test);
+			return new ExecutableHolder(new Vi());
+		}
+		else if(tokens[0].equals("upload"))
+		{
+			return new ExecutableHolder(new Upload());
+		}
+		else if(tokens[0].equals("exit"))
+		{
+			return new ExecutableHolder(new Exit());
 		}
 		return null;
 	}

@@ -10,6 +10,8 @@ import org.lwjgl.glfw.GLFWCharCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
 import org.lwjgl.system.MemoryUtil;
 
+import state.GameState;
+
 public class GlobalInput
 {
 	Driver globalState; //lol I sure do love global state ;)
@@ -53,6 +55,11 @@ public class GlobalInput
 	public int getScreenHeight()
 	{
 		return globalState.wHeight;
+	}
+	public void changeState(GameState newState)
+	{
+		globalState.currentState.cleanup();
+		globalState.currentState = newState;
 	}
 	public void systemExit()
 	{

@@ -1,4 +1,4 @@
-package computer;
+package computer.program;
 
 import java.awt.FontMetrics;
 import java.awt.Toolkit;
@@ -16,33 +16,50 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
 
+import computer.system.Computer;
+
+import util.Color;
 import static state.programming.Modifiers.*;
 
 public class Vi implements RenderedExecutable
 {
-	StringBuffer output;
-	RegisteredFont font;
-	int cols,rows;
+	private StringBuffer output;
+	private RegisteredFont font;
+	private int cols,rows;
 	private int cursor;
+	private int leftBorder = 6;
 	
-	int selectStart=-1;
-	int selectEnd=-1;
+	private int selectStart=-1;
+	private int selectEnd=-1;
+	private int clickPos=-1;
+	private int charHeight,charWidth;
+	private int cursorX;
+	private int blinkTime = 0;
+	private int blinkPeriod = 500;
+	private boolean insert = true;
+	private IntConsumer makeVisible;
 	
-	int charHeight,charWidth;
+	private String fileName;
+	private boolean running = false;
+	private Computer system;
 	
-	int cursorX;
-	
-	int blinkTime = 0;
-	int blinkPeriod = 500;
-	
-	boolean insert = true;
-	
-	IntConsumer makeVisible;
-	
-	public void setup(String[] args, StringBuffer output, RegisteredFont consoleFont, int cols, int rows, IntConsumer makeVisible)
+	public void setup(String[] args, StringBuffer output, RegisteredFont consoleFont, int cols, int rows, IntConsumer makeVisible, Computer system)
 	{
+		if(args.length<2)
+		{
+			output.append("usage: vi [filename]");
+			return;
+		}
+		else
+		{
+			fileName = args[1];
+		}
+		
+		running = true;
+		
+		this.system = system;
 		this.output = output;
-		this.cols = cols;
+		this.cols = cols-getLeftBorder();
 		this.rows = rows;
 		this.font = consoleFont;
 		this.makeVisible = makeVisible;
@@ -50,12 +67,9 @@ public class Vi implements RenderedExecutable
 		charHeight = metrics.getHeight();
 		charWidth = metrics.charWidth(' ');
 		
-		for(int i = 0; i<256; i++)
+		if(system.exists(fileName))
 		{
-			output.append(i);
-			output.append(": ");
-			output.append((char)i);
-			output.append('\n');
+			output.append(system.read(fileName));
 		}
 	}
 	
@@ -78,11 +92,13 @@ public class Vi implements RenderedExecutable
 
 	public boolean isRunning()
 	{
-		return true;
+		return running;
 	}
 
 	public void stop()
 	{
+		this.output.setLength(0);
+		running = false;
 	}
 	
 	public boolean hasSelection()
@@ -102,10 +118,16 @@ public class Vi implements RenderedExecutable
 	public void render(Context c, int startRow)
 	{
 		int row = startRow;
-		int x=0;
+		int x= charWidth*getLeftBorder();
 		int y = row*charHeight;
-		
 		int col = 0;
+		int line = 0;
+		
+		if(row>=0)
+		{
+			renderPreLine(y,line,c);
+		}
+		
 		for(int i = 0; i<output.length() && row<rows; i++)
 		{
 			char character = output.charAt(i);
@@ -113,35 +135,17 @@ public class Vi implements RenderedExecutable
 			{
 				if(row>=0)
 				{
+					renderChar(character,x,y,c);
 					if(i>= selectStart && i<selectEnd)
 					{
-						c.pushTransform();
-						c.appendTransform(Matrix.scaling(charWidth,charHeight,0));
-						c.appendTransform(Matrix.translation(x,y,0));
-						UtilSprites.white.render(c);
-						c.popTransform();
+						renderSelect(x,y,c);
 					}
-					if(i==getCursor())
+					if(i==cursor)
 					{
 						GL11.glPushAttrib(GL11.GL_COLOR_BUFFER_BIT);
-						GL14.glBlendFuncSeparate(GL11.GL_ONE,GL11.GL_DST_COLOR,GL11.GL_ZERO,GL11.GL_ZERO);
-						GL20.glBlendEquationSeparate(GL14.GL_FUNC_SUBTRACT,GL14.GL_FUNC_ADD);
+						GL14.glBlendFuncSeparate(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ZERO, GL11.GL_ZERO, GL11.GL_ZERO);
+						GL20.glBlendEquationSeparate(GL14.GL_FUNC_ADD, GL14.GL_FUNC_ADD);
 						renderCursor(x,y,c);
-						GL11.glPopAttrib();
-					}
-					Sprite s = font.getSprite(character);
-					if(s!=null)
-					{
-						GL11.glPushAttrib(GL11.GL_COLOR_BUFFER_BIT);
-						
-						GL14.glBlendFuncSeparate(GL11.GL_ONE,GL11.GL_DST_COLOR,GL11.GL_ZERO,GL11.GL_ZERO);
-						GL20.glBlendEquationSeparate(GL14.GL_FUNC_SUBTRACT,GL14.GL_FUNC_ADD);
-						
-						c.pushTransform();
-						c.appendTransform(Matrix.translation(x,y,0));
-						s.render(c);
-						c.popTransform();
-						c.resetColor();
 						GL11.glPopAttrib();
 					}
 					c.resetColor();
@@ -152,25 +156,72 @@ public class Vi implements RenderedExecutable
 				{
 					y+= charHeight;
 					row++;
-					x = 0;
+					x = charWidth*getLeftBorder();
 					col = 0;
 				}
 			}
-			else
+			else//character == '\n'
 			{
-				if(i==getCursor())
+				if(i >= selectStart && i<selectEnd && row>=0)
+				{
+					renderSelect(x,y,c);
+				}
+				if(i==cursor && row>=0)
 				{
 					renderCursor(x,y,c);
 				}
 				y += charHeight;
 				row++;
-				x = 0;
+				x = charWidth*getLeftBorder();
 				col = 0;
+				line++;
+				if(row>=0 && row<rows)
+				{
+					renderPreLine(y,line,c);
+				}
 			}
 		}
-		if(getCursor()==output.length() && row<rows && row>=0)
+		if(cursor==output.length() && row<rows && row>=0)
 		{
 			renderCursor(x,y,c);
+		}
+	}
+	
+	private void renderSelect(int x, int y, Context c)
+	{
+		GL11.glPushAttrib(GL11.GL_COLOR_BUFFER_BIT);
+		GL14.glBlendFuncSeparate(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ZERO, GL11.GL_ZERO, GL11.GL_ZERO);
+		GL20.glBlendEquationSeparate(GL14.GL_FUNC_ADD, GL14.GL_FUNC_ADD);
+		c.setColor(Color.white);
+		c.pushTransform();
+		c.prependTransform(Matrix.translation(x,y,0));
+		c.prependTransform(Matrix.scaling(charWidth,charHeight,0));
+		UtilSprites.white.render(c);
+		c.popTransform();
+		GL11.glPopAttrib();
+	}
+	
+	private void renderPreLine(int y,int line, Context c)
+	{
+		c.setColor(Color.blue);
+		String number = String.valueOf(line)+"|  ";;
+		int rightBorder = getLeftBorder()-number.length();
+		for(int i = 0; i<number.length() && i<getLeftBorder(); i++)
+		{
+			renderChar(number.charAt(i),(i+rightBorder)*charWidth,y,c);
+		}
+		c.resetColor();
+	}
+	
+	private void renderChar(char character, int x, int y, Context c)
+	{
+		Sprite s = font.getSprite(character);
+		if(s!=null)
+		{
+			c.pushTransform();
+			c.appendTransform(Matrix.translation(x,y,0));
+			s.render(c);
+			c.popTransform();
 		}
 	}
 
@@ -178,11 +229,17 @@ public class Vi implements RenderedExecutable
 	{
 		if(blinkTime<blinkPeriod/2)
 		{
+			c.setColor(Color.white);
 			c.pushTransform();
 			c.appendTransform(Matrix.translation(x,y,0));
 			font.getSprite(getCursorChar()).render(c);
 			c.popTransform();
 		}
+	}
+	
+	private int getLeftBorder()
+	{
+		return leftBorder;
 	}
 	
 	public int getPos(int x0, int y0)
@@ -230,7 +287,7 @@ public class Vi implements RenderedExecutable
 		int x = 0;
 		for(int i = 0; i<output.length(); i++)
 		{
-			if(i==getCursor())
+			if(i==cursor)
 			{
 				return x;
 			}
@@ -246,34 +303,13 @@ public class Vi implements RenderedExecutable
 		return x;
 	}
 	
-	int clickPos=-1;
-	public void mouseClicked(int x, int y)
-	{
-		setCursorPos(x,y);
-		clickPos = cursor;
-	}
-	public void mouseMoved(int x, int y)
-	{
-		if(clickPos!=-1)
-		{
-			setCursorPos(x,y);
-			selectStart = Math.min(cursor, clickPos);
-			selectEnd = Math.max(cursor, clickPos);
-		}
-	}
-
-	public void mouseReleased()
-	{
-		clickPos = -1;
-	}
-	
 	public int getCursorY()
 	{
 		int y = 0;
 		int x = 0;
 		for(int i = 0; i<output.length(); i++)
 		{
-			if(i==getCursor())
+			if(i==cursor)
 			{
 				return y;
 			}
@@ -289,6 +325,28 @@ public class Vi implements RenderedExecutable
 		}
 		return y;
 	}
+	
+	public void mouseClicked(int x, int y)
+	{
+		selectStart = selectEnd = -1;
+		setCursorPos(x-getLeftBorder(),y);
+		clickPos = cursor;
+	}
+	public void mouseMoved(int x, int y)
+	{
+		if(clickPos!=-1)
+		{
+			setCursorPos(x-getLeftBorder(),y);
+			selectStart = Math.min(cursor, clickPos);
+			selectEnd = Math.max(cursor, clickPos);
+		}
+	}
+	public void mouseReleased()
+	{
+		clickPos = -1;
+	}
+	
+	
 	
 	public void acceptPaste(String s)
 	{
@@ -306,74 +364,74 @@ public class Vi implements RenderedExecutable
 	}
 	private void leftPress(int modFlags)
 	{
-		if(isShiftDown(modFlags) && getCursor() > 0)
+		if(isShiftDown(modFlags) && cursor > 0)
 		{
 			if(selectStart == -1)
 			{
-				selectStart = getCursor()-1;
-				selectEnd = getCursor();
-				setCursor(getCursor() - 1);
+				selectStart = cursor-1;
+				selectEnd = cursor;
+				setCursor(cursor - 1);
 				cursorX = getCursorX();
 			}
-			else if(selectEnd == getCursor() && selectStart == getCursor())
+			else if(selectEnd == cursor && selectStart == cursor)
 			{
 				selectStart--;
-				setCursor(getCursor() - 1);
+				setCursor(cursor - 1);
 				cursorX = getCursorX();
 			}
-			else if(selectEnd == getCursor())
+			else if(selectEnd == cursor)
 			{
 				selectEnd--;
-				setCursor(getCursor() - 1);
+				setCursor(cursor - 1);
 				cursorX = getCursorX();
 			}
-			else if(selectStart == getCursor())
+			else if(selectStart == cursor)
 			{
 				selectStart --;
-				setCursor(getCursor() - 1);
+				setCursor(cursor - 1);
 				cursorX = getCursorX();
 			}
 		}
-		else if(getCursor()>0)
+		else if(cursor>0)
 		{
-			setCursor(getCursor() - 1);
+			setCursor(cursor - 1);
 			cursorX = getCursorX();
 			selectStart = selectEnd = -1;
 		}
 	}
 	private void rightPress(int modFlags)
 	{
-		if(isShiftDown(modFlags) && getCursor() < output.length())
+		if(isShiftDown(modFlags) && cursor < output.length())
 		{
 			if(selectStart == -1)
 			{
-				selectStart = getCursor();
-				selectEnd = getCursor()+1;
-				setCursor(getCursor() + 1);
+				selectStart = cursor;
+				selectEnd = cursor+1;
+				setCursor(cursor + 1);
 				cursorX = getCursorX();
 			}
-			else if(selectEnd == getCursor() && selectStart == getCursor())
+			else if(selectEnd == cursor && selectStart == cursor)
 			{
 				selectEnd++;
-				setCursor(getCursor() + 1);
+				setCursor(cursor + 1);
 				cursorX = getCursorX();
 			}
-			else if(selectEnd == getCursor())
+			else if(selectEnd == cursor)
 			{
 				selectEnd++;
-				setCursor(getCursor() + 1);
+				setCursor(cursor + 1);
 				cursorX = getCursorX();
 			}
-			else if(selectStart == getCursor())
+			else if(selectStart == cursor)
 			{
 				selectStart++;
-				setCursor(getCursor() + 1);
+				setCursor(cursor + 1);
 				cursorX = getCursorX();
 			}
 		}
-		else if(getCursor() < output.length())
+		else if(cursor < output.length())
 		{
-			setCursor(getCursor() + 1);
+			setCursor(cursor + 1);
 			cursorX = getCursorX();
 			selectStart = selectEnd = -1;
 		}
@@ -386,20 +444,20 @@ public class Vi implements RenderedExecutable
 		
 		if(isShiftDown(modFlags))
 		{
-			int posA=getCursor(),posB=getCursor();
+			int posA=cursor,posB=cursor;
 			if(selectStart == -1)
 			{
 				posA = newPos;
-				posB = getCursor();
+				posB = cursor;
 				setCursor(newPos);
 			}
-			else if(selectEnd == getCursor())
+			else if(selectEnd == cursor)
 			{
 				posA = selectStart;
 				posB = newPos;
 				setCursor(newPos);
 			}
-			else if(selectStart == getCursor())
+			else if(selectStart == cursor)
 			{
 				posA = selectEnd;
 				posB = newPos;
@@ -422,20 +480,20 @@ public class Vi implements RenderedExecutable
 		
 		if(isShiftDown(modFlags))
 		{
-			int posA=getCursor(),posB=getCursor();
+			int posA=cursor,posB=cursor;
 			if(selectStart == -1)
 			{
 				posA = newPos;
-				posB = getCursor();
+				posB = cursor;
 				setCursor(newPos);
 			}
-			else if(selectEnd == getCursor())
+			else if(selectEnd == cursor)
 			{
 				posA = selectStart;
 				posB = newPos;
 				setCursor(newPos);
 			}
-			else if(selectStart == getCursor())
+			else if(selectStart == cursor)
 			{
 				posA = selectEnd;
 				posB = newPos;
@@ -472,7 +530,24 @@ public class Vi implements RenderedExecutable
 		}
 		else if(key == GLFW.GLFW_KEY_ENTER)
 		{
+			boolean endsInColon = cursor>0 && cursor-1 < output.length() && output.charAt(cursor-1)==':';
+			//boolean endLine = cursor == output.length() || output.charAt(cursor)=='\n';
+			int lineStart = cursor;
+			for(int i = cursor-1; i>=0 && output.charAt(i)!='\n';i--)
+			{
+				lineStart = i;
+			}
+			String lastLine = output.substring(lineStart, cursor);
 			insertChar('\n');
+			for(int i = 0; i<lastLine.length() && lastLine.charAt(i) == ' '; i++)
+			{
+				insertChar(' ');
+			}
+			if(endsInColon)
+			{
+				insertChar(' ');
+				insertChar(' ');
+			}
 		}
 		else if(key == GLFW.GLFW_KEY_TAB)
 		{
@@ -487,10 +562,10 @@ public class Vi implements RenderedExecutable
 				output.delete(selectStart, selectEnd);
 				selectStart = selectEnd = -1;
 			}
-			else if(getCursor()>0 && getCursor()<=output.length())
+			else if(cursor>0 && cursor<=output.length())
 			{
-				output.deleteCharAt(getCursor()-1);
-				setCursor(getCursor() - 1);
+				output.deleteCharAt(cursor-1);
+				setCursor(cursor - 1);
 			}
 		}
 		else if(key == GLFW.GLFW_KEY_DELETE)
@@ -501,9 +576,9 @@ public class Vi implements RenderedExecutable
 				output.delete(selectStart, selectEnd);
 				selectStart = selectEnd = -1;
 			}
-			else if(getCursor()<output.length())
+			else if(cursor<output.length())
 			{
-				output.deleteCharAt(getCursor());
+				output.deleteCharAt(cursor);
 				makeVisible.accept(getCursorY());
 			}
 		}
@@ -526,6 +601,10 @@ public class Vi implements RenderedExecutable
 			setCursor(selectStart);
 			output.delete(selectStart, selectEnd);
 			selectStart = selectEnd = -1;
+		}
+		else if(key == GLFW.GLFW_KEY_S && isControlDown(modFlags))
+		{
+			system.write(fileName, output.toString());
 		}
 		else if(key == GLFW.GLFW_KEY_INSERT)
 		{
@@ -550,8 +629,8 @@ public class Vi implements RenderedExecutable
 			output.delete(selectStart, selectEnd);
 			selectStart = selectEnd = -1;
 		}
-		output.insert(getCursor(), c);
-		setCursor(getCursor() + 1);
+		output.insert(cursor, c);
+		setCursor(cursor + 1);
 		cursorX = getCursorX();
 	}
 	public void charTyped(char c)
@@ -568,24 +647,18 @@ public class Vi implements RenderedExecutable
 				output.delete(selectStart, selectEnd);
 				selectStart = selectEnd = -1;
 			}
-			if(output.charAt(getCursor()) == '\n')
+			if(cursor == output.length() || output.charAt(cursor) == '\n')
 			{
-				output.insert(getCursor(), c);
+				output.insert(cursor, c);
 			}
 			else
 			{
-				output.setCharAt(getCursor(), c);
+				output.setCharAt(cursor, c);
 			}
-			setCursor(getCursor() + 1);
+			setCursor(cursor + 1);
 			cursorX = getCursorX();
 		}
 	}
-
-	int getCursor()
-	{
-		return cursor;
-	}
-
 	void setCursor(int cursor)
 	{
 		this.cursor = cursor;

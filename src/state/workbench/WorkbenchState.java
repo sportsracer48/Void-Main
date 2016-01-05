@@ -57,6 +57,7 @@ public class WorkbenchState extends GameState
 	FluidEntity mouseCompanion = new FluidEntity(0,0,0);
 	
 	Sprite wireSymbol;
+	Sprite programmingSymbol;
 	
 	Item specialArduino;
 	OuinoEnvironment testEnvironment;
@@ -93,6 +94,22 @@ public class WorkbenchState extends GameState
 		}
 	};
 	
+	Mode programming = new Mode()
+	{
+
+		public void enable()
+		{
+			mouseCompanion.setSpriteAndSize(programmingSymbol);
+		}
+
+		public void disable()
+		{
+			mouseCompanion.setSpriteAndSize(null);
+			mouseCompanion.setColor(Color.white);
+		}
+		
+	};
+	
 	ModeManager manager = new ModeManager(edit);
 	
 	List<Entity> ui;
@@ -114,6 +131,10 @@ public class WorkbenchState extends GameState
 				{
 					manager.setMode(edit);
 				}
+			}
+			else if(manager.getMode() == programming)
+			{
+				manager.setMode(edit);
 			}
 			else
 			{
@@ -332,7 +353,7 @@ public class WorkbenchState extends GameState
 		tools = windowBuilder.tools;
 		
 		grid = new ChassisGrid(40,5,1,
-				sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring,history,
+				sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring,programming,history,
 				sprites.getSprite("wire segment x.png"),sprites.getSprite("wire segment y.png"),sprites.getSprite("wire segment z.png"));
 		
 		grid.addExternalBreakouts(breakout,sprites.getSprite("extern pin.png"),sprites.getSprite("breakout bg.png"), 
@@ -340,7 +361,7 @@ public class WorkbenchState extends GameState
 		
 		testEnvironment = new OuinoEnvironment(windowBuilder.specialArduino.getPins());
 		
-		ToolInitializer.init(tools, sprites, inventory, partMounting, testEnvironment, manager, wiring, history);
+		ToolInitializer.init(tools, sprites, inventory, partMounting, testEnvironment, manager, wiring, programming, history);
 		
 		//scene init
 		add(grid);
@@ -351,6 +372,7 @@ public class WorkbenchState extends GameState
 		addRenderable(laptop);
 		
 		wireSymbol = sprites.getSprite("wire symbol.png");
+		programmingSymbol = sprites.getSprite("programming symbol.png");
 		addActable(mouseCompanion);
 		TextEntity.setDefaultBgSprites(
 				sprites.getSprite("fade corner.png"),

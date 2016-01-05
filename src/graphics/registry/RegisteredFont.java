@@ -24,6 +24,7 @@ public class RegisteredFont
 	}
 	private Sprite getSpriteSlow(char c)
 	{
+		System.out.println(name+"/"+c);
 		return atlas.getSpriteGlobal(name+"/"+c);
 	}
 	private void accelerate()

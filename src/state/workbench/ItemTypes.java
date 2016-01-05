@@ -1,8 +1,13 @@
 package state.workbench;
 
+import java.util.List;
+
+import program.Environment;
+import program.OuinoEnvironment;
 import util.Grid;
 import breadboard.BreadboardUtil;
 import game.item.ItemType;
+import game.item.Pin;
 import graphics.Sprite;
 import graphics.registry.SpriteAtlas;
 
@@ -29,7 +34,13 @@ public class ItemTypes
 		final Sprite ledOff = sprites.getSprite("led off.png");
 		
 		breakout = new ItemType(null);
-		microController = new ItemType(sprites.getSprite("ouino.png"),sprites.getSprite("ouino item.png"));
+		microController = new ItemType(sprites.getSprite("ouino.png"),sprites.getSprite("ouino item.png"))
+		{
+			public Environment getEnvironmentFor(List<Pin> pins)
+			{
+				return new OuinoEnvironment(pins);
+			}
+		};
 		battery = new ItemType(sprites.getSprite("battery.png"),sprites.getSprite("battery item.png"));
 		antenna = new ItemType(sprites.getSprite("antenna ic.png"),sprites.getSprite("antenna item.png"));
 		breadboard = new ItemType(sprites.getSprite("breadboard.png"),sprites.getSprite("breadboard item.png"));

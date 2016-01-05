@@ -281,10 +281,7 @@ public class OuinoEnvironment implements Environment
 	
 	public boolean powered()
 	{
-		return true;
-		//TODO
-		//DEBUG
-		//return vIn.getReceivedPotential()>0 && isGrounded();
+		return vIn.getReceivedPotential()>0 && isGrounded();
 	}
 	public void updatePower()
 	{

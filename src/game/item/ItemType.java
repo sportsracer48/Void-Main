@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import program.Environment;
 import util.Grid;
 import util.Grid.Coord;
 import graphics.Sprite;
@@ -274,5 +275,10 @@ public class ItemType //kinda reflexive, but hey, whatever
 	public void setPinUpdate(BiConsumer<List<Pin>, ItemEntity> pinUpdate)
 	{
 		this.pinUpdate = pinUpdate;
+	}
+
+	public Environment getEnvironmentFor(List<Pin> pins)
+	{
+		return null;
 	}
 }

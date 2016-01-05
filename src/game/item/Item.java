@@ -3,6 +3,7 @@ package game.item;
 import java.util.ArrayList;
 import java.util.List;
 
+import program.Environment;
 import state.workbench.game.WiringMode;
 import state.workbench.graphics.PinHighlight;
 import graphics.Sprite;
@@ -12,6 +13,7 @@ public class Item
 {
 	ItemType type;
 	List<Pin> pins;
+	Environment env;
 	
 	public Item(ItemType type)
 	{
@@ -89,5 +91,15 @@ public class Item
 	public List<Pin> getPins()
 	{
 		return pins;
+	}
+
+	public Environment getEnvironment()
+	{
+		if(env!=null)
+		{
+			return env;
+		}
+		env = type.getEnvironmentFor(getPins());
+		return env;
 	}
 }

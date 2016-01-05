@@ -8,12 +8,11 @@ import state.Mode;
 import state.ModeManager;
 import state.ui.Button;
 import state.workbench.game.EditHistory;
-import util.FileLoader;
 import util.Grid;
 
 public class ToolInitializer
 {
-	public static void init(Entity tools, SpriteAtlas sprites, Entity inventory, Entity partMounting, Environment testEnvironment, ModeManager manager, Mode wiring,EditHistory history)
+	public static void init(Entity tools, SpriteAtlas sprites, Entity inventory, Entity partMounting, Environment testEnvironment, ModeManager manager, Mode wiring, Mode programming,EditHistory history)
 	{
 		Button[] toolButtons = new Button[10];
 		
@@ -32,15 +31,7 @@ public class ToolInitializer
 		toolButtons[0].setOnPress(()->inventory.setEnabled(true));
 		toolButtons[1].setOnPress(()->partMounting.setEnabled(true));
 		toolButtons[2].setOnPress(()->{
-			try
-			{
-				String program = FileLoader.getFileContents("blink.py");
-				testEnvironment.uplode(program);
-			} 
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
+			manager.setMode(programming);
 		});
 		toolButtons[3].setOnPress(()->{
 			manager.setMode(wiring);

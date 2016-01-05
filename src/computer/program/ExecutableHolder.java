@@ -1,6 +1,8 @@
-package computer;
+package computer.program;
 
 import java.util.function.IntConsumer;
+
+import computer.system.Computer;
 
 import graphics.registry.RegisteredFont;
 import state.programming.AppendOnlyBuffer;
@@ -32,18 +34,18 @@ public class ExecutableHolder
 		mode = RENDERED;
 	}
 	
-	public void init(String[] args, AppendOnlyBuffer appendOnly, StringBuffer editable, RegisteredFont consoleFont, int cols, int rows, IntConsumer makeVisible)
+	public void init(String[] args, AppendOnlyBuffer appendOnly, StringBuffer editable, RegisteredFont consoleFont, int cols, int rows, IntConsumer makeVisible, Computer system)
 	{
 		switch(mode)
 		{
 		case WRITE_ONLY:
-			writeOnlyExec.run(args, appendOnly);
+			writeOnlyExec.run(args, appendOnly, system);
 			break;
 		case INTERACTIVE:
-			interactiveExec.setup(args, appendOnly);
+			interactiveExec.setup(args, appendOnly, system);
 			break;
 		case RENDERED:
-			renderedExec.setup(args, editable, consoleFont, cols, rows, makeVisible);
+			renderedExec.setup(args, editable, consoleFont, cols, rows, makeVisible, system);
 			break;
 		}
 	}

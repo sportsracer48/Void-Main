@@ -1,4 +1,4 @@
-package computer;
+package computer.program;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -6,6 +6,8 @@ import java.io.PrintStream;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.util.InteractiveInterpreter;
+
+import computer.system.Computer;
 
 import program.PythonSanitizer;
 import state.programming.AppendOnlyBuffer;
@@ -18,7 +20,7 @@ public class PythonExecutable implements InteractiveExecutable
 	
 	volatile boolean running;
 	
-	public void setup(String[] args, AppendOnlyBuffer out)
+	public void setup(String[] args, AppendOnlyBuffer out, Computer system)
 	{
 		this.out = out;
 		interpreter = new InteractiveInterpreter();

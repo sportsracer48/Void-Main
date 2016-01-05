@@ -29,7 +29,7 @@ public abstract class GameState
 	public RenderList uiList = new RenderList(false);
 	public ActList actList = new ActList();
 	protected GlobalInput input;
-	long window;
+	protected long window;
 	
 	public GameState(GlobalInput input, long window)
 	{
@@ -44,6 +44,14 @@ public abstract class GameState
 	public void showCursor()
 	{
 		GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+	}
+	public void setCursor(long cursor)
+	{
+		GLFW.glfwSetCursor(window, cursor);
+	}
+	public void changeTo(GameState other)
+	{
+		input.changeState(other);
 	}
 	
 	public String getClipboardString()
@@ -161,6 +169,8 @@ public abstract class GameState
 	public abstract void renderAll(Context c);
 	
 	public String getPerformanceString(){return "";}
+	
+	public void cleanup(){}
 	
 	public void update(int dt)
 	{

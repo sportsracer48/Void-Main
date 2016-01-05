@@ -1,10 +1,12 @@
-package computer;
+package computer.program;
+
+import computer.system.Computer;
 
 import state.programming.AppendOnlyBuffer;
 
 public interface InteractiveExecutable
 {
-	public void setup(String[] args, AppendOnlyBuffer out);
+	public void setup(String[] args, AppendOnlyBuffer out,Computer system);
 	public default String getPrompt()
 	{
 		return ">";

@@ -1,13 +1,15 @@
-package computer;
+package computer.program;
 
 import java.util.function.IntConsumer;
+
+import computer.system.Computer;
 
 import graphics.Context;
 import graphics.registry.RegisteredFont;
 
 public interface RenderedExecutable
 {
-	public void setup(String[] args, StringBuffer output, RegisteredFont consoleFont, int cols, int rows, IntConsumer makeVisible);
+	public void setup(String[] args, StringBuffer output, RegisteredFont consoleFont, int cols, int rows, IntConsumer makeVisible, Computer system);
 	public void act(int dt);
 	public boolean isRunning();
 	public void stop();

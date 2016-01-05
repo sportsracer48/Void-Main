@@ -149,4 +149,9 @@ public class Context
 	{
 		return modelMat;
 	}
+
+	public void setColor(java.awt.Color gray)
+	{
+		setColor(new Color(gray.getRGB()));
+	}
 }

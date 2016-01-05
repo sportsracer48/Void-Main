@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.lwjgl.glfw.GLFW;
 
+import entry.GlobalState;
+import state.Mode;
 import state.ModeManager;
 import state.ui.ClickableArea;
 import state.workbench.controller.GrabBound;
@@ -40,15 +42,16 @@ public class ChassisGrid extends Entity
 	ItemManipulator manip;
 	ModeManager manager;
 	WiringMode wiring;
+	Mode programming;
 	EditHistory history;
 	
-	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring, EditHistory history, Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
+	public ChassisGrid(float x, float y, float z, Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring, Mode programmingMode, EditHistory history, Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
 	{
-		this(10,10,21,37,55,36,x,y,z,base, manip,manager,wiring,history,wireSegmentX,wireSegmentY,wireSegmentZ);
+		this(10,10,21,37,55,36,x,y,z,base, manip,manager,wiring,programmingMode,history,wireSegmentX,wireSegmentY,wireSegmentZ);
 	}
 	
 	private ChassisGrid(int width, int height, float offsetX, float offsetY, float xStep, float yStep, float x, float y, float z, 
-			Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring, EditHistory history,
+			Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring, Mode programmingMode, EditHistory history,
 			Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
 	{
 		super(x,y,z,base);
@@ -89,6 +92,7 @@ public class ChassisGrid extends Entity
 		this.manip = manip;
 		this.manager = manager;
 		this.wiring = wiring;
+		this.programming = programmingMode;
 		
 		grid.forEachWithIndicies((x2,y2,col,row)->
 		{
@@ -129,7 +133,17 @@ public class ChassisGrid extends Entity
 					{
 						return;
 					}
-					if(manager.getMode()!=wiring)
+					if(manager.getMode()==wiring)
+					{
+						wiring.showSelector(item);
+					}
+					else if(manager.getMode()==programming)
+					{
+						//TODO
+						GlobalState.laptop.setConnected(item.getEnvironment());
+						GlobalState.currentWorkbench.changeTo(GlobalState.currentProgramming);
+					}
+					else
 					{
 						Coord c = getCoords(item);
 						Coord squareGrabbed = new Coord(col-c.x,row-c.y);
@@ -139,10 +153,6 @@ public class ChassisGrid extends Entity
 						showReturnPreview.setValue(true);
 						grabbedSquare.setValue(squareGrabbed);
 					}
-					else
-					{
-						wiring.showSelector(item);
-					}	
 				}
 			});
 			addChild(a);
