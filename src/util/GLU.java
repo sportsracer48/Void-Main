@@ -30,6 +30,11 @@ public class GLU
 		return String.format("Unknown error %s", Integer.toHexString(glError));
 	}
 	
+	public static float lerp(float start, float end, float t)
+	{
+		return start+(end-start)*t;
+	}
+	
 	public static void print2DArray(float[][] array)
 	{
 		for(int y = 0; y<array[0].length; y++)

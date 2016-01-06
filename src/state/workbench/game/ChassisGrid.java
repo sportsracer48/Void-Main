@@ -12,6 +12,7 @@ import entry.GlobalState;
 import state.Mode;
 import state.ModeManager;
 import state.ui.ClickableArea;
+import state.workbench.ZoomTransition;
 import state.workbench.controller.GrabBound;
 import state.workbench.controller.ItemAcceptor;
 import state.workbench.controller.ItemManipulator;
@@ -48,14 +49,16 @@ public class ChassisGrid extends Entity
 	
 	public ChassisGrid(float x, float y, float z, 
 			Sprite base,ItemManipulator manip,ModeManager manager,WiringMode wiring, Mode programmingMode, EditHistory history, ProgramCoordinator coordinator,
-			Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
+			Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ,
+			ZoomTransition programmingTransition)
 	{
-		this(10,10,21,37,55,36,x,y,z,base, manip,manager,wiring,programmingMode,history,coordinator,wireSegmentX,wireSegmentY,wireSegmentZ);
+		this(10,10,21,37,55,36,x,y,z,base, manip,manager,wiring,programmingMode,history,coordinator,wireSegmentX,wireSegmentY,wireSegmentZ,programmingTransition);
 	}
 	
 	private ChassisGrid(int width, int height, float offsetX, float offsetY, float xStep, float yStep, float x, float y, float z, 
 			Sprite base, ItemManipulator manip,ModeManager manager,WiringMode wiring, Mode programmingMode, EditHistory history, ProgramCoordinator coordinator,
-			Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ)
+			Sprite wireSegmentX, Sprite wireSegmentY, Sprite wireSegmentZ,
+			ZoomTransition programmingTransition)
 	{
 		super(x,y,z,base);
 		
@@ -144,7 +147,7 @@ public class ChassisGrid extends Entity
 					{
 						//TODO
 						GlobalState.laptop.setConnected(item.getEnvironment(coordinator));
-						GlobalState.currentWorkbench.changeTo(GlobalState.currentProgramming);
+						programmingTransition.start();
 					}
 					else
 					{

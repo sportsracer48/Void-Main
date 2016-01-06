@@ -5,6 +5,9 @@ import math.Matrix;
 public class Camera
 {
 	float x, y, scale, screenWidth, screenHeight;
+	
+	boolean allowAnyScale = false;
+	
 	public Camera(float x, float y, float screenWidth, float screenHeight, float scale)
 	{
 		this.x=x;
@@ -57,24 +60,44 @@ public class Camera
 		return screenWidth/scale;
 	}
 	
+	public void setBounds(float left, float right, float top, float bottom)
+	{
+		float width = right-left;
+		scale = screenWidth/width;
+		setLeftX(left);
+		setTopY(top);
+	}
 	
 	public Matrix getView()
 	{
-		if(scale<1)
+		if(allowAnyScale)
 		{
-			scale = 1;
+			return new Matrix(new float[]{
+					scale,0,0,-x*scale+screenWidth/2,
+					0,scale,0,-y*scale+screenHeight/2,
+					0,0,scale,0,
+					0,0,0,1
+					},4);
 		}
-		if(scale>32)
+		else
 		{
-			scale = 32;
+			if(scale<1)
+			{
+				scale = 1;
+			}
+			if(scale>32)
+			{
+				scale = 32;
+			}
+			return new Matrix(new float[]{
+					Math.round(scale),0,0,Math.round(-x*scale)+screenWidth/2,
+					0,Math.round(scale),0,Math.round(-y*scale)+screenHeight/2,
+					0,0,Math.round(scale),0,
+					0,0,0,1
+					},4);
 		}
-		return new Matrix(new float[]{
-				Math.round(scale),0,0,Math.round(-x*scale)+screenWidth/2,
-				0,Math.round(scale),0,Math.round(-y*scale)+screenHeight/2,
-				0,0,Math.round(scale),0,
-				0,0,0,1
-				},4);
 	}
+	
 	public Matrix getInverseView()
 	{
 		float invScale = 1f/scale;
@@ -84,5 +107,15 @@ public class Camera
 				0,0,invScale,0,
 				0,0,0,1
 				},4);
+	}
+
+	public void setAllowAnyScale(boolean allowAnyScale)
+	{
+		this.allowAnyScale = allowAnyScale;
+	}
+
+	public boolean doesAllowAnyScale()
+	{
+		return allowAnyScale;
 	}
 }

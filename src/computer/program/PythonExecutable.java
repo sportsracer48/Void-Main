@@ -17,6 +17,8 @@ public class PythonExecutable implements InteractiveExecutable
 	AppendOnlyBuffer out;
 	InteractiveInterpreter interpreter;
 	OutputStream stdOut;
+	int indents = 0;
+	String multiLineCommand = "";
 	
 	volatile boolean running;
 	
@@ -37,8 +39,33 @@ public class PythonExecutable implements InteractiveExecutable
 	public void acceptCommand(String command)
 	{
 		out.appendln(getPrompt()+command);
+		if(!multiLineCommand.equals(""))
+		{
+			if(command.startsWith(" "))
+			{
+				multiLineCommand += "\n"+command;
+				return;
+			}
+		}
+		else if(command.endsWith(":"))
+		{
+			if(multiLineCommand.equals(""))
+			{
+				multiLineCommand = command;
+			}
+			else
+			{
+				multiLineCommand += "\n"+command;
+			}
+			return;
+		}
 		try
 		{
+			if(!multiLineCommand.equals(""))
+			{
+				command = multiLineCommand;
+				multiLineCommand = "";
+			}
 			PythonSanitizer sanitizer = new PythonSanitizer(command);
 			if(!sanitizer.isLegal())
 			{
@@ -70,7 +97,14 @@ public class PythonExecutable implements InteractiveExecutable
 	
 	public String getPrompt()
 	{
-		return ">>> ";
+		if(multiLineCommand.equals(""))
+		{
+			return ">>> ";
+		}
+		else
+		{
+			return "... ";
+		}
 	}
 
 	public void act(int dt)

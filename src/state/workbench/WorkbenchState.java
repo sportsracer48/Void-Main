@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFW;
 
 import program.ProgramCoordinator;
 import entry.GlobalInput;
+import entry.GlobalState;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
@@ -112,8 +113,14 @@ public class WorkbenchState extends GameState
 	
 	ChassisGrid grid;
 	
+	ZoomTransition programmingTransition = new ZoomTransition(camera,700,100);
+	
 	public void keyPressed(int key)
 	{
+		if(programmingTransition.isRunning())
+		{
+			return;
+		}
 		if(key == GLFW.GLFW_KEY_ESCAPE)
 		{
 			if(manager.getMode() == wiring)
@@ -136,7 +143,7 @@ public class WorkbenchState extends GameState
 				systemExit();
 			}
 		}
-		if(key == GLFW.GLFW_KEY_KP_ADD || key == GLFW.GLFW_KEY_EQUAL)
+		else if(key == GLFW.GLFW_KEY_KP_ADD || key == GLFW.GLFW_KEY_EQUAL)
 		{
 			camera.scale*=2;
 		}
@@ -144,21 +151,25 @@ public class WorkbenchState extends GameState
 		{
 			camera.scale/=2;
 		}
-		if(key == GLFW.GLFW_KEY_Z && (isKeyPressed(GLFW.GLFW_KEY_LEFT_CONTROL) || isKeyPressed(GLFW.GLFW_KEY_RIGHT_CONTROL)))
+		else if(key == GLFW.GLFW_KEY_Z && (isKeyPressed(GLFW.GLFW_KEY_LEFT_CONTROL) || isKeyPressed(GLFW.GLFW_KEY_RIGHT_CONTROL)))
 		{
 			history.undo();
 		}
-		if(key == GLFW.GLFW_KEY_Y && (isKeyPressed(GLFW.GLFW_KEY_LEFT_CONTROL) || isKeyPressed(GLFW.GLFW_KEY_RIGHT_CONTROL)))
+		else if(key == GLFW.GLFW_KEY_Y && (isKeyPressed(GLFW.GLFW_KEY_LEFT_CONTROL) || isKeyPressed(GLFW.GLFW_KEY_RIGHT_CONTROL)))
 		{
 			history.redo();
 		}
-		if(key == GLFW.GLFW_KEY_E)
+		else if(key == GLFW.GLFW_KEY_E)
 		{
 			manager.setMode(wiring);
 		}
 		else if(key == GLFW.GLFW_KEY_Q)
 		{
 			manager.setMode(edit);
+		}
+		else if(key == GLFW.GLFW_KEY_R)
+		{
+			manager.setMode(programming);
 		}
 	}
 	
@@ -170,6 +181,10 @@ public class WorkbenchState extends GameState
 	
 	public void mousePressed(int button)
 	{
+		if(programmingTransition.isRunning())
+		{
+			return;
+		}
 		Matrix worldMouse = worldMouse();
 		globalClickArea.handleClick(getMouseX(), getMouseY(),button, Matrix.identity(4));
 		if(mouseContext.hasMouseHolder())
@@ -197,6 +212,10 @@ public class WorkbenchState extends GameState
 	
 	public void mouseReleased(int button)
 	{
+		if(programmingTransition.isRunning())
+		{
+			return;
+		}
 		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
 		{
 			globalClickArea.handleAnyRelease();
@@ -217,6 +236,10 @@ public class WorkbenchState extends GameState
 	
 	public void mouseMoved(float x, float y)
 	{
+		if(programmingTransition.isRunning())
+		{
+			return;
+		}
 		Matrix worldMouse = worldMouse();
 		mouseCompanion.setPos(Math.round(x+16), Math.round(y+16));
 		globalClickArea.handleMove(x, y, Matrix.identity(4), mouseContext);
@@ -243,6 +266,19 @@ public class WorkbenchState extends GameState
 	
 	public void afterInput(int dt)
 	{
+		if(programmingTransition.isRunning())
+		{
+			if(programmingTransition.isDone())
+			{
+				changeTo(GlobalState.currentProgramming);
+				programmingTransition.reset();
+			}
+			else
+			{
+				programmingTransition.act(dt);
+			}
+			return;
+		}
 		float cameraSpeed = 1f/camera.scale;//pixels per millisecond
 		if(
 				(isKeyPressed(GLFW.GLFW_KEY_W) ^ isKeyPressed(GLFW.GLFW_KEY_S)) &&
@@ -349,7 +385,8 @@ public class WorkbenchState extends GameState
 		
 		grid = new ChassisGrid(40,5,1,
 				sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring,programming,history,coordinator,
-				sprites.getSprite("wire segment x.png"),sprites.getSprite("wire segment y.png"),sprites.getSprite("wire segment z.png"));
+				sprites.getSprite("wire segment x.png"),sprites.getSprite("wire segment y.png"),sprites.getSprite("wire segment z.png"),
+				programmingTransition);
 		
 		grid.addExternalBreakouts(breakout,sprites.getSprite("extern pin.png"),sprites.getSprite("breakout bg.png"), 
 				windowBuilder.top, windowBuilder.bot, windowBuilder.left, windowBuilder.right, windowBuilder.front, windowBuilder.back);

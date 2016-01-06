@@ -48,7 +48,8 @@ public class ProgrammingState extends GameState
 	{
 		if(key == GLFW.GLFW_KEY_ESCAPE)
 		{
-			systemExit();
+			//TODO
+			changeTo(GlobalState.currentWorkbench);
 		}
 		console.keyPressed(key, getModFlags());
 		if(isControlDown() && key == GLFW.GLFW_KEY_V)
