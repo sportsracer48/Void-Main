@@ -116,6 +116,7 @@ public class ConsoleEntity extends Entity
 	}
 	public void act(int dt)
 	{
+		if (getCommand().length()>0)System.out.println((int)getCommand().charAt(0));
 		blinkTime = (blinkTime+dt)%blinkPeriod;
 		if(runningInteractiveProgram)
 		{
