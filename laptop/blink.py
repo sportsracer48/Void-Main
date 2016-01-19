@@ -1,7 +1,11 @@
-def setup():
-  pinMode(13,OUTPUT)
-def loop():
-  digitalWrite(13,HIGH)
-  delay(1000)
-  digitalWrite(13,LOW)
-  delay(1000)
+i=5
+def test():
+    global i
+    def tarst():
+        print i
+        i = 1234
+        print i
+    return tarst
+    
+test()()
+print i

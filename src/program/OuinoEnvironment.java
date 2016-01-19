@@ -5,13 +5,9 @@ import game.item.Pin;
 
 import java.util.List;
 
-import org.python.core.Py;
-import org.python.core.PyCode;
-import org.python.core.PyObject;
-import org.python.core.ThreadState;
-import org.python.util.InteractiveInterpreter;
-
-import util.Condition;
+import org.python.compiler.Interpreter;
+import org.python.compiler.PythonCompiler;
+import org.python.compiler.CompiledCode;
 
 public class OuinoEnvironment implements Environment
 {
@@ -22,8 +18,14 @@ public class OuinoEnvironment implements Environment
 	public static final int INPUT_PULLUP = 2;
 	public static final int NO_CONNECTION = 3;
 	public static final int CONSTANT = 4;
-	public static PyCode ouinoPy = null;
-	
+	boolean delaying = false;
+	int delayTime = 0;
+	int goalDelay = 0;
+	public static String bootStrap =
+			  "\n"
+			+ "setup()\n"
+			+ "while True:\n"
+			+ "  loop()";
 	
 	
 	List<Pin> globalPins;
@@ -33,17 +35,9 @@ public class OuinoEnvironment implements Environment
 	Pin[] ground;
 	Pin vcc3;
 	Pin vcc5;
-	Condition hasPower;
-	InteractiveInterpreter interpreter;
 	
 	String program;
-	PyObject setup;
-	PyObject loop;
-	
-	
-	volatile Thread interpreterThread;
-	volatile ThreadState interpreterThreadState;
-	volatile boolean runningUserCode = false;
+	Interpreter interpreter;
 
 	public OuinoEnvironment(List<Pin> pins)
 	{
@@ -59,188 +53,50 @@ public class OuinoEnvironment implements Environment
 		ground = new Pin[]{globalPins.get(3),globalPins.get(23),globalPins.get(24)};
 		vcc3 = globalPins.get(21);
 		vcc5 = globalPins.get(22);
-		hasPower = new Condition(()->powered());
-		unpowerAll();
 		updatePower();
-	}
-	
-	public void run()
-	{
-		//close the old interpreter
-		if(interpreter != null)
-		{
-			interpreter.close();
-		}
-		//make a new one
-		interpreter = new InteractiveInterpreter();
-		
-		//setup the environment in the new interpreter
-		OuinoPythonEnvironment.exec(interpreter.getLocals(), this);
-		
-		//save the threadstate so we can interrupt it later
-		interpreterThreadState = Py.getThreadState();
-		
-		//if we don't have a program to load, we need not go any further
-		if(program!=null)
-		{
-			PythonSanitizer sanitizer = new PythonSanitizer(program);
-			if(!sanitizer.isLegal())
-			{
-				sanitizer.throwException();
-			}
-			//compile the script, load it into the interpreter, get the important parts out
-			PyCode script = interpreter.compile(program);
-			interpreter.exec(script);
-			setup = interpreter.get("setup");
-			loop = interpreter.get("loop");
-			
-			//loop until we should stop
-			while(!Thread.currentThread().isInterrupted())
-			{
-				//sanity check
-				if(Thread.currentThread() != interpreterThread) break;
-				
-				//wait until the board has power
-				hasPower.waitUntilTrue();
-				
-				//sanity check
-				if(Thread.currentThread() != interpreterThread) break;
-				
-				updatePower();
-				//call the setup
-				setup();
-				while(powered() && !Thread.currentThread().isInterrupted())
-				{
-					//sanity check
-					if(Thread.currentThread() != interpreterThread) break;
-					loop();
-				}
-				updatePower();
-			}
-		}
 	}
 	
 
 	public void uplode(String program)
 	{
 		this.program = program;
-		new PythonSanitizer(program);
 		reset();
 	}
 	
 	public void act(int dt)
 	{
-		hasPower.update();
+		updatePower();
+		if(powered())
+		{
+			if(interpreter!=null)
+			{
+				if(delaying)
+				{
+					delayTime+=dt;
+					if(delayTime>=goalDelay)
+					{
+						delaying = false;
+						delayTime = 0;
+					}
+				}
+				else
+				{
+					interpreter.execute(dt);
+				}
+			}
+		}
 		for(Pin p:globalPins)
 		{
 			p.act(dt);
 		}
 	}
 	
-	public void start()
-	{
-		if(interpreterThread!=null && interpreterThread.isAlive())
-		{
-			throw new RuntimeException("The interpreter thread is still running. This is actually not ok.");
-		}
-		interpreterThread = new Thread(this);
-		interpreterThread.setDaemon(true);
-		interpreterThread.start();
-	}
-	
-	@SuppressWarnings("deprecation")//no other way
 	public void reset()
 	{
-		if(interpreterThread != null && interpreterThread.isAlive())
-		{
-			try
-			{
-				interpreterThread.interrupt();
-				interpreter.interrupt(interpreterThreadState);
-				try
-				{
-					interpreterThread.join(7);//you get seven milliseconds to stop running
-				} 
-				catch (InterruptedException e)
-				{
-					//this is kinda odd, but probably not an issue in the long run
-				}
-				if(interpreterThread.isAlive())
-				{
-					if(!runningUserCode)
-					{
-						System.err.println("Strangly, the interpreterThread has failed to stop, even though it is not currently running user code");
-					}
-					else
-					{
-						System.err.println("Interrupt failed, running user code, of course");
-					}
-					System.err.println("time's up, force stoping now");
-					interpreterThread.stop();//We are so out of options here that this is really the only option.
-				}
-			}
-			catch(ThreadDeath death)
-			{
-				//DONT CARE LOL
-			}
-			if(interpreterThread.isAlive())
-			{
-				try
-				{
-					//if it is alive, it won't be soon
-					System.err.println("the world's most resilient thread it still going");
-					interpreterThread.join();
-					System.err.println("ok it stopped");
-				} 
-				catch (InterruptedException e)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
 		initialize();
-		start();
-	}
-	
-	public void setup()
-	{
-		try
-		{
-			if(setup!=null)
-			{
-				runningUserCode = true;
-				setup.__call__();
-				runningUserCode = false;
-			}
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		catch(Error e)
-		{
-			//fall through, python interrupt
-		}
-	}
-	public void loop()
-	{
-		try
-		{
-			if(loop!=null)
-			{
-				runningUserCode = true;
-				loop.__call__();
-				runningUserCode = false;
-			}
-		}
-		catch(Exception e)
-		{
-			System.err.println("Python exception in loop, "+e.getMessage());
-		}
-		catch(Error e)
-		{
-			//fall through, python interrupt
-		}
+		CompiledCode programSuite = PythonCompiler.compile(program+bootStrap);
+		programSuite.dump();
+		interpreter = new Interpreter(programSuite,OuinoPythonEnvironment.getGlobals(this));
 	}
 	
 	public void unpowerAll()
@@ -270,14 +126,10 @@ public class OuinoEnvironment implements Environment
 	}
 	public void delay(int ms)
 	{
-		try
-		{
-			Thread.sleep(ms);
-		}
-		catch (InterruptedException e)
-		{
-			Thread.currentThread().interrupt();
-		}
+		goalDelay = ms;
+		delayTime = 0;
+		delaying = true;
+		interpreter.stop();
 	}
 	
 	public boolean powered()
@@ -323,5 +175,4 @@ public class OuinoEnvironment implements Environment
 	{
 		return pinModes;
 	}
-	
 }

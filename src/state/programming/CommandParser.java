@@ -6,6 +6,7 @@ import java.util.List;
 import computer.program.Echo;
 import computer.program.ExecutableHolder;
 import computer.program.Exit;
+import computer.program.Help;
 import computer.program.PythonExecutable;
 import computer.program.RepeatEcho;
 import computer.program.Upload;
@@ -13,13 +14,6 @@ import computer.program.Vi;
 
 public class CommandParser
 {
-	static final String unitPattern = "";
-	AppendOnlyBuffer out;
-	
-	public CommandParser(AppendOnlyBuffer out)
-	{
-		this.out = out;
-	}
 	
 	public ExecutableHolder execute(String[] tokens)
 	{
@@ -50,6 +44,10 @@ public class CommandParser
 		else if(tokens[0].equals("exit"))
 		{
 			return new ExecutableHolder(new Exit());
+		}
+		else if(tokens[0].equals("help") || tokens[0].equals("info") || tokens[0].equals("?"))
+		{
+			return new ExecutableHolder(new Help());
 		}
 		return null;
 	}

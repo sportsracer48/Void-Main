@@ -10,6 +10,9 @@ public class GlobalState
 
 	public static Computer laptop;
 	
+	
+	//BAD BAD NAUGHTY BAD BAD
+	//TODO REMOVE GLOBAL STATE
 	public static WorkbenchState currentWorkbench;
 	public static ProgrammingState currentProgramming;
 	

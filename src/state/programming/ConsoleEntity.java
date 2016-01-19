@@ -109,7 +109,7 @@ public class ConsoleEntity extends Entity
 		bg.setColor(Color.black);
 		
 		appendOnly = new AppendOnlyBuffer(cols);
-		parser = new CommandParser(appendOnly);
+		parser = new CommandParser();
 		
 		appendOnly.append("Login admin@"+computer.getName()+"\n\n");
 		newPrompt();

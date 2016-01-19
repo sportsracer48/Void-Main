@@ -17,7 +17,7 @@ public class WirePath implements Iterable<Coord>
 	List<Coord> path;
 	List<Entity> entities;
 	float zCoord;
-	float zOffset=1000;
+	float zStart;
 	Sprite segmentX, segmentY, segmentZ;
 	Color wireColor;
 	Item startItem,endItem;
@@ -29,7 +29,13 @@ public class WirePath implements Iterable<Coord>
 		this.wireColor = wireColor;
 		this.startItem = startItem;
 		this.endItem = endItem;
+		this.zStart = zStart;
 		init(start,end,zStart,z);
+	}
+	
+	public float getZCoord()
+	{
+		return (zCoord-zStart)%10 +zStart;
 	}
 	
 	public WirePath(Coord start, Color wireColor, float zStart, float[][] z, Sprite segmentY,Sprite segmentZ, Item startItem)
@@ -38,6 +44,7 @@ public class WirePath implements Iterable<Coord>
 		this.segmentZ = segmentZ;
 		this.wireColor = wireColor;
 		this.startItem = startItem;
+		this.zStart = zStart;
 		initUnfinished(start,zStart,z);
 	}
 	
@@ -56,7 +63,7 @@ public class WirePath implements Iterable<Coord>
 				path.add(c);
 			}
 		}
-		segments.add(new ZSegment(start,(int)zCoord,segmentZ,startItem));
+		segments.add(new ZSegment(start,(int)getZCoord(),segmentZ,startItem));
 	}
 	
 	private void init(Coord start, Coord end, float zStart, float[][] z)
@@ -77,8 +84,8 @@ public class WirePath implements Iterable<Coord>
 		{
 			this.zCoord = Math.max(z[c.x][c.y]+1, zCoord);
 		}
-		segments.add(new ZSegment(start,(int)zCoord,segmentZ,startItem));
-		segments.add(new ZSegment(end,(int)zCoord,segmentZ,endItem));
+		segments.add(new ZSegment(start,(int)getZCoord(),segmentZ,startItem));
+		segments.add(new ZSegment(end,(int)getZCoord(),segmentZ,endItem));
 	}
 	
 	private void initSegments(Coord start, Coord end, float zStart, float[][] z)
@@ -127,7 +134,7 @@ public class WirePath implements Iterable<Coord>
 		
 		for(Segment s:segments)
 		{
-			Entity segmentEntity = s.getEntity(zCoord,wireColor);
+			Entity segmentEntity = s.getEntity(getZCoord(),wireColor);
 			entities.add(segmentEntity);
 		}
 		
