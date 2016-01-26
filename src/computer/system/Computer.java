@@ -146,4 +146,8 @@ public class Computer
 	{
 		this.connected = environment;
 	}
+	public Environment getConnected()
+	{
+		return this.connected;
+	}
 }

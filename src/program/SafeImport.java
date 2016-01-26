@@ -12,6 +12,7 @@ public class SafeImport extends PyObject
 	private static String[] allowedImports = {"math","random"};
 	
 	private static final long serialVersionUID = 1L;
+	
 	public SafeImport(PyObject unsafeImport)
 	{
 		for(String module: allowedImports)

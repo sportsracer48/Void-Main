@@ -13,6 +13,15 @@ public class FrameEntity extends Entity
 		this.sprites = sprites;
 	}
 	
+	public Sprite getBase()
+	{
+		if(frame>=0 && frame<sprites.length)
+		{
+			return sprites[frame];
+		}
+		return null;
+	}
+	
 	public void setFrame(int frame)
 	{
 		this.frame = frame;

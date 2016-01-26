@@ -9,6 +9,7 @@ import computer.program.Exit;
 import computer.program.Help;
 import computer.program.PythonExecutable;
 import computer.program.RepeatEcho;
+import computer.program.SerialMonitor;
 import computer.program.Upload;
 import computer.program.Vi;
 
@@ -44,6 +45,10 @@ public class CommandParser
 		else if(tokens[0].equals("exit"))
 		{
 			return new ExecutableHolder(new Exit());
+		}
+		else if(tokens[0].equals("serial"))
+		{
+			return new ExecutableHolder(new SerialMonitor());
 		}
 		else if(tokens[0].equals("help") || tokens[0].equals("info") || tokens[0].equals("?"))
 		{

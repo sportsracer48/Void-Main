@@ -327,6 +327,10 @@ public class Entity implements Comparable<Entity>, Actable
 		}
 		children.update();
 	}
+	public void updateChildren()
+	{
+		children.update();
+	}
 	
 	public void setZ(float z)
 	{
@@ -414,5 +418,10 @@ public class Entity implements Comparable<Entity>, Actable
 	public int compareTo(Entity r)
 	{
 		return Float.compare(getZ(), r.getZ());
+	}
+
+	public Sprite getBase()
+	{
+		return base;
 	}
 }

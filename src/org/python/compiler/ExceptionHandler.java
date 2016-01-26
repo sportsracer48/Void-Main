@@ -28,14 +28,17 @@ public class ExceptionHandler extends StackFrame
 			return true;
 		}
 		PyType pyType = e.pythonType;
-		PyObject bases = pyType.getBases();
-		for(int i = 0; i<bases.__len__(); i++)
+		if(pyType != null)
 		{
-			PyObject superType = bases.__getitem__(i);
-			String superTypeName = superType.__getattr__("__name__").asString();
-			if(superTypeName.equals(type))
+			PyObject bases = pyType.getBases();
+			for(int i = 0; i<bases.__len__(); i++)
 			{
-				return true;
+				PyObject superType = bases.__getitem__(i);
+				String superTypeName = superType.__getattr__("__name__").asString();
+				if(superTypeName.equals(type))
+				{
+					return true;
+				}
 			}
 		}
 		Class<?> javaType = e.javaType;

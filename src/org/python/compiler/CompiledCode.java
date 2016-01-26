@@ -57,6 +57,7 @@ import org.python.antlr.ast.UnaryOp;
 import org.python.antlr.ast.While;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
+import org.python.antlr.ast.alias;
 import org.python.antlr.ast.boolopType;
 import org.python.antlr.ast.cmpopType;
 import org.python.antlr.ast.comprehension;
@@ -68,6 +69,7 @@ import org.python.antlr.base.stmt;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
+import org.python.core.PySyntaxError;
 
 public class CompiledCode extends Visitor
 {
@@ -80,7 +82,7 @@ public class CompiledCode extends Visitor
 	boolean firstLine = true;
 	String doc = "";
 	
-	public static CompiledCode codeFor(PythonTree tree,expr expression)
+	public static CompiledCode codeFor(PythonTree tree,expr expression) throws Exception
 	{
 		java.util.List<stmt> expressions = new ArrayList<>();
 		expressions.add(new Return(tree,expression));
@@ -88,13 +90,13 @@ public class CompiledCode extends Visitor
 		return result;
 	}
 	
-	public CompiledCode(PythonTree code)
+	public CompiledCode(PythonTree code) throws Exception
 	{
 		init(code.getChildren());
 	}
 	
 
-	public <T extends PythonTree> CompiledCode(java.util.List<T> code)
+	public <T extends PythonTree> CompiledCode(java.util.List<T> code) throws Exception
 	{
 		init(code);
 	}
@@ -104,27 +106,20 @@ public class CompiledCode extends Visitor
 		
 	}
 	
-	private <T extends PythonTree> void init(java.util.List<T> code)
+	private <T extends PythonTree> void init(java.util.List<T> code) throws Exception
 	{
 		for(T child:code)
 		{
-			try
+			visit(child);
+			if(child instanceof Expr)
 			{
-				visit(child);
-				if(child instanceof Expr)
+				if(((Expr) child).getInternalValue() instanceof Str && firstLine)
 				{
-					if(((Expr) child).getInternalValue() instanceof Str && firstLine)
-					{
-						this.doc = ((Str) ((Expr) child).getInternalValue()).getInternalS().toString();//it casts everything to a string okay?
-					}
-					addLine("POP $");
+					this.doc = ((Str) ((Expr) child).getInternalValue()).getInternalS().toString();//it casts everything to a string okay?
 				}
-				firstLine = false;
-			} 
-			catch (Exception e)
-			{
-				e.printStackTrace();
+				addLine("POP $");
 			}
+			firstLine = false;
 		}
 	}
 	public Object visit(PythonTree node) throws Exception 
@@ -446,6 +441,7 @@ public class CompiledCode extends Visitor
 
 	public Object visitWith(With node) throws Exception
 	{
+		//TODO
 		throw new RuntimeException("NOT SUPPORTED");
 	}
 
@@ -559,28 +555,77 @@ public class CompiledCode extends Visitor
 
 	public Object visitAssert(Assert node) throws Exception
 	{
-		throw new RuntimeException("NOT SUPPORTED");
+		String end = getUnique("assertEnd");
+		addLine("PUSH __debug__");
+		addLine("JUMPIFFALSE "+end);
+		visit(node.getInternalTest());
+		addLine("NOT");
+		addLine("JUMPIFFALSE "+end);
+		if(node.getInternalMsg() != null)
+		{
+			visit(node.getInternalMsg());
+			addLine("PUSH AssertionError");
+			addLine("CALL 1");
+		}
+		else
+		{
+			addLine("PUSH AssertionError");
+		}
+		addLine("RAISE");
+		addLine("LABEL "+end);
+		return null;
 	}
 
 
 
 	public Object visitImport(Import node) throws Exception
 	{
-		throw new RuntimeException("NOT SUPPORTED");
+		for(alias name:node.getInternalNames())
+		{
+			addLine("IMPORT "+name.getInternalName());
+			if(name.getInternalAsname() != null)
+			{
+				addLine("POP "+name.getInternalAsname());
+			}
+			else
+			{
+				addLine("POP "+name.getInternalName());
+			}
+		}
+		return null;
 	}
 
 
 
 	public Object visitImportFrom(ImportFrom node) throws Exception
 	{
-		throw new RuntimeException("NOT SUPPORTED");
+		String module = getUnique(node.getInternalModule()+"$");
+		addLine("IMPORT "+node.getInternalModule());
+		addLine("POP "+module);
+		
+		for(alias name:node.getInternalNames())
+		{
+			addLine("PUSH "+module);
+			addLine("SELECTMEMBER "+name.getInternalName());
+			addLine("PUSHMEMBER");
+			if(name.getInternalAsname() != null)
+			{
+				addLine("POP "+name.getInternalAsname());
+			}
+			else
+			{
+				addLine("POP "+name.getInternalName());
+			}
+		}
+		addLine("DEL "+module);
+		return null;
 	}
 
 
 
 	public Object visitExec(Exec node) throws Exception
 	{
-		throw new RuntimeException("NOT SUPPORTED");
+		throw new PySyntaxError("exec statements are not supported in python-=1",line,col,node.getText(),"<script>");
 	}
 
 
@@ -1025,6 +1070,7 @@ public class CompiledCode extends Visitor
 
 	public Object visitGeneratorExp(GeneratorExp node) throws Exception
 	{
+		//TODO
 		throw new RuntimeException("NOT SUPPORTED");
 	}
 
@@ -1032,6 +1078,7 @@ public class CompiledCode extends Visitor
 
 	public Object visitYield(Yield node) throws Exception
 	{
+		//TODO
 		throw new RuntimeException("NOT SUPPORTED");
 	}
 
@@ -1394,6 +1441,7 @@ public class CompiledCode extends Visitor
 
 	public Object visitExtSlice(ExtSlice node) throws Exception
 	{
+		//TODO
 		throw new RuntimeException("TODO");
 	}
 

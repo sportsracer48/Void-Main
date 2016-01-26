@@ -1,5 +1,6 @@
 package org.python.compiler;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
@@ -11,6 +12,8 @@ import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+
+import program.SafeImport;
 
 public class Interpreter
 {
@@ -32,16 +35,123 @@ public class Interpreter
 	private CompiledCode pSuite;
 	private int pc = 0;
 	boolean running;
+	SafeImport safeImport;
 	
-	public Interpreter(CompiledCode root,Hashtable<String,PyObject> globals)
+	PrintStream stdout;
+	
+	public Interpreter(CompiledCode root,Hashtable<String,PyObject> globals,PrintStream stdout)
 	{
+		this(globals,stdout);
+		this.root = root;
+		this.setpSuite(root);
+	}
+	public Interpreter(Hashtable<String,PyObject> globals,PrintStream stdout)
+	{
+		this.stdout = stdout;
+		if(stdout == null)
+		{
+			stdout = System.out;
+		}
 		scopeStack.add(global);
 		for(String s:globals.keySet())
 		{
 			global.set(s, globals.get(s));
 		}
-		this.root = root;
-		this.setpSuite(root);
+		this.safeImport = (SafeImport) global.get("__import__");
+	}
+	/**
+	 * 
+	 * @param count the maximum number of cycles to execute
+	 * @return the number of cycles executed
+	 * @throw any uncaught exceptions in the code
+	 */
+	public int execute(int count)
+	{
+		running = true;
+		int executed = 0;
+		for(int i = 0; (i<count || count<0) && running; i++)
+		{
+			CodeLine line = null;
+			if(pc<getpSuite().code.size())
+			{
+				line = getpSuite().getLine(pc);
+				try
+				{
+					evaluate(line);
+					executed++;
+				}
+				catch(Exception e)
+				{
+					if(e instanceof PyException)
+					{
+						PyException pe = (PyException)e;
+						this.loadExceptionHandlerState(new ExceptionHolder(pe, line));
+					}
+					else
+					{
+						this.loadExceptionHandlerState(new ExceptionHolder(e, line));
+					}
+				}
+			}
+			else
+			{
+				if(callStack.isEmpty())
+				{
+					running = false;
+					break;
+				}
+				else
+				{
+					revertFrame();
+					pushObject(Py.None);
+				}
+			}
+		}
+		return executed;
+	}
+	public void executeAll()
+	{
+		execute(-1);
+	}
+	public PyObject eval(String source)
+	{
+		pSuite = PythonCompiler.compile(source);
+		pc = 0;
+		if(pSuite.code.get(pSuite.code.size()-1).op.equals("POP $"))
+		{
+			pSuite.code.remove(pSuite.code.size()-1);
+		}
+		executeAll();
+		if(stack.isEmpty())
+		{
+			return Py.None;
+		}
+		return popObject();
+	}
+	public void beginEval(String source)
+	{
+		pSuite = PythonCompiler.compile(source);
+		pc = 0;
+		if(pSuite.code.get(pSuite.code.size()-1).op.equals("POP $"))
+		{
+			pSuite.code.remove(pSuite.code.size()-1);
+		}
+		running = true;
+	}
+	public boolean isRunning()
+	{
+		return running;
+	}
+	public PyObject evalValue()
+	{
+		if(stack.isEmpty())
+		{
+			return Py.None;
+		}
+		else
+		{
+			return popObject();
+		}
 	}
 	
 	public void setpSuiteAndPc(CompiledCode pSuite, int pc)
@@ -109,7 +219,12 @@ public class Interpreter
 		{
 			return global.get(name);
 		}
-		return Py.None;
+		throw new PyException(Py.NameError.getType(),Py.NameError.__call__(new PyString("Name "+name+" is not defined in this scope")));
+	}
+	
+	public boolean hasReadable(String name)
+	{
+		return global.containsReadable(name) || currentScope().containsReadable(name);
 	}
 	
 	public void setVar(String name, PyObject value)
@@ -337,54 +452,6 @@ public class Interpreter
 	public ExceptionHandler popException()
 	{
 		return exceptionStack.remove(0);
-	}
-	
-	public void execute(int count)
-	{
-		running = true;
-		for(int i = 0; (i<count || count<0) && running; i++)
-		{
-			CodeLine line = null;
-			if(pc<getpSuite().code.size())
-			{
-				line = getpSuite().getLine(pc);
-				try
-				{
-					evaluate(line);
-				}
-				catch(Exception e)
-				{
-					if(e instanceof PyException)
-					{
-						PyException pe = (PyException)e;
-						this.loadExceptionHandlerState(new ExceptionHolder(pe, line));
-					}
-					else
-					{
-						System.err.println(line.toString(0));
-						e.printStackTrace();
-						throw new RuntimeException(e);
-					}
-				}
-			}
-			else
-			{
-				if(callStack.isEmpty())
-				{
-					break;
-				}
-				else
-				{
-					revertFrame();
-					pushObject(Py.None);
-				}
-			}
-		};
-		running = false;
-	}
-	public void executeAll()
-	{
-		execute(-1);
 	}
 	
 	public void evaluate(CodeLine line)
@@ -621,11 +688,20 @@ public class Interpreter
 		case "CLASS":
 			evalClass(line);
 			break;
+		case "IMPORT":
+			evalImport(tokens);
+			break;
 		default:
 			System.err.println("UNEXPECTED OPCODE: "+tokens[0]);
 			break;
 		}
 	}
+	private void evalImport(String[] tokens)
+	{
+		pushObject(safeImport.__call__(new PyString(tokens[1])));
+		pc++;
+	}
+
 	private void evalSlice()
 	{
 		PyObject lower = popObject();
@@ -1140,7 +1216,7 @@ public class Interpreter
 
 	private void evalPrint()
 	{
-		System.out.print(popObject().__str__());
+		stdout.print(popObject().__str__());
 		pc++;
 	}
 
@@ -1194,13 +1270,18 @@ public class Interpreter
 		{
 			DefLine def = (DefLine)line;
 			Function f = def.defined;
+			PyObject defaults = null;
+			if(hasReadable(f.defaultsSymbol))
+			{
+				defaults = getVar(f.defaultsSymbol);
+			}
 			if(scopeStack.size()>1)
 			{
-				setVar(f.name,new FunctionInstance(f,getVar(f.defaultsSymbol),getClosure(f.internals.referencedExternalVars)));
+				setVar(f.name,new FunctionInstance(f,defaults,getClosure(f.internals.referencedExternalVars)));
 			}
 			else
 			{
-				setVar(f.name,new FunctionInstance(f,getVar(f.defaultsSymbol)));
+				setVar(f.name,new FunctionInstance(f,defaults));
 			}
 		}
 		pc++;
@@ -1352,6 +1433,10 @@ public class Interpreter
 				pushObject(callable.__call__(args,new String[]{}));
 			}
 			catch(PyException e)
+			{
+				loadExceptionHandlerState(new ExceptionHolder(e,line));
+			}
+			catch(Exception e)
 			{
 				loadExceptionHandlerState(new ExceptionHolder(e,line));
 			}

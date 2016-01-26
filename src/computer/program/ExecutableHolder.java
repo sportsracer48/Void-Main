@@ -34,7 +34,7 @@ public class ExecutableHolder
 		mode = RENDERED;
 	}
 	
-	public void init(String[] args, AppendOnlyBuffer appendOnly, StringBuffer editable, RegisteredFont consoleFont, int cols, int rows, IntConsumer makeVisible, Computer system)
+	public void init(String[] args, AppendOnlyBuffer appendOnly, StringBuffer editable, RegisteredFont consoleFont, float scale, int cols, int rows, IntConsumer makeVisible, Computer system)
 	{
 		switch(mode)
 		{
@@ -45,7 +45,7 @@ public class ExecutableHolder
 			interactiveExec.setup(args, appendOnly, system);
 			break;
 		case RENDERED:
-			renderedExec.setup(args, editable, consoleFont, cols, rows, makeVisible, system);
+			renderedExec.setup(args, editable, appendOnly, consoleFont, scale, cols, rows, makeVisible, system);
 			break;
 		}
 	}

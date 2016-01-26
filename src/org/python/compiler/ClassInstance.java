@@ -89,11 +89,7 @@ public class ClassInstance extends PyObject
 				return result;
 			}
 		}
-		if(super.__findattr_ex__(attr) != null)
-		{
-			return super.__findattr_ex__(attr);
-		}
-		return Py.None;
+		return super.__findattr_ex__(attr);
 	}
 	public void __setattr__(String attr, PyObject val)
 	{

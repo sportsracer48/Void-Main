@@ -8,6 +8,8 @@ import computer.system.Computer;
 import entry.GlobalInput;
 import entry.GlobalState;
 import graphics.Context;
+import graphics.Sprite;
+import graphics.entity.Entity;
 import graphics.registry.SpriteAtlas;
 import state.GameState;
 import state.workbench.Camera;
@@ -16,11 +18,17 @@ import static state.programming.Modifiers.*;
 public class ProgrammingState extends GameState
 {
 	ConsoleEntity console;
+	Entity background;
+	Entity laptop;
+	Entity laptopBg;
 	Camera camera;
 	boolean mouseMoveThisFrame = false;
 	long ibeamCursor;
 	long defaultCursor;
 	Computer computer;
+	
+	int laptopX = 700;
+	int laptopY = 100;
 	
 	public ProgrammingState(GlobalInput input, long window)
 	{
@@ -30,11 +38,49 @@ public class ProgrammingState extends GameState
 	
 	public void init(SpriteAtlas sprites)
 	{
+		sprites.setNamespace("res/sprite/workbench/");
 		camera = new Camera(screenWidth()/2,screenHeight()/2,screenWidth(),screenHeight(),1);
-		console = new ConsoleEntity(100,100,0,1800,800,computer);
+		
+		Sprite laptopSprite = sprites.getSprite("laptop hud.png");
+		
+		int screenWidth = screenWidth();
+		int screenHeight = screenHeight();
+		float aspectRatio = (float)laptopSprite.imWidth/laptopSprite.imHeight;
+		
+		float goalWidth = screenHeight*aspectRatio;
+		float goalHeight = screenWidth/aspectRatio;
+		
+		if(goalHeight>screenHeight)
+		{
+			goalHeight = goalWidth/aspectRatio;
+		}
+		if(goalWidth>screenWidth)
+		{
+			goalWidth = goalHeight*aspectRatio;
+		}
+		float xScale = goalWidth/laptopSprite.imWidth;
+		float yScale = goalHeight/laptopSprite.imHeight;
+		
+		float resultWidth = laptopSprite.imWidth*xScale;
+		float resultHeight = laptopSprite.imHeight*yScale;
+		
+		float xOffset = (screenWidth-resultWidth)/2f;
+		float yOffset = (screenHeight-resultHeight)/2f;
+		
+		background = new Entity(-laptopX*xScale+xOffset,-laptopY*yScale+yOffset,0,sprites.getSprite("background.png"));
+		background.setScale(yScale, yScale);
+		laptopBg = new Entity(xOffset,yOffset,0,sprites.getSprite("laptop.png"));
+		laptopBg.setScale(xScale,yScale);
+		laptop = new Entity(xOffset,yOffset,0,laptopSprite);
+		laptop.setScale(xScale, yScale);
+		console = new ConsoleEntity(22*xScale+xOffset+2,18*yScale+yOffset+2,0,193*xScale-4,109*yScale-4,computer);
+		addUI(background);
+		addUI(laptopBg);
+		addUI(laptop);
 		addUI(console);
 		ibeamCursor = GLFW.glfwCreateStandardCursor(GLFW.GLFW_IBEAM_CURSOR);
 		defaultCursor = GLFW.glfwCreateStandardCursor(GLFW.GLFW_ARROW_CURSOR);
+		sprites.resetNamespace();
 	}
 	
 	public int getModFlags()

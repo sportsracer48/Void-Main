@@ -223,7 +223,7 @@ public class SpriteAtlas
 			float y = (float)r.y/height;
 			float swidth = (float)r.width/width;
 			float sheight = (float)r.height/height;
-			Sprite s = new Sprite(pTex,x,y,swidth,sheight,r.width,r.height);
+			Sprite s = new Sprite(pTex,x,y,swidth,sheight,r.width,r.height,r.im);
 			sprites.add(s);
 			spriteTable.put(r.name, s);
 		}
@@ -249,6 +249,59 @@ public class SpriteAtlas
 	public Sprite getSprite(String name)
 	{
 		return spriteTable.get(namespace + name);
+	}
+	
+	public Sprite[] getAnimation(String name, int frames)
+	{
+		Sprite[] result = new Sprite[frames];
+		Sprite parent = getSprite(name);
+		if(parent == null)
+		{
+			return null;
+		}
+		float x0 = parent.x;
+		float y = parent.y;
+		float sheight = parent.height;
+		float swidth = parent.width/frames;
+		int imWidth = parent.imWidth/frames;
+		int imHeight = parent.imHeight;
+		for(int i = 0; i<frames; i++)
+		{
+			BufferedImage subImage = new BufferedImage(imWidth,imHeight,BufferedImage.TYPE_INT_ARGB);
+			subImage.getGraphics().drawImage(parent.image, -imWidth*i, 0, null);
+			result[i] = new Sprite(pTex,x0+i*swidth,y,swidth,sheight,imWidth,imHeight,subImage);
+		}
+		return result;
+	}
+	
+	public List<Sprite[]> getAnimations(String prefix, int frames)
+	{
+		List<Sprite[]> result = new ArrayList<>();
+		Sprite current[] = null;
+		for(
+				int i = 0; 
+				(current = getAnimation(String.format(prefix, i),frames))!=null; 
+				i++
+			)//magic for/while loops of magic
+		{
+			result.add(current);
+		}
+		return result;
+	}
+	
+	public List<Sprite> getSprites(String prefix)
+	{
+		List<Sprite> result = new ArrayList<>();
+		Sprite current = null;
+		for(
+				int i = 0; 
+				(current = getSprite(String.format(prefix, i)))!=null; 
+				i++
+			)//magic for/while loops of magic
+		{
+			result.add(current);
+		}
+		return result;
 	}
 	
 	public Sprite getSpriteGlobal(String name)

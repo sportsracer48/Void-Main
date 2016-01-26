@@ -17,7 +17,7 @@ import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
 
 import computer.system.Computer;
-
+import state.programming.AppendOnlyBuffer;
 import util.Color;
 import static state.programming.Modifiers.*;
 
@@ -32,7 +32,7 @@ public class Vi implements RenderedExecutable
 	private int selectStart=-1;
 	private int selectEnd=-1;
 	private int clickPos=-1;
-	private int charHeight,charWidth;
+	private float charHeight,charWidth;
 	private int cursorX;
 	private int blinkTime = 0;
 	private int blinkPeriod = 500;
@@ -43,7 +43,11 @@ public class Vi implements RenderedExecutable
 	private boolean running = false;
 	private Computer system;
 	
-	public void setup(String[] args, StringBuffer output, RegisteredFont consoleFont, int cols, int rows, IntConsumer makeVisible, Computer system)
+	float scale;
+	
+	AppendOnlyBuffer stdout;
+	
+	public void setup(String[] args, StringBuffer output, AppendOnlyBuffer stdout, RegisteredFont consoleFont, float scale, int cols, int rows, IntConsumer makeVisible, Computer system)
 	{
 		if(args.length<2)
 		{
@@ -63,9 +67,11 @@ public class Vi implements RenderedExecutable
 		this.rows = rows;
 		this.font = consoleFont;
 		this.makeVisible = makeVisible;
+		this.scale = scale;
+		this.stdout = stdout;
 		FontMetrics metrics = font.metrics;
-		charHeight = metrics.getHeight();
-		charWidth = metrics.charWidth(' ');
+		charHeight = metrics.getHeight()*scale;
+		charWidth = metrics.charWidth(' ')*scale;
 		
 		if(system.exists(fileName))
 		{
@@ -118,8 +124,8 @@ public class Vi implements RenderedExecutable
 	public void render(Context c, int startRow)
 	{
 		int row = startRow;
-		int x= charWidth*getLeftBorder();
-		int y = row*charHeight;
+		float x= charWidth*getLeftBorder();
+		float y = row*charHeight;
 		int col = 0;
 		int line = 0;
 		
@@ -187,21 +193,21 @@ public class Vi implements RenderedExecutable
 		}
 	}
 	
-	private void renderSelect(int x, int y, Context c)
+	private void renderSelect(float x, float y, Context c)
 	{
 		GL11.glPushAttrib(GL11.GL_COLOR_BUFFER_BIT);
 		GL14.glBlendFuncSeparate(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ZERO, GL11.GL_ZERO, GL11.GL_ZERO);
 		GL20.glBlendEquationSeparate(GL14.GL_FUNC_ADD, GL14.GL_FUNC_ADD);
 		c.setColor(Color.white);
 		c.pushTransform();
-		c.prependTransform(Matrix.translation(x,y,0));
-		c.prependTransform(Matrix.scaling(charWidth,charHeight,0));
+		c.prependTransform(Matrix.translation(x/scale,y/scale,0));
+		c.prependTransform(Matrix.scaling(charWidth/scale,charHeight/scale,0));
 		UtilSprites.white.render(c);
 		c.popTransform();
 		GL11.glPopAttrib();
 	}
 	
-	private void renderPreLine(int y,int line, Context c)
+	private void renderPreLine(float y,int line, Context c)
 	{
 		c.setColor(Color.blue);
 		String number = String.valueOf(line)+"|  ";;
@@ -213,7 +219,7 @@ public class Vi implements RenderedExecutable
 		c.resetColor();
 	}
 	
-	private void renderChar(char character, int x, int y, Context c)
+	private void renderChar(char character, float x, float y, Context c)
 	{
 		Sprite s = font.getSprite(character);
 		if(s!=null)
@@ -225,7 +231,7 @@ public class Vi implements RenderedExecutable
 		}
 	}
 
-	private void renderCursor(int x, int y, Context c)
+	private void renderCursor(float x, float y, Context c)
 	{
 		if(blinkTime<blinkPeriod/2)
 		{
@@ -276,8 +282,14 @@ public class Vi implements RenderedExecutable
 		}
 		return output.length();
 	}
+	public int getPos(float x0, float y0)
+	{
+		int y = (int)y0;
+		int x = (int)Math.round(x0);
+		return getPos(x,y);
+	}
 	
-	public void setCursorPos(int x, int y)
+	public void setCursorPos(float x, float y)
 	{
 		setCursor(getPos(x,y));
 	}
@@ -326,13 +338,13 @@ public class Vi implements RenderedExecutable
 		return y;
 	}
 	
-	public void mouseClicked(int x, int y)
+	public void mouseClicked(float x, float y)
 	{
 		selectStart = selectEnd = -1;
 		setCursorPos(x-getLeftBorder(),y);
 		clickPos = cursor;
 	}
-	public void mouseMoved(int x, int y)
+	public void mouseMoved(float x, float y)
 	{
 		if(clickPos!=-1)
 		{
@@ -605,6 +617,7 @@ public class Vi implements RenderedExecutable
 		else if(key == GLFW.GLFW_KEY_S && isControlDown(modFlags))
 		{
 			system.write(fileName, output.toString());
+			stdout.appendln("Saved to "+fileName);
 		}
 		else if(key == GLFW.GLFW_KEY_INSERT)
 		{

@@ -34,7 +34,7 @@ public class Function
 		internals.referencedExternalVars.removeAll(args);
 	}
 	
-	public Function(String name, CompiledCode internals, arguments arguments)
+	public Function(String name, CompiledCode internals, arguments arguments) throws Exception
 	{
 		this.internals = internals;
 		this.name = name;

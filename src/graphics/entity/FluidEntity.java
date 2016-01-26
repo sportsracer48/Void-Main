@@ -20,7 +20,16 @@ public class FluidEntity extends Entity
 	{
 		super(x,y,z,null);
 	}
-
+	
+	public Sprite getBase()
+	{
+		if(self!=null)
+		{
+			return self.getBase();
+		}
+		return body;
+	}
+	
 	public float getUnscaledWidth()
 	{
 		return width;

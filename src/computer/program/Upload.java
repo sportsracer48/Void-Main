@@ -1,7 +1,8 @@
 package computer.program;
 
-import state.programming.AppendOnlyBuffer;
+import java.io.PrintStream;
 
+import state.programming.AppendOnlyBuffer;
 import computer.system.Computer;
 
 public class Upload implements WriteOnlyExecutable
@@ -14,12 +15,19 @@ public class Upload implements WriteOnlyExecutable
 		}
 		else if(system.hasConnection())
 		{
-			system.upload(system.read(args[1]));
+			try
+			{
+				system.upload(system.read(args[1]));
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace(new PrintStream(out.getOuputStream()));
+			}
 			out.appendln("success!");
 		}
 		else
 		{
-			out.appendln("failure 38(");
+			out.appendln("No board connected.");
 		}
 	}
 

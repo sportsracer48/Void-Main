@@ -26,19 +26,19 @@ public class WindowBuilder
 	InventorySlot[] front = new InventorySlot[4];
 	InventorySlot[] back = new InventorySlot[4];
 	
-	public WindowBuilder(SpriteAtlas sprites, ItemManipulator itemManip, DragContext grabContext, int screenHeight)
+	public WindowBuilder(SpriteAtlas sprites, ItemManipulator itemManip, DragContext grabContext, int screenHeight, int screenWidth)
 	{
 		Sprite invHighlight = sprites.getSprite("inv-slot highlight.png");
-		inventory = new Window(1300,440,sprites.getSprite("Inventory UI.png"),close.build(),grabContext);
+		inventory = new Window(screenWidth-700,440,sprites.getSprite("Inventory UI.png"),close.build(),grabContext);
 		inventory.setEnabled(false);
 		
-		partMounting = new Window(1300,40,sprites.getSprite("part mounting ui.png"), close.build(),grabContext);
+		partMounting = new Window(screenWidth-700,40,sprites.getSprite("part mounting ui.png"), close.build(),grabContext);
 		partMounting.setEnabled(false);
 		
 		Button disabledClose = close.build();
 		disabledClose.setEnabled(false);
 		
-		tools = new Window(650,screenHeight-200,sprites.getSprite("Tools.png"),disabledClose,grabContext);
+		tools = new Window(screenWidth/2-200,screenHeight-200,sprites.getSprite("Tools.png"),disabledClose,grabContext);
 		
 		QuadConsumer<Float,Float,Integer,Integer> addToInventory = (x2,y2,i,j) ->
 		{

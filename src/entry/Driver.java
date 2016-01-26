@@ -25,6 +25,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import state.GameState;
 import state.programming.ProgrammingState;
+import state.viewport.ViewportState;
 import state.workbench.WorkbenchState;
 //import state.workbench.WorkbenchState;
 import util.GLU;
@@ -51,7 +52,6 @@ public class Driver
 		initShaders();
 		initSprites();
 		initContext();
-		
 		initGame();
 	}
 	
@@ -97,6 +97,7 @@ public class Driver
 	{
 		spriteAtlas = new SpriteAtlas(new File("res/sprite/workbench/"));
 		spriteAtlas.addAllChildren(new File("res/sprite/util/"));
+		spriteAtlas.addAllChildren(new File("res/sprite/level/"));
 		RegisteredFont defaultFont = spriteAtlas.addFont(new File("res/font/TERMINALVECTOR.TTF"), Font.PLAIN, 12);
 		RegisteredFont defaultFontOutline = new RegisteredFont("TerminalVector$o", defaultFont.metrics, spriteAtlas);
 		RegisteredFont.setDefault(defaultFont);
@@ -145,8 +146,9 @@ public class Driver
 		GlobalState.currentProgramming.init(spriteAtlas);
 		GlobalState.currentWorkbench = new WorkbenchState(input,window);
 		GlobalState.currentWorkbench.init(spriteAtlas);
-		PythonInit.init();
-		currentState = GlobalState.currentWorkbench;
+		//PythonInit.init();
+		currentState = new ViewportState(input,window);//GlobalState.currentWorkbench;
+		currentState.init(spriteAtlas);
 	}
 	
 	public void checkError()
@@ -169,6 +171,7 @@ public class Driver
 	{
 		currentState.beforeInput(dt);
 		GLFW.glfwPollEvents();
+		GlobalState.coordinator.act(dt);
 		currentState.update(dt);
 	}
 

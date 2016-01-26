@@ -21,15 +21,24 @@ public class ZoomTransition
 	boolean running = false;
 	boolean returnScaleAllowState;
 	
-	public ZoomTransition(Camera c, int laptopX, int laptopY)
+	public ZoomTransition(Camera c, int laptopX, int laptopY, int screenWidth, int screenHeight, float laptopWidth, float laptopHeight)
 	{
 		this.c=c;
 		
+		float xScale = screenWidth/laptopWidth;
+		float yScale = screenHeight/laptopHeight;
+		float scale = Math.min(xScale, yScale);
 		
-		goalTopY = laptopY + 18;
-		goalLeftX = laptopX + 22;
-		goalBottomY = laptopY + 127;
-		goalRightX = laptopX + 215;
+		float resultWidth = laptopWidth*xScale/scale;
+		float resultHeight = laptopHeight*yScale/scale;
+		
+		float xOffset = (resultWidth-laptopWidth)/2;
+		float yOffset =	(resultHeight-laptopHeight)/2;
+		
+		goalTopY = laptopY-yOffset;
+		goalLeftX = laptopX-xOffset;
+		goalBottomY = goalTopY+resultHeight;
+		goalRightX = goalLeftX+resultWidth;
 		
 	}
 	

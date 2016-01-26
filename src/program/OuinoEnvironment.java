@@ -3,11 +3,15 @@ package program;
 import entry.GlobalState;
 import game.item.Pin;
 
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.List;
 
 import org.python.compiler.Interpreter;
 import org.python.compiler.PythonCompiler;
 import org.python.compiler.CompiledCode;
+
+import util.Pipe;
 
 public class OuinoEnvironment implements Environment
 {
@@ -38,11 +42,21 @@ public class OuinoEnvironment implements Environment
 	
 	String program;
 	Interpreter interpreter;
+	
+	Pipe serialOut;
+	float cyclesPerSecond = 1_000_000f; //1000 khz
+	float cyclesPerMs = cyclesPerSecond/1000;
 
 	public OuinoEnvironment(List<Pin> pins)
 	{
+		serialOut = new Pipe(2048);
 		globalPins = pins;
 		initialize();
+	}
+	
+	public InputStream getSerialStream()
+	{
+		return serialOut.getInputStream();
 	}
 	
 	private void initialize()
@@ -54,6 +68,14 @@ public class OuinoEnvironment implements Environment
 		vcc3 = globalPins.get(21);
 		vcc5 = globalPins.get(22);
 		updatePower();
+	}
+	private void resetState()
+	{
+		for(int i = 0; i<13; i++)
+		{
+			digitalWrite(i,LOW);
+			pinMode(i,INPUT);
+		}
 	}
 	
 
@@ -75,13 +97,30 @@ public class OuinoEnvironment implements Environment
 					delayTime+=dt;
 					if(delayTime>=goalDelay)
 					{
+						dt = delayTime-delayTime;
 						delaying = false;
 						delayTime = 0;
 					}
 				}
-				else
+				if(!delaying)
 				{
-					interpreter.execute(dt);
+					try
+					{
+						int cycles = interpreter.execute((int)(dt*cyclesPerMs));
+						if(delaying)
+						{
+							delayTime += (dt - cycles/cyclesPerMs);
+							System.out.println(delayTime);
+						}
+					}
+					catch(Exception e)
+					{
+						PrintStream serialOut = new PrintStream(this.serialOut.getOutputStream());
+						serialOut.println("\nFATAL ERROR\n");
+						e.printStackTrace(serialOut);
+						interpreter = null;
+						resetState();
+					}
 				}
 			}
 		}
@@ -94,9 +133,10 @@ public class OuinoEnvironment implements Environment
 	public void reset()
 	{
 		initialize();
+		resetState();
 		CompiledCode programSuite = PythonCompiler.compile(program+bootStrap);
-		programSuite.dump();
-		interpreter = new Interpreter(programSuite,OuinoPythonEnvironment.getGlobals(this));
+		PrintStream serialOut = new PrintStream(this.serialOut.getOutputStream());
+		interpreter = new Interpreter(programSuite,OuinoPythonEnvironment.getGlobals(this),serialOut);
 	}
 	
 	public void unpowerAll()

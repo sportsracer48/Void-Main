@@ -6,7 +6,6 @@ import math.Matrix;
 
 import org.lwjgl.glfw.GLFW;
 
-import program.ProgramCoordinator;
 import entry.GlobalInput;
 import entry.GlobalState;
 import graphics.Context;
@@ -51,7 +50,6 @@ public class WorkbenchState extends GameState
 	ClickableArea globalClickArea = new ClickableArea(0,0,0,0);
 	ItemManipulator itemManip = new ItemManipulator(grabContext,this,globalClickArea);
 	EditHistory history = new EditHistory();
-	ProgramCoordinator coordinator = new ProgramCoordinator();
 	
 	FluidEntity mouseCompanion = new FluidEntity(0,0,0);
 	
@@ -60,7 +58,6 @@ public class WorkbenchState extends GameState
 	
 	Mode edit = new Mode()
 	{
-
 		public void enable()
 		{
 		}
@@ -113,7 +110,7 @@ public class WorkbenchState extends GameState
 	
 	ChassisGrid grid;
 	
-	ZoomTransition programmingTransition = new ZoomTransition(camera,700,100);
+	ZoomTransition programmingTransition = new ZoomTransition(camera,700,100,screenWidth(),screenHeight(),236,152);
 	
 	public void keyPressed(int key)
 	{
@@ -336,7 +333,6 @@ public class WorkbenchState extends GameState
 		mouseMoved(getMouseX(),getMouseY());
 		mouseContext.setFrozen(false);
 		itemManip.act(dt);
-		coordinator.act(dt);
 		
 		if(grabContext.getGrabbed() != null)
 		{
@@ -375,7 +371,7 @@ public class WorkbenchState extends GameState
 		
 		// root children init
 		
-		WindowBuilder windowBuilder = new WindowBuilder(sprites, itemManip, grabContext, screenHeight());
+		WindowBuilder windowBuilder = new WindowBuilder(sprites, itemManip, grabContext, screenHeight(), screenWidth());
 		
 		partMounting = windowBuilder.partMounting;
 		
@@ -384,7 +380,7 @@ public class WorkbenchState extends GameState
 		tools = windowBuilder.tools;
 		
 		grid = new ChassisGrid(40,5,1,
-				sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring,programming,history,coordinator,
+				sprites.getSprite("Chassis plate.png"),itemManip,manager,wiring,programming,history,
 				sprites.getSprite("wire segment x.png"),sprites.getSprite("wire segment y.png"),sprites.getSprite("wire segment z.png"),
 				programmingTransition);
 		

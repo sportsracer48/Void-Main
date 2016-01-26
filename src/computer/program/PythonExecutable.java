@@ -1,34 +1,34 @@
 package computer.program;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
 
-import org.python.core.Py;
+import org.python.compiler.Interpreter;
 import org.python.core.PyObject;
-import org.python.util.InteractiveInterpreter;
 
+import program.OuinoPythonEnvironment;
 import computer.system.Computer;
-
-import program.PythonSanitizer;
 import state.programming.AppendOnlyBuffer;
 
 public class PythonExecutable implements InteractiveExecutable
 {
 	AppendOnlyBuffer out;
-	InteractiveInterpreter interpreter;
-	OutputStream stdOut;
+	PrintStream stdOut;
 	int indents = 0;
 	String multiLineCommand = "";
 	
+	Interpreter interpreter;
+	
 	volatile boolean running;
+	boolean runningInterpreter;
+	float cyclesPerSecond = 1_000_000f; //1000 khz
+	float cyclesPerMs = cyclesPerSecond/1000;
 	
 	public void setup(String[] args, AppendOnlyBuffer out, Computer system)
 	{
 		this.out = out;
-		interpreter = new InteractiveInterpreter();
 		running = true;
-		stdOut = out.getOuputStream();
-		interpreter.setOut(stdOut);
+		stdOut = new PrintStream(out.getOuputStream());
+		interpreter = new Interpreter(OuinoPythonEnvironment.getGlobals(null),stdOut);
 	}
 	
 	public boolean isRunning()
@@ -38,6 +38,10 @@ public class PythonExecutable implements InteractiveExecutable
 
 	public void acceptCommand(String command)
 	{
+		if(runningInterpreter)
+		{
+			return;
+		}
 		out.appendln(getPrompt()+command);
 		if(!multiLineCommand.equals(""))
 		{
@@ -66,20 +70,8 @@ public class PythonExecutable implements InteractiveExecutable
 				command = multiLineCommand;
 				multiLineCommand = "";
 			}
-			PythonSanitizer sanitizer = new PythonSanitizer(command);
-			if(!sanitizer.isLegal())
-			{
-				sanitizer.throwException();
-			}
-			try
-			{
-				PyObject output = interpreter.eval(command);
-				out.appendln(output.toString());
-			}
-			catch(Exception e)
-			{
-				interpreter.exec(command);
-			}
+			interpreter.beginEval(command);
+			runningInterpreter = true;
 		}
 		catch(Exception e)
 		{
@@ -91,8 +83,6 @@ public class PythonExecutable implements InteractiveExecutable
 	public void stop()
 	{
 		running = false;
-		interpreter.interrupt(Py.getThreadState());
-		interpreter.close();
 	}
 	
 	public String getPrompt()
@@ -109,7 +99,25 @@ public class PythonExecutable implements InteractiveExecutable
 
 	public void act(int dt)
 	{
-		
+		if(runningInterpreter)
+		{
+			try
+			{
+				interpreter.execute((int) (dt*cyclesPerMs));
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace(stdOut);
+				runningInterpreter = false;
+				return;
+			}
+			if(!interpreter.isRunning())
+			{
+				PyObject value = interpreter.evalValue();
+				stdOut.println(value.__repr__().asString());
+				runningInterpreter = false;
+			}
+		}
 	}
 
 }

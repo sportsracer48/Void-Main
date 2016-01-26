@@ -12,40 +12,6 @@ import java.util.Hashtable;
 
 public class OuinoPythonEnvironment
 {
-	public static void exec(PyObject locals, OuinoEnvironment env)
-	{
-		locals.__setitem__("HIGH", new PyInteger(OuinoEnvironment.HIGH));
-		locals.__setitem__("LOW", new PyInteger(OuinoEnvironment.LOW));
-		locals.__setitem__("OUTPUT", new PyInteger(OuinoEnvironment.OUTPUT));
-		locals.__setitem__("INPUT", new PyInteger(OuinoEnvironment.INPUT));
-		locals.__setitem__("INPUT_PULLUP", new PyInteger(OuinoEnvironment.INPUT_PULLUP));
-		locals.__setitem__("NO_CONNECTION", new PyInteger(OuinoEnvironment.NO_CONNECTION));
-		locals.__setitem__("CONSTANT", new PyInteger(OuinoEnvironment.CONSTANT));
-		
-		
-		locals.__setitem__("pinMode", new PyCallable((args,keys)->{
-			env.pinMode(
-					getArg(0,"pin",args,keys).asInt(),
-					getArg(1,"mode",args,keys).asInt()
-					);
-			return null;
-		}));
-		
-		locals.__setitem__("digitalWrite", new PyCallable((args,keys)->{
-			env.digitalWrite(
-					getArg(0,"pin",args,keys).asInt(),
-					getArg(1,"val",args,keys).asInt()
-					);
-			return null;
-		}));
-		
-		locals.__setitem__("delay", new PyCallable((args,keys)->{
-			env.delay(
-					getArg(0,"ms",args,keys).asInt()
-					);
-			return null;
-		}));
-	}
 	public static Hashtable<String,PyObject> getGlobals(OuinoEnvironment env)
 	{
 		Hashtable<String,PyObject> locals = new Hashtable<>();
@@ -67,40 +33,46 @@ public class OuinoPythonEnvironment
 		locals.put("$newTuple", new NewTuple());
 		locals.put("None", Py.None);
 		locals.put("Ellipsis", Py.Ellipsis);
+		locals.put("AssertionError", Py.AssertionError);
+		locals.put("__debug__", Py.True);
 		
 		PyObject builtins = Py.getSystemState().modules.__finditem__("__builtin__");
 		
 		locals.put("enumerate", builtins.__getattr__("enumerate"));
 		locals.put("dir", builtins.__getattr__("dir"));
 		locals.put("range", builtins.__getattr__("range"));
+		locals.put("__import__", builtins.__getattr__("__import__"));
 		
 		locals.put("Exception", Py.Exception);
 		
 		locals.put("RuntimeError", Py.RuntimeError);
 		
-		locals.put("pinMode", new PyCallable((args,keys)->{
-			env.pinMode(
-					getArg(0,"pin",args,keys).asInt(),
-					getArg(1,"mode",args,keys).asInt()
-					);
-			return null;
-		}));
+		if(env != null)
+		{
+			locals.put("pinMode", new PyCallable((args,keys)->{
+				env.pinMode(
+						getArg(0,"pin",args,keys).asInt(),
+						getArg(1,"mode",args,keys).asInt()
+						);
+				return null;
+			}));
+			
+			locals.put("digitalWrite", new PyCallable((args,keys)->{
+				env.digitalWrite(
+						getArg(0,"pin",args,keys).asInt(),
+						getArg(1,"val",args,keys).asInt()
+						);
+				return null;
+			}));
+			
+			locals.put("delay", new PyCallable((args,keys)->{
+				env.delay(
+						getArg(0,"ms",args,keys).asInt()
+						);
+				return null;
+			}));
+		}
 		
-		locals.put("digitalWrite", new PyCallable((args,keys)->{
-			throw new RuntimeException("lakjsdlkajsdkljalskjd");
-//			env.digitalWrite(
-//					getArg(0,"pin",args,keys).asInt(),
-//					getArg(1,"val",args,keys).asInt()
-//					);
-//			return null;
-		}));
-		
-		locals.put("delay", new PyCallable((args,keys)->{
-			env.delay(
-					getArg(0,"ms",args,keys).asInt()
-					);
-			return null;
-		}));
 		
 		return locals;
 	}

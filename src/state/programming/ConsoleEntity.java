@@ -16,12 +16,10 @@ import computer.program.InteractiveExecutable;
 import computer.program.RenderedExecutable;
 import computer.system.Computer;
 import state.ui.ClickableArea;
-import util.Color;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
 import graphics.registry.RegisteredFont;
-import graphics.registry.UtilSprites;
 
 public class ConsoleEntity extends Entity
 {
@@ -36,14 +34,14 @@ public class ConsoleEntity extends Entity
 	int commandStart;
 	
 	float width,height;
-	int charWidth, charHeight, rows, cols;
+	float charWidth, charHeight;
+	int rows, cols;
 	
 	int startLine = 0;
 	int blinkTime = 0;
 	int blinkPeriod = 500;
 	
 	boolean insert = true;
-	Entity bg;
 	
 	boolean runningInteractiveProgram = false;
 	boolean runningRenderedProgram = false;
@@ -52,6 +50,8 @@ public class ConsoleEntity extends Entity
 	CommandParser parser;
 	
 	Computer computer;
+	
+	float scale = 1f;
 	
 	public ConsoleEntity(float x, float y, float z, float width, float height, Computer computer)
 	{
@@ -63,10 +63,10 @@ public class ConsoleEntity extends Entity
 			{
 				if(runningRenderedProgram)
 				{
-					int charX = (int)(x/charWidth);
-					int charY = (int)(y/charHeight);
+					float charX = (x/charWidth);
+					float charY = (y/charHeight);
 					
-					int realCharY = charY-appendOnly.height()+startLine+1;
+					float realCharY = charY-appendOnly.height()+startLine+1;
 					if(charX>=0 && charY>=0 && charX<cols && charY<rows)
 					{
 						renderedProgram.mouseClicked(charX,realCharY);
@@ -79,8 +79,8 @@ public class ConsoleEntity extends Entity
 				{
 					renderedProgram.mouseMoved
 					(
-							(int)(x/charWidth),
-							(int)(y/charHeight)-appendOnly.height()+startLine+1
+							(x/charWidth),
+							(y/charHeight)-appendOnly.height()+startLine+1
 					);
 				}
 			}
@@ -95,18 +95,15 @@ public class ConsoleEntity extends Entity
 		
 		this.computer = computer;
 		
+		this.setScale(scale, scale);
 		font = RegisteredFont.defaultFont;
-		this.width = width;
-		this.height = height;
+		this.width = width/scale;
+		this.height = height/scale;
 		FontMetrics metrics = font.metrics;
-		charWidth = metrics.charWidth(' ');
-		charHeight = metrics.getHeight();
+		charWidth = metrics.charWidth(' ')*scale;
+		charHeight = metrics.getHeight()*scale;
 		rows = (int) (height/charHeight);
 		cols = (int) (width/charWidth);
-		
-		bg = new Entity(-charWidth,-charHeight,0,UtilSprites.white);
-		bg.setScale((cols+2)*charWidth, (rows+2)*charHeight);
-		bg.setColor(Color.black);
 		
 		appendOnly = new AppendOnlyBuffer(cols);
 		parser = new CommandParser();
@@ -166,7 +163,7 @@ public class ConsoleEntity extends Entity
 			return 22;
 		}
 	}
-	private void renderCursor(int x, int y, Context c)
+	private void renderCursor(float x, float y, Context c)
 	{
 		if(blinkTime<blinkPeriod/2)
 		{
@@ -186,7 +183,6 @@ public class ConsoleEntity extends Entity
 	
 	public void renderBase(Context c)
 	{
-		bg.render(c);
 		//render the static section
 		renderStaticSection(c);
 		//render the mutable section
@@ -203,7 +199,7 @@ public class ConsoleEntity extends Entity
 	public void renderStaticSection(Context c)
 	{
 		int row = 0;
-		int x = 0, y = 0;
+		float x = 0, y = 0;
 		if(startLine<0)
 		{
 			y = -startLine*charHeight;
@@ -240,8 +236,8 @@ public class ConsoleEntity extends Entity
 	public void renderMutableSection(Context c)
 	{
 		int row = -startLine+appendOnly.height()-1;
-		int x=0;
-		int y = row*charHeight;
+		float x=0;
+		float y = row*charHeight;
 		
 		int col = 0;
 		for(int i = 0; i<editable.length() && row<rows; i++)
@@ -280,7 +276,7 @@ public class ConsoleEntity extends Entity
 			renderCursor(x,y,c);
 		}
 	}
-	private void renderChar(Context c,char character, int x, int y)
+	private void renderChar(Context c,char character, float x, float y)
 	{
 		Sprite s = font.getSprite(character);
 		if(s!=null)
@@ -408,7 +404,7 @@ public class ConsoleEntity extends Entity
 			}
 			if(holder!=null)
 			{
-				holder.init(tokens, appendOnly, editable, font, cols, rows, this::makeVisible, computer);
+				holder.init(tokens, appendOnly, editable, font, scale, cols, rows, this::makeVisible, computer);
 				if(!runningProgram())
 				{
 					runningInteractiveProgram = false;
@@ -511,6 +507,16 @@ public class ConsoleEntity extends Entity
 		else if(key == GLFW.GLFW_KEY_PAGE_DOWN)
 		{
 			startLine+=rows;
+		}
+		else if(key == GLFW.GLFW_KEY_UP && Modifiers.isControlDown(modFlags))
+		{
+			startLine--;
+			return;
+		}
+		else if(key == GLFW.GLFW_KEY_DOWN && Modifiers.isControlDown(modFlags))
+		{
+			startLine++;
+			return;
 		}
 		
 		if(runningRenderedProgram)
