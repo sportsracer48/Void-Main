@@ -1,11 +1,16 @@
-package graphics.entity;
+package graphics.entity.particles;
 
+import util.BoundingInterface;
 import graphics.Sprite;
+import graphics.entity.Entity;
 
 public abstract class ParticleSystem extends Entity
 {
 	Sprite[] particleSprites;
 	float x,y,z,width,height,depth;
+	BoundingInterface bounds;
+	boolean allowOOB = false;
+	ParticleBins bins;
 	public ParticleSystem(float x, float y, float z,float zIndex, float width, float height, float depth, Sprite[] particles)
 	{
 		super(0,0,zIndex,null);
@@ -49,6 +54,46 @@ public abstract class ParticleSystem extends Entity
 	public void addParticle(Particle p)
 	{
 		addChild(p);
+		if(hasBins())
+		{
+			bins.add(p, p.x, p.y);
+		}
+	}
+	
+	public boolean hasBounds()
+	{
+		return bounds!=null;
+	}
+	
+	public BoundingInterface getBounds()
+	{
+		return bounds;
+	}
+	
+	public void setBounds(BoundingInterface box)
+	{
+		this.bounds = box;
+	}
+	
+	public boolean allowOOB()
+	{
+		return allowOOB;
+	}
+	public void setAllowOOB(boolean allowOOB)
+	{
+		this.allowOOB = allowOOB;
+	}
+	public boolean hasBins()
+	{
+		return bins != null;
+	}
+	public ParticleBins getBins()
+	{
+		return bins;
+	}
+	public void setBins(ParticleBins bins)
+	{
+		this.bins = bins;
 	}
 	
 	public abstract Particle createParticle();

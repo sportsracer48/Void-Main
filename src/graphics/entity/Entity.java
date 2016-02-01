@@ -337,17 +337,13 @@ public class Entity implements Comparable<Entity>, Actable
 		this.targetZ=this.z=z;
 	}
 	
-	public void render(Context c)
+	public void setupContext(Context c)
 	{
-		if(!enabled || !visible)
-		{
-			return;
-		}
 		if(groupAlpha!=1)
 		{
 			c.setAlpha(groupAlpha);
 		}
-		if(colored)
+		if(colored || c.hasGroupColor())
 		{
 			c.setColor(new Color(color.r(),color.g(),color.b(),color.a()*c.getAlpha()));
 		}
@@ -357,14 +353,35 @@ public class Entity implements Comparable<Entity>, Actable
 		}
 		c.pushTransform();
 		c.prependTransform(model);
-		
-		renderBase(c);
-		
+	}
+	
+	public void resetColor(Context c)
+	{
 		if(colored)
 		{
 			c.resetColor();
 		}
+	}
+	
+	public void render(Context c)
+	{
+		if(!enabled || !visible)
+		{
+			return;
+		}
+		setupContext(c);
+		renderBase(c);
+		resetColor(c);
 		renderChildren(c);
+		resetContext(c);
+	}
+	
+	public void resetContext(Context c)
+	{
+		if(colored || c.hasGroupColor())
+		{
+			c.resetColor();
+		}
 		if(groupAlpha!=1)
 		{
 			c.setAlpha(1);

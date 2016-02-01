@@ -4,45 +4,62 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 
 import graphics.Sprite;
-import graphics.entity.Particle;
-import graphics.entity.ParticleSystem;
+import graphics.entity.particles.Particle;
+import graphics.entity.particles.ParticleSystem;
 
 public class DestructionParticle
 {
-	public static void spawnParticlesFor(Sprite s,int scale,Sprite[] sprites,ParticleSystem system)
+	public static void spawnParticlesFor(Sprite s, Sprite[] sprites,ParticleSystem system, float vBiasX, float vBiasY)
 	{
 		BufferedImage im = s.image;
 		WritableRaster raster = im.getRaster();
+		int imWidth = s.imWidth;
+		int imHeight = s.imHeight;
 		
-		for(int x = 0; x<im.getWidth(); x++)
+		for(int x = 0; x<imWidth; x++)
 		{
-			for(int y = 0; y<im.getHeight(); y++)
+			for(int y = 0; y<imHeight; y++)
 			{
-				if(raster.getSample(x, y, 3)==255 &&Math.random()>.9)
+				if(raster.getSample(x, y, 3)==255 && Math.random()>.9)
 				{
-					Particle toReturn = new Particle(x*scale,y*scale,1,sprites[(int)Math.random()*sprites.length],500,system)
+					Particle toReturn = new Particle(x,(float) ((16-Math.random()*imHeight)),y,sprites[(int)Math.random()*sprites.length],(int)(1000*Math.random()),system)
 					{
-						float dx = (float) (Math.random()-.5)*.2f;
-						float dy = (float) (Math.random()-.5)*.2f;
-						float dz = (float) (Math.random())*.2f;
-						float a = -.001f;
+						float dx = (float) (Math.random()-.5)*.05f+vBiasX;
+						float dy = (float) (Math.random()-.5)*.05f+vBiasY;
+						float dz = (float) (Math.random())*.025f;
+						float ay = -.001f;
+						float af = -.01f;
 						public void update(int dt, int lifeTime, float x,float y, float z)
 						{
-							if(z==0)
+							BoundingInterface bounds = getBounds();
+							if(bounds.onBoundZ(z))
 							{
-								return;
+								float xFriction = af*Math.signum(dx)*dt;
+								float yFriction = af*Math.signum(dy)*dt;
+								if(Math.abs(xFriction)<Math.abs(dx))
+								{
+									dx += af*Math.signum(dx)*dt;
+								}
+								else
+								{
+									dx = 0;
+								}
+								if(Math.abs(yFriction)<Math.abs(dy))
+								{
+									dy += af*Math.signum(dy)*dt;
+								}
+								else
+								{
+									dy = 0;
+								}
 							}
 							setX(x+dx*dt);
 							setY(y+dy*dt);
-							dz += a*dt;
+							dz += ay*dt;
 							setZ(z+dz*dt);
-							if(this.z<0)
-							{
-								this.z=0;
-							}
 						}
 					};
-					toReturn.setScale(scale);
+					toReturn.setScale((float)Math.random());
 					toReturn.setColor(new Color(im.getRGB(x, y)));
 					system.addParticle(toReturn);
 				}

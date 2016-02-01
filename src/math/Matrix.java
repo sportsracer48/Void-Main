@@ -64,6 +64,22 @@ public class Matrix
 		}
 		return out;
 	}
+	public Matrix compMult(Matrix m)
+	{
+		if(m.rows != rows || m.cols != cols)
+		{
+			throw new RuntimeException("illegal matricies");
+		}
+		Matrix out = new Matrix(rows, cols);
+		for(int row = 0; row<out.rows; row++)
+		{
+			for(int col = 0; col<out.cols; col++)
+			{
+				out.set(row, col, get(row,col)*m.get(row, col));
+			}
+		}
+		return out;
+	}
 	
 	public Matrix add(Matrix m)
 	{

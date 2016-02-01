@@ -4,9 +4,9 @@ import math.Matrix;
 
 public class Camera
 {
-	float x, y, scale, screenWidth, screenHeight;
+	public float x, y, scale, screenWidth, screenHeight;
 	
-	boolean allowAnyScale = false;
+	public boolean allowAnyScale = false;
 	
 	public Camera(float x, float y, float screenWidth, float screenHeight, float scale)
 	{
@@ -15,6 +15,20 @@ public class Camera
 		this.scale = scale;
 		this.screenWidth = screenWidth;
 		this.screenHeight = screenHeight;
+	}
+	
+	public boolean intersects(float x, float y, float width, float height)
+	{
+		float leftX = this.getLeftX();
+		float rightX = this.getRightX();
+		float topY = this.getTopY();
+		float botY = this.getBottomY();
+		
+		
+		return  (x+width >= leftX && 
+				x<=rightX) && 
+				y+height >= topY && 
+				y<=botY;
 	}
 	
 	public float getLeftX()

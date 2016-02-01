@@ -15,6 +15,9 @@ public class Context
 	Matrix modelMat;
 	Matrix viewMat;
 	Matrix projectionMat;
+	
+	Matrix groupColor;
+	
 	float alpha=1;
 	List<Matrix> projections = new ArrayList<Matrix>();
 	List<Matrix> stack = new ArrayList<>();
@@ -126,13 +129,39 @@ public class Context
 		Matrix.uniformMatrix(matrix, st);
 	}
 	
+	public void setGroupColor(Matrix color)
+	{
+		this.groupColor = color;
+	}
 	public void setColor(Matrix color)
 	{
-		Matrix.uniformVector(color, this.color);
+		if(groupColor == null)
+		{
+			Matrix.uniformVector(color, this.color);
+		}
+		else
+		{
+			Matrix.uniformVector(groupColor.compMult(color), this.color);
+		}
 	}
 	public void resetColor()
 	{
-		Matrix.uniformVector(Color.white, this.color);
+		if(groupColor == null)
+		{
+			Matrix.uniformVector(Color.white, this.color);
+		}
+		else
+		{
+			Matrix.uniformVector(groupColor, this.color);
+		}
+	}
+	public boolean hasGroupColor()
+	{
+		return this.groupColor != null;
+	}
+	public void resetGroupColor()
+	{
+		this.groupColor = null;
 	}
 
 	public float getAlpha()

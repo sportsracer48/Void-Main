@@ -54,7 +54,6 @@ public class FluidEntity extends Entity
 	{
 		if(self!=null)
 		{
-			super.removeChild(self);
 			self=null;
 		}
 		this.body = body;
@@ -86,10 +85,6 @@ public class FluidEntity extends Entity
 	public void clearChildren()
 	{
 		super.clearChildren();
-		if(self!=null)
-		{
-			addChild(self);
-		}
 	}
 	
 	public void setTo(Entity e)
@@ -98,18 +93,33 @@ public class FluidEntity extends Entity
 		this.self = e;
 		if(e!=null)
 		{
-			addChild(e);
 			setWidth(e.getWidth());
 			setHeight(e.getHeight());
 		}
 	}
-	
+	public void act(int dt)
+	{
+		if(self!=null)
+		{
+			self.act(dt);
+		}
+		super.act(dt);
+	}
 	public void renderBase(Context c)
 	{
 		if(body != null)
 		{
 			body.render(c);
 		}
+		if(self != null)
+		{
+			self.render(c);
+		}
+	}
+
+	public Entity getSelf()
+	{
+		return self;
 	}
 	
 }

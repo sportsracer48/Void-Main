@@ -25,4 +25,9 @@ public class Color extends Matrix
 	{
 		this(((code>>>16) & 0xFF)/255f,((code>>>8) & 0xFF)/255f,((code>>>0) & 0xFF)/255f,1);
 	}
+
+	public static Matrix changeAlpha(Matrix color, float alpha)
+	{
+		return new Color(color.r(),color.g(),color.b(),alpha);
+	}
 }
