@@ -43,7 +43,7 @@ public class Unit
 	{
 		if(moving)
 		{
-			float speed = .5f;
+			float speed = .5f/5f;
 			float dx = (goal.x - tile.x)*speed;
 			float dy = (goal.y - tile.y)*speed;
 			if(dx!=0 && dy!= 0)
@@ -51,7 +51,7 @@ public class Unit
 				System.err.println("ILLEGAL MOTION");
 				throw new RuntimeException();
 			}
-			if(Math.abs(goal.x-(tile.x+xOffset/16))<=Math.abs(dx/16) && Math.abs(goal.y-(tile.y+yOffset/16))<=Math.abs(dy/16))
+			if(Math.abs(goal.x-(tile.x+xOffset/16))<=Math.abs(dx*dt/16) && Math.abs(goal.y-(tile.y+yOffset/16))<=Math.abs(dy*dt/16))
 			{
 				setTile(goal);
 				xOffset = 0;
@@ -61,8 +61,8 @@ public class Unit
 			}
 			else
 			{
-				xOffset += dx;
-				yOffset += dy;
+				xOffset += dx*dt;
+				yOffset += dy*dt;
 			}
 		}
 		if(base != null)
