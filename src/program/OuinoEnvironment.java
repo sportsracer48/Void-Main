@@ -106,7 +106,7 @@ public class OuinoEnvironment implements Environment
 				{
 					try
 					{
-						int cycles = interpreter.execute((int)(dt*cyclesPerMs));
+						int cycles = interpreter.execute((int)(cyclesPerMs));
 						if(delaying)
 						{
 							delayTime += (dt - cycles/cyclesPerMs);

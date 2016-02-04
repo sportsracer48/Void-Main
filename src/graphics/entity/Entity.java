@@ -210,6 +210,7 @@ public class Entity implements Comparable<Entity>, Actable
 		handleMove(x,y,null);
 	}
 	
+	//x and y appear to do nothing here?
 	public void handleMove(float x, float y, MouseoverContext context, Matrix model)
 	{
 		if(!enabled || !modeEnabled())

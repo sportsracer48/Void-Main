@@ -192,10 +192,13 @@ public class ViewportState extends GameState
 		{
 			mapBuilder.addNewRoom();
 		}
-		mapBuilder.dump();
-		map = mapBuilder.getMap(factory);
-		robotX = mapBuilder.getStartX();
-		robotY = mapBuilder.getStartY();
+		//mapBuilder.dump();
+		Tile[][] map2;
+		//map2 = mapBuilder.getMap(factory);
+		map = mapBuilder.getMapPerfect(factory);
+		robotX = mapBuilder.getStartX(map);
+		robotY = mapBuilder.getStartY(map);
+		System.out.println("Robot coords: " + robotX + ", " + robotY);
 		
 		int mapWidth = map.length;
 		int mapHeight = map[0].length;
