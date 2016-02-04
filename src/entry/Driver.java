@@ -65,8 +65,8 @@ public class Driver
 		
 		GLFW.glfwSetErrorCallback(GLFWErrorCallback.createPrint(System.err));
 		GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-		wWidth = vidmode.getWidth();
-		wHeight = vidmode.getHeight();
+		wWidth = vidmode.width();
+		wHeight = vidmode.height();
 		
 		window = GLFW.glfwCreateWindow(wWidth, wHeight, "Void Main", fullScreen?GLFW.glfwGetPrimaryMonitor():MemoryUtil.NULL, MemoryUtil.NULL);
 
@@ -146,8 +146,9 @@ public class Driver
 		GlobalState.currentProgramming.init(spriteAtlas);
 		GlobalState.currentWorkbench = new WorkbenchState(input,window);
 		GlobalState.currentWorkbench.init(spriteAtlas);
-		//PythonInit.init();
+		PythonInit.init();
 		currentState = new ViewportState(input,window);//GlobalState.currentWorkbench;
+		//currentState = GlobalState.currentWorkbench;
 		currentState.init(spriteAtlas);
 	}
 	
