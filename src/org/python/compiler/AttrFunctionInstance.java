@@ -5,8 +5,8 @@ import org.python.core.PyObject;
 
 public class AttrFunctionInstance extends FunctionInstance
 {
-	private static final long serialVersionUID = 1L;
-
+	private static final long serialVersionUID = -763343636161697573L;
+	
 	PyObject self;
 	FunctionInstance staticInstance;
 	public String toString()

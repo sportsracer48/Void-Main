@@ -3,9 +3,12 @@ package util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 
-public class Pipe
+public class Pipe implements Serializable
 {
+	private static final long serialVersionUID = -2061641002514663106L;
+	
 	byte[] buffer;
 	int readPtr=0;
 	int writePtr=0;

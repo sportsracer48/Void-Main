@@ -8,7 +8,7 @@ import org.python.core.PyType;
 
 public class ExceptionHolder extends PyObject
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 7402014254643163575L;
 	
 	PyException exception;
 	PyObject pythonVersion;

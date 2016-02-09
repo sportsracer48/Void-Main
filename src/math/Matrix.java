@@ -2,13 +2,16 @@ package math;
 
 import graphics.shader.Uniform;
 
+import java.io.Serializable;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 import org.lwjgl.BufferUtils;
 
-public class Matrix
+public class Matrix implements Serializable
 {
+	private static final long serialVersionUID = -234348954841694818L;
+	
 	static FloatBuffer tempMatrix = BufferUtils.createFloatBuffer(16);
 	static FloatBuffer tempVector = BufferUtils.createFloatBuffer(4);
 	

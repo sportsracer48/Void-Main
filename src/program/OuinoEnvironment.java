@@ -2,19 +2,27 @@ package program;
 
 import entry.GlobalState;
 import game.item.Pin;
+import game.map.UnitController;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.List;
 
 import org.python.compiler.Interpreter;
 import org.python.compiler.PythonCompiler;
 import org.python.compiler.CompiledCode;
 
+import util.BitShiftPipe;
 import util.Pipe;
 
 public class OuinoEnvironment implements Environment
 {
+	private static final long serialVersionUID = -6299833059149665874L;
+	static float cyclesPerSecond = 1_000_000f; //1000 khz
+	static float cyclesPerMs = cyclesPerSecond/1000;
+	
 	public static final int HIGH = 1024;
 	public static final int LOW = 0;
 	public static final int OUTPUT = 0;
@@ -22,6 +30,10 @@ public class OuinoEnvironment implements Environment
 	public static final int INPUT_PULLUP = 2;
 	public static final int NO_CONNECTION = 3;
 	public static final int CONSTANT = 4;
+	
+	public static final int SERIAL_INPUT = 5;
+	public static final int SERIAL_CLOCK = 6;
+	
 	boolean delaying = false;
 	int delayTime = 0;
 	int goalDelay = 0;
@@ -34,6 +46,9 @@ public class OuinoEnvironment implements Environment
 	
 	List<Pin> globalPins;
 	int[] pinModes;
+	boolean[] wasOff;
+	int[] serialSignalPins;
+	BitShiftPipe[] serialDataPipes;
 	
 	Pin vIn;
 	Pin[] ground;
@@ -44,8 +59,7 @@ public class OuinoEnvironment implements Environment
 	Interpreter interpreter;
 	
 	Pipe serialOut;
-	float cyclesPerSecond = 1_000_000f; //1000 khz
-	float cyclesPerMs = cyclesPerSecond/1000;
+	UnitController controller;
 
 	public OuinoEnvironment(List<Pin> pins)
 	{
@@ -53,21 +67,241 @@ public class OuinoEnvironment implements Environment
 		globalPins = pins;
 		initialize();
 	}
+	private void initialize()
+	{
+		pinModes = new int[]{NO_CONNECTION,NO_CONNECTION,CONSTANT,CONSTANT,INPUT,INPUT,INPUT,INPUT,INPUT,INPUT,      INPUT,INPUT,INPUT,INPUT,INPUT,INPUT,INPUT,INPUT,
+				NO_CONNECTION,NO_CONNECTION,INPUT,CONSTANT,CONSTANT,CONSTANT,CONSTANT,INPUT,              INPUT,INPUT,INPUT,INPUT,INPUT};
+		wasOff = new boolean[pinModes.length];
+		serialSignalPins = new int[pinModes.length];
+		serialDataPipes = new BitShiftPipe[pinModes.length];
+		
+		Arrays.fill(serialSignalPins, -1);
+		vIn = globalPins.get(25);
+		ground = new Pin[]{globalPins.get(3),globalPins.get(23),globalPins.get(24)};
+		vcc3 = globalPins.get(21);
+		vcc5 = globalPins.get(22);
+		updatePower();
+	}
+	
+	public void logicUpdate()
+	{
+		for(int i = 0;i<globalPins.size();i++)
+		{
+			if(pinModes[i] == SERIAL_CLOCK)
+			{
+				boolean wasOff = this.wasOff[i];
+				Pin clock = globalPins.get(i);
+				int signalIndex = serialSignalPins[i];
+				if(signalIndex>=0 && signalIndex<globalPins.size() && serialDataPipes[signalIndex] != null)
+				{
+					Pin signal = globalPins.get(signalIndex);
+					if(wasOff && clock.getReceivedPotential()==HIGH)
+					{
+						serialDataPipes[signalIndex].writeBit(signal.getReceivedPotential()==HIGH);
+					}
+				}
+				this.wasOff[i] = clock.getReceivedPotential()!=HIGH;
+			}
+		}
+	}
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	public void pinMode(int pinNumber, int val)
+	{
+		if(!(val==OUTPUT || val==INPUT || val==INPUT_PULLUP))
+		{
+			return;
+		}
+		if(pinNumber<0 || pinNumber>13)
+		{
+			return;
+		}
+		int truePinNumber = 17-pinNumber;
+		pinModes[truePinNumber]=val;
+		serialDataPipes[truePinNumber]=null;
+	}
+	public void serialMode(int clockPin, int signalPin)
+	{
+		if(clockPin <0 || clockPin>13 || signalPin<0 || signalPin>13)
+		{
+			return;
+		}
+		int trueClockPin = 17-clockPin;
+		int trueSignalPin = 17-signalPin;
+		pinModes[trueClockPin] = SERIAL_CLOCK;
+		pinModes[trueSignalPin] = SERIAL_INPUT;
+		serialSignalPins[trueClockPin] = trueSignalPin;
+		serialDataPipes[trueSignalPin] = new BitShiftPipe(64);
+		logicUpdate();
+	}
+	public int serialRead(int pinNumber)
+	{
+		if(pinNumber<0 || pinNumber>13)
+		{
+			return -1;
+		}
+		int truePinNumber = 17-pinNumber;
+		if(pinModes[truePinNumber] != SERIAL_INPUT)
+		{
+			return -1;
+		}
+		if(serialDataPipes[truePinNumber] == null)
+		{
+			return -1;
+		}
+		return serialDataPipes[truePinNumber].readByte();
+	}
+	public boolean hasSerialData(int pinNumber)
+	{
+		if(pinNumber<0 || pinNumber>13)
+		{
+			return false;
+		}
+		int truePinNumber = 17-pinNumber;
+		if(pinModes[truePinNumber] != SERIAL_INPUT)
+		{
+			return false;
+		}
+		if(serialDataPipes[truePinNumber] == null)
+		{
+			return false;
+		}
+		return serialDataPipes[truePinNumber].hasData();
+	}
+	public void digitalWrite(int pinNumber, int val)
+	{
+		if(pinNumber<0 || pinNumber>13)
+		{
+			return;
+		}
+		int truePinNumber = 17-pinNumber;
+		if(pinModes[truePinNumber] != OUTPUT)
+		{
+			return;
+		}
+		Pin pin = globalPins.get(truePinNumber);
+		if(val>LOW)
+		{
+			pin.setPotential(HIGH);
+		}
+		else
+		{
+			pin.setPotential(LOW);
+		}
+	}
+	public void analogWrite(int pinNumber, int val)
+	{
+		if(pinNumber<0 || pinNumber>13)
+		{
+			return;
+		}
+		int truePinNumber = 17-pinNumber;
+		if(pinModes[truePinNumber] != OUTPUT)
+		{
+			return;
+		}
+		Pin pin = globalPins.get(truePinNumber);
+		pin.setPotential(val);
+	}
+	
+	public int digitalRead(int pinNumber)
+	{
+		if(pinNumber<0 || pinNumber>13)
+		{
+			return 0;
+		}
+		int truePinNumber = 17-pinNumber;
+		if(pinModes[truePinNumber] != INPUT)
+		{
+			return 0;
+		}
+		Pin pin = globalPins.get(truePinNumber);
+		int potential = pin.getReceivedPotential();
+		if(potential > LOW)
+		{
+			return HIGH;
+		}
+		else
+		{
+			return LOW;
+		}
+	}
+	public int analogRead(int pinNumber)
+	{
+		if(pinNumber<0 || pinNumber>13)
+		{
+			return 0;
+		}
+		int truePinNumber = 17-pinNumber;
+		if(pinModes[truePinNumber] != INPUT)
+		{
+			return 0;
+		}
+		Pin pin = globalPins.get(truePinNumber);
+		return pin.getPotential();
+	}
+	public boolean pullupRead(int pinNumber)
+	{
+		if(pinNumber<0 || pinNumber>13)
+		{
+			return false;
+		}
+		int truePinNumber = 17-pinNumber;
+		if(pinModes[truePinNumber] != INPUT_PULLUP)
+		{
+			return false;
+		}
+		return globalPins.get(truePinNumber).isGrounded();
+	}
+	
+	public void delay(int ms)
+	{
+		goalDelay = ms;
+		delayTime = 0;
+		delaying = true;
+		interpreter.stop();
+	}
+	public void tick()
+	{
+		if(controller!=null)
+		{
+			controller.tick();
+			if(controller.isAnimating())
+			{
+				interpreter.stop();
+			}
+		}
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	
+	
+	private void writeObject(java.io.ObjectOutputStream out) throws IOException
+	{
+		out.defaultWriteObject();
+	}
+	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
+	{
+		in.defaultReadObject();
+		if(interpreter != null)
+		{
+			PrintStream serialOut = new PrintStream(this.serialOut.getOutputStream());
+			interpreter.setStdOut(serialOut);
+		}
+	}
 	
 	public InputStream getSerialStream()
 	{
 		return serialOut.getInputStream();
 	}
 	
-	private void initialize()
+	public void setUnitController(UnitController controller)
 	{
-		pinModes = new int[]{NO_CONNECTION,NO_CONNECTION,CONSTANT,CONSTANT,INPUT,INPUT,INPUT,INPUT,INPUT,INPUT,      INPUT,INPUT,INPUT,INPUT,INPUT,INPUT,INPUT,INPUT,
-				NO_CONNECTION,NO_CONNECTION,INPUT,CONSTANT,CONSTANT,CONSTANT,CONSTANT,INPUT,              INPUT,INPUT,INPUT,INPUT,INPUT};
-		vIn = globalPins.get(25);
-		ground = new Pin[]{globalPins.get(3),globalPins.get(23),globalPins.get(24)};
-		vcc3 = globalPins.get(21);
-		vcc5 = globalPins.get(22);
-		updatePower();
+		this.controller = controller;
+	}
+	public UnitController getUnitController()
+	{
+		return controller;
 	}
 	private void resetState()
 	{
@@ -97,20 +331,18 @@ public class OuinoEnvironment implements Environment
 					delayTime+=dt;
 					if(delayTime>=goalDelay)
 					{
-						dt = delayTime-delayTime;
 						delaying = false;
 						delayTime = 0;
 					}
 				}
-				if(!delaying)
+				if(!delaying && !isAnimating())
 				{
 					try
 					{
-						int cycles = interpreter.execute((int)(dt*cyclesPerMs));
+						interpreter.execute((int)(cyclesPerMs));
 						if(delaying)
 						{
-							delayTime += (dt - cycles/cyclesPerMs);
-							System.out.println(delayTime);
+							delayTime = 0;
 						}
 					}
 					catch(Exception e)
@@ -124,10 +356,6 @@ public class OuinoEnvironment implements Environment
 				}
 			}
 		}
-		for(Pin p:globalPins)
-		{
-			p.act(dt);
-		}
 	}
 	
 	public void reset()
@@ -137,39 +365,21 @@ public class OuinoEnvironment implements Environment
 		CompiledCode programSuite = PythonCompiler.compile(program+bootStrap);
 		PrintStream serialOut = new PrintStream(this.serialOut.getOutputStream());
 		interpreter = new Interpreter(programSuite,OuinoPythonEnvironment.getGlobals(this),serialOut);
+		programSuite.dump();
 	}
 	
 	public void unpowerAll()
 	{
 		for(Pin p:globalPins)
 		{
-			p.setGoalPotential(0);
-			p.setGoalGrounded(false);
+			p.setPotential(0);
+			p.setGrounded(false);
 		}
 	}
-	public void digitalWrite(int pinNumber, int val)
+	
+	public boolean isAnimating()
 	{
-		if(pinNumber<0 || pinNumber>13)
-		{
-			return;
-		}
-		Pin pin = globalPins.get(17-pinNumber);
-		pin.setGoalPotential(val);
-	}
-	public void pinMode(int pinNumber, int val)
-	{
-		if(pinNumber<0 || pinNumber>13)
-		{
-			return;
-		}
-		pinModes[17-pinNumber]=val;
-	}
-	public void delay(int ms)
-	{
-		goalDelay = ms;
-		delayTime = 0;
-		delaying = true;
-		interpreter.stop();
+		return controller != null && controller.isAnimating();
 	}
 	
 	public boolean powered()
@@ -189,10 +399,10 @@ public class OuinoEnvironment implements Environment
 		{
 			for(Pin p:ground)
 			{
-				p.setGoalGrounded(true);
+				p.setGrounded(true);
 			}
-			vcc3.setGoalPotential(614);
-			vcc5.setGoalPotential(1024);
+			vcc3.setPotential(614);
+			vcc5.setPotential(1024);
 		}
 		else
 		{

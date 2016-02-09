@@ -1,25 +1,55 @@
 package game.item;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import entry.GlobalState;
 import program.Environment;
-import program.ProgramCoordinator;
 import state.workbench.game.WiringMode;
 import state.workbench.graphics.PinHighlight;
+import game.map.Unit;
 import graphics.Sprite;
 import graphics.entity.Entity;
 
-public class Item
+public class Item implements Serializable
 {
-	ItemType type;
+	private static final long serialVersionUID = -3436670486907081262L;
+	
+	transient ItemType type;
+	int typeId;
 	List<Pin> pins;
+	List<Pin> breakoutPins;
+	List<Long> state = new ArrayList<>();
 	Environment env;
 	
 	public Item(ItemType type)
 	{
 		this.type = type;
 		pins = type.getPins(this);
+		breakoutPins = type.getBreakoutPins(this);
+		env = type.getEnvironmentFor(pins, GlobalState.coordinator);
+		typeId = type.typeId;
+	}
+	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
+	{
+		stream.defaultReadObject();
+		type = ItemTypes.fromId(typeId);
+		if(env!=null)
+		{
+			GlobalState.coordinator.addEnvironment(env);
+		}
+		
+//		List<Coord> pinLocations = type.getPinLocations();
+//		for(int i = 0; i<pins.size(); i++)
+//		{
+//			Pin p = pins.get(i);
+//			Coord c = pinLocations.get(i);
+//			p.x = c.x;
+//			p.y = c.y;
+//		}
 	}
 	
 	public Entity getInvEntity()
@@ -50,6 +80,65 @@ public class Item
 	public boolean existsInWorld()
 	{
 		return getWorldSprite()!=null;
+	}
+	
+	public void updateExported(int location, Unit unit)
+	{
+		if(type.getExportPinUpdate()!=null)
+		{
+			type.getExportPinUpdate().accept(getPins(), getBreakoutPins(),location,unit,this);
+		}
+	}
+	
+	public void setState(int stateIndex, long stateLong)
+	{
+		while(state.size()<stateIndex+1)
+		{
+			state.add(0L);
+		}
+		state.set(stateIndex, stateLong);
+	}
+	
+	public long getState(int stateIndex)
+	{
+		while(state.size()<stateIndex+1)
+		{
+			state.add(0L);
+		}
+		return state.get(stateIndex);
+	}
+	
+	public void resetState()
+	{
+		state.clear();
+	}
+	
+	public void pinUpdate()
+	{
+		if(type.getLogicUpdate() != null)
+		{
+			type.getLogicUpdate().accept(getPins(),this);
+		}
+		if(env != null)
+		{
+			env.logicUpdate();
+		}
+	}
+	public void graphicsUpdate(ItemEntity entity)
+	{
+		if(type.getGraphicsPinUpdate() == null)
+		{
+			return;
+		}
+		type.getGraphicsPinUpdate().accept(pins,entity);
+	}
+	public void radioUpdate()
+	{
+		if(type.getRadioUpdate() == null)
+		{
+			return;
+		}
+		type.getRadioUpdate().accept(pins,this);
 	}
 	
 	public void stripPins()
@@ -93,14 +182,14 @@ public class Item
 	{
 		return pins;
 	}
-
-	public Environment getEnvironment(ProgramCoordinator coordinator)
+	public List<Pin> getBreakoutPins()
 	{
-		if(env != null)
-		{
-			return env;
-		}
-		env = type.getEnvironmentFor(getPins(),coordinator);
+		return breakoutPins;
+	}
+
+	public Environment getEnvironment()
+	{
 		return env;
 	}
+
 }

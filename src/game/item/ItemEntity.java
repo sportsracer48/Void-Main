@@ -1,24 +1,22 @@
 package game.item;
 
-import graphics.entity.AnimatedEntity;
+import graphics.entity.FluidEntity;
 
-public class ItemEntity extends AnimatedEntity
+public class ItemEntity extends FluidEntity
 {
 	Item item;
 	ItemType type;
 	public ItemEntity(float x, float y, float z, Item i)
 	{
-		super(x, y, z, i.getWorldSprite());
+		super(x, y, z);
+		super.setSpriteAndSize(i.getWorldSprite());
 		this.item = i;
 		this.type = i.getType();
 	}
-
-	public void animate(int dt)
+	
+	public void act(int dt)
 	{
-		if(type.getPinUpdate()!=null)
-		{
-			type.getPinUpdate().accept(item.getPins(),this);
-		}
+		super.act(dt);
+		item.graphicsUpdate(this);
 	}
-
 }

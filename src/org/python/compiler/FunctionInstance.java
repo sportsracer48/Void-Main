@@ -9,7 +9,7 @@ import org.python.core.PyString;
 
 public class FunctionInstance extends PyObject
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -5519220740766735959L;
 	
 	public PyObject __defaults__;
 	public PyObject __doc__;

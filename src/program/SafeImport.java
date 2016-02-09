@@ -8,10 +8,10 @@ import org.python.core.PyString;
 
 public class SafeImport extends PyObject
 {
+	private static final long serialVersionUID = 4202609761453668015L;
+	
 	private static HashMap<String,PyObject> modules = new HashMap<>();
 	private static String[] allowedImports = {"math","random"};
-	
-	private static final long serialVersionUID = 1L;
 	
 	public SafeImport(PyObject unsafeImport)
 	{

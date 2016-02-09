@@ -1,9 +1,7 @@
 package state.workbench.game;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
+import java.util.function.Consumer;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -22,6 +20,7 @@ import util.Grid.Coord;
 import util.Color;
 import game.item.Item;
 import game.item.ItemType;
+import game.item.ItemTypes;
 import graphics.Sprite;
 import graphics.entity.Entity;
 import graphics.entity.FluidEntity;
@@ -31,7 +30,7 @@ public class ChassisGrid extends Entity
 	Item[][] contents;
 	Entity[][] entities;
 	ItemAcceptor[][] slots;
-	List<ExternalBreakout> breakouts;
+	BreakoutItems breakouts;
 	FluidEntity preview;
 	FluidEntity returnPreview;
 	WireRenderer wireRenderer;
@@ -144,8 +143,7 @@ public class ChassisGrid extends Entity
 					}
 					else if(manager.getMode()==programming)
 					{
-						//TODO
-						GlobalState.laptop.setConnected(item.getEnvironment(GlobalState.coordinator));
+						GlobalState.laptop.setConnected(item.getEnvironment());
 						programmingTransition.start();
 					}
 					else
@@ -163,6 +161,37 @@ public class ChassisGrid extends Entity
 			addChild(a);
 		});
 	}
+	public HashSet<Item> getItems()
+	{
+		HashSet<Item> allItems = new HashSet<>();
+		grid.forEachWithIndicies((i,j,x,y)->{
+			if(contents[x][y] != null)
+			{
+				allItems.add(contents[x][y]);
+			}
+		});
+		for(ExternalBreakout breakout:breakouts.allBreakouts)
+		{
+			for(InventorySlot slot:breakout.slots)
+			{
+				Item i = slot.getContents();
+				if(i!=null)
+				{
+					allItems.add(i);
+				}
+			}
+		}
+		return allItems;
+	}
+	public void forEachItem(Consumer<Item> consumer)
+	{
+		getItems().forEach(consumer);
+	}
+	
+	public ExportState export()
+	{
+		return new ExportState(contents,breakouts,history);
+	}
 	
 	public void addExternalBreakouts(ItemType breakoutType,Sprite pinSprite, Sprite bgSprite, InventorySlot[] topSlots, InventorySlot[] botSlots, InventorySlot[] leftSlots, InventorySlot[] rightSlots, InventorySlot[] frontSlots, InventorySlot[] backSlots)
 	{
@@ -173,16 +202,10 @@ public class ChassisGrid extends Entity
 		ExternalBreakout front = new ExternalBreakout(pinSprite,bgSprite,breakoutType,wiring,frontSlots);
 		ExternalBreakout back =  new ExternalBreakout(pinSprite,bgSprite,breakoutType,wiring,backSlots);
 		
-		breakouts = new ArrayList<>();
-		breakouts.add(top);
-		breakouts.add(bot);
-		breakouts.add(left);
-		breakouts.add(right);
-		breakouts.add(front);
-		breakouts.add(back);
+		breakouts = new BreakoutItems(top,bot,left,right,front,back);
 		
 		int x = 0;
-		for(ExternalBreakout b: breakouts)
+		for(ExternalBreakout b: breakouts.allBreakouts)
 		{
 			Entity e = b.getEntity(grid.getX(x), grid.getY(10), 0);
 			contents[x][10] = b.itemInterface;
@@ -206,19 +229,9 @@ public class ChassisGrid extends Entity
 		history.init();
 	}
 	
-	public List<ExternalBreakout> getBreakouts()
+	public BreakoutItems getBreakouts()
 	{
 		return breakouts;
-	}
-	
-	public Item[][] createCopy()
-	{
-		Item[][] copy = new Item[contents.length][contents[0].length];
-		for(int x = 0; x<width; x++)
-		{
-			copy[x] = Arrays.copyOf(contents[x], contents[x].length);
-		}
-		return copy;
 	}
 	
 	
@@ -343,6 +356,20 @@ public class ChassisGrid extends Entity
 		if(!showReturnPreview.getValue())
 		{
 			disableReturnPreview();
+		}
+	}
+
+	public void clear()
+	{
+		grid.forEachWithIndicies((i,j,x,y)->{
+			if(contents[x][y] != null && contents[x][y].getType().typeId != ItemTypes.BREAKOUT)
+			{
+				remove(x,y);
+			}
+		});
+		for(ExternalBreakout breakout:breakouts.allBreakouts)
+		{
+			breakout.clear();
 		}
 	}
 	

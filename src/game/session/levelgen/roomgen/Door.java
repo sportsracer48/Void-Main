@@ -1,4 +1,4 @@
-package levelgen;
+package game.session.levelgen.roomgen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +12,7 @@ public class Door
 		this.x=x;
 		this.y=y;
 	}
-	public List<Room> getValidRooms(int maxSize, Predicate<Room> validator)
+	public List<Room> getValidRooms(int maxSize, Predicate<Room> validator,int n)
 	{
 		List<Room> result = new ArrayList<>();
 		for(int left = -maxSize; left<= maxSize; left++)
@@ -31,7 +31,7 @@ public class Door
 						{
 							continue;
 						}
-						Room candidate = new Room(x+left,y+top,right-left+1,bot-top+1);
+						Room candidate = new Room(x+left,y+top,right-left+1,bot-top+1,n);
 						if(!candidate.contains(x, y))
 						{
 							continue;

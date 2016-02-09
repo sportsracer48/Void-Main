@@ -4,7 +4,7 @@ import org.python.core.PyObject;
 
 public class MemberPointer extends Pointer
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1619792618511733537L;
 	
 	String member;
 	PyObject target;

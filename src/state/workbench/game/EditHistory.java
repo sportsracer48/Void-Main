@@ -15,7 +15,7 @@ public class EditHistory
 	public SavedState copyState()
 	{
 		Wire current = wireEditor.getCurrent() == null?null:wireEditor.getCurrent().clone();
-		SavedState newState = new SavedState(view.createCopy(),current,view.getBreakouts());
+		SavedState newState = new SavedState(view.contents,current,view.getBreakouts());
 		return newState;
 	}
 	
@@ -64,5 +64,13 @@ public class EditHistory
 		history.clear();
 		history.add(copyState());
 		statePtr = 0;
+	}
+	public void init(SavedState toLoad)
+	{
+		history.clear();
+		history.add(toLoad);
+		statePtr = 0;
+		toLoad.load(view.contents, wireEditor, view.getBreakouts());
+		view.revalidateEntities();
 	}
 }

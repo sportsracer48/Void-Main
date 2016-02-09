@@ -1,5 +1,6 @@
 package org.python.compiler;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
@@ -9,8 +10,10 @@ import org.python.core.PyCell;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
 
-public class Scope
+public class Scope implements Serializable
 {
+	private static final long serialVersionUID = 5296057157691916790L;
+	
 	Hashtable<String,PyObject> scope;
 	HashSet<String> global = new HashSet<>();
 	Scope closure;

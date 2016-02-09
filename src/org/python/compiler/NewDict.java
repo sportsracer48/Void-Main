@@ -5,8 +5,8 @@ import org.python.core.PyObject;
 
 public class NewDict extends PyObject
 {
-	private static final long serialVersionUID = 1L;
-	
+	private static final long serialVersionUID = -8005489173753475989L;
+
 	public PyObject __call__(PyObject[] args, String[] keywords)
 	{
 		for(int i = 0; i<args.length; i+=2)

@@ -1,20 +1,25 @@
-package levelgen;
+package game.session.levelgen.roomgen;
+
+import game.map.Map;
+import game.map.Tile;
+import game.session.levelgen.MapConfig;
+import game.session.levelgen.MapUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import state.viewport.MapFactory;
-import state.viewport.Tile;
-
 public class PartialMap
 {
 	List<Room> rooms = new ArrayList<>();
 	List<Door> doors = new ArrayList<>();
-	int roomSize = 6;
-	public PartialMap()
+	int roomSize;
+	int roomNumber = 1;
+
+	public PartialMap(int roomSize)
 	{
-		rooms.add(new Room(0,0,12,12));
+		this.roomSize = roomSize;
+		rooms.add(new Room(0,0,roomSize*2,roomSize*2,0));
 	}
 	public int getStartX()
 	{
@@ -24,47 +29,78 @@ public class PartialMap
 	{
 		return 1-getTop();
 	}
-	public Tile[][] getMap(MapFactory factory)
+	public Map getMap(MapConfig config)
 	{
 		int left = getLeft();
 		int top = getTop();
 		int width = getWidth();
 		int height = getHeight();
-		Tile[][] map = new Tile[width][height];
+		Tile[][] grid = new Tile[width][height];
+		Map map = new Map(grid,getStartX(),getStartY(),config);
 		for(int y = 0; y<height; y++)
 		{
 			for(int x = 0; x<width; x++)
 			{
-				map[x][y] = new Tile(x,y,16,9);
+				grid[x][y] = new Tile(x,y,16,9,map);
 			}
 		}
 		for(Room r: rooms)
 		{
 			for(int x = r.x; x<r.x+r.width; x++)
 			{
-				factory.assignWall(map[x-left][r.y-top]);
-				factory.assignWall(map[x-left][r.y+r.height-1-top]);
+				grid[x-left][r.y-top].makeWall();
+				grid[x-left][r.y+r.height-1-top].makeWall();
 			}
 			for(int y = r.y; y<r.y+r.height; y++)
 			{
-				factory.assignWall(map[r.x-left][y-top]);
-				factory.assignWall(map[r.x+r.width-left-1][y-top]);
+				grid[r.x-left][y-top].makeWall();
+				grid[r.x+r.width-left-1][y-top].makeWall();
 			}
 			for(int x = r.x+1; x<r.x+r.width-1; x++)
 			{
 				for(int y = r.y+1; y<r.y+r.height-1; y++)
 				{
-					factory.assignFloor(map[x-left][y-top]);
+					grid[x-left][y-top].makeFloor();
 				}
 			}
 		}
 		for(Door d: doors)
 		{
-			factory.assignFloor(map[d.x-left][d.y-top]);
+			grid[d.x-left][d.y-top].makeFloor();
 		}
 		return map;
 	}
-	public void dump()
+	
+	public boolean isFullyConnected()
+	{
+		int width = getWidth();
+		int height = getHeight();
+		char[][] test = toGrid();
+		char[][] flood = new char[width][height];
+		
+		for(int y = 0; y<height; y++)
+		{
+			for(int x = 0; x<width; x++)
+			{
+				flood[x][y] = test[x][y];
+			}
+		}
+		flood(getStartX(),getStartY(),flood);
+		for(int y = 0; y<height; y++)
+		{
+			for(int x = 0; x<width; x++)
+			{
+				if(flood[x][y]=='.' || flood[x][y]=='o')
+				{
+					System.out.println("("+x+","+y+")");
+					dump();
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	public char[][] toGrid()
 	{
 		int left = getLeft();
 		int top = getTop();
@@ -101,16 +137,72 @@ public class PartialMap
 		}
 		for(Door d: doors)
 		{
-			test[d.x-left][d.y-top] = '.';
+			test[d.x-left][d.y-top] = 'o';
 		}
+		return test;
+	}
+	
+	public void dump()
+	{
+		int width = getWidth();
+		int height = getHeight();
+		
+		char[][] test = toGrid();
+		char[][] flood = new char[width][height];
+		
 		for(int y = 0; y<height; y++)
 		{
 			for(int x = 0; x<width; x++)
 			{
+				flood[x][y] = test[x][y];
 				System.out.print(test[x][y]);
 			}
 			System.out.println();
 		}
+		System.out.println();
+		flood(getStartX(),getStartY(),flood);
+		for(int y = 0; y<height; y++)
+		{
+			for(int x = 0; x<width; x++)
+			{
+				System.out.print(flood[x][y]);
+			}
+			System.out.println();
+		}
+		System.out.println();
+	}
+	public void flood(int x, int y, char[][] flood)
+	{
+		try
+		{
+			if(flood[x][y] == '.')
+			{
+				flood[x][y] = '-';
+			}
+			else if(flood[x][y] == 'o')
+			{
+				flood[x][y] = 'x';
+			}
+			else
+			{
+				return;
+			}
+			for(int dx = -1; dx<=1;dx++)
+			{
+				for(int dy = -1; dy<=1; dy++)
+				{
+					if((dx!=0) ^ (dy!=0))//one but not both are != 0
+					{
+						flood(x+dx,y+dy,flood);
+					}
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			return;
+		}
+		
 		
 	}
 	public int getLeft()
@@ -144,14 +236,15 @@ public class PartialMap
 		{
 			return;
 		}
-		List<Room> candidates = d.getValidRooms(roomSize,this::validNewRoom);
+		List<Room> candidates = d.getValidRooms(roomSize,this::validNewRoom,roomNumber);
 		if(candidates.size() == 0)
 		{
 			System.out.println("no candidates");
 			return;
 		}
 		doors.add(d);
-		rooms.add(MapFactory.selectRandom(candidates));
+		rooms.add(MapUtil.selectRandom(candidates));
+		roomNumber++;
 	}
 	public boolean validNewRoom(Room r)
 	{
@@ -161,7 +254,7 @@ public class PartialMap
 	{
 		return rooms.stream().filter(r -> r.contains(d.x, d.y)).count() == 1 &&
 				doors.stream().filter(d2 -> d2.x == d.x && d2.y == d.y).count() == 0 &&
-				!d.getValidRooms(roomSize,this::validNewRoom).isEmpty();
+				!d.getValidRooms(roomSize,this::validNewRoom,roomNumber).isEmpty();
 	}
 	public boolean hasValidDoors()
 	{
@@ -169,7 +262,20 @@ public class PartialMap
 	}
 	public boolean hasValidDoors(Room r)
 	{
-		return r.getAllDoors().stream().anyMatch(this::validNewDoor);
+		if(r.knownInvalid)
+		{
+			return false;
+		}
+		boolean hasValidDoors = r.getAllDoors().stream().anyMatch(this::validNewDoor);
+		if(hasValidDoors)
+		{
+			return true;
+		}
+		else
+		{
+			r.knownInvalid = true;
+			return false;
+		}
 	}
 	public Door makeDoor()
 	{
@@ -178,7 +284,7 @@ public class PartialMap
 			return null;
 		}
 		List<Room> validRooms = rooms.stream().filter(this::hasValidDoors).collect(Collectors.toList());
-		Room parent = MapFactory.selectRandom(validRooms);
+		Room parent = MapUtil.selectRandom(validRooms);
 		return makeDoor(parent);
 	}
 	public Door makeDoor(Room r)
@@ -188,6 +294,6 @@ public class PartialMap
 		{
 			return null;
 		}
-		return MapFactory.selectRandom(validDoors);
+		return MapUtil.selectRandom(validDoors);
 	}
 }

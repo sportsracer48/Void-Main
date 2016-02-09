@@ -1,9 +1,15 @@
 package game.item;
 
+import java.io.Serializable;
+
 import util.Color;
 
-public class Wire
+public class Wire implements Serializable
 {
+	private static final long serialVersionUID = -5001928836113260611L;
+	
+	public static final int START = 0;
+	public static final int END = 1;
 	Color c;
 	Pin start,end;
 	
@@ -11,7 +17,31 @@ public class Wire
 	{
 		return start;
 	}
-
+	
+	public int getPosition(Pin p)
+	{
+		if(p==start)
+		{
+			return START;
+		}
+		if(p==end)
+		{
+			return END;
+		}
+		return -1;
+	}
+	public void setPin(int position,Pin pin)
+	{
+		if(position == START)
+		{
+			setStart(pin);
+		}
+		else if(position == END)
+		{
+			setEnd(pin);
+		}
+	}
+	
 	public void setStart(Pin start)
 	{
 		this.start = start;

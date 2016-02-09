@@ -166,11 +166,12 @@ public abstract class GameState
 	public void fileDropped(String path){}
 	
 	public abstract void init(SpriteAtlas sprites);
+	public abstract void enable();
 	public abstract void renderAll(Context c);
 	
 	public String getPerformanceString(){return "";}
 	
-	public void cleanup(){}
+	public void disable(){}
 	
 	public void update(int dt)
 	{

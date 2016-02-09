@@ -9,7 +9,7 @@ import org.python.core.PyType;
 
 public class ClassInstance extends PyObject
 {	
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 6121116571828960189L;
 	
 	public PyObject __doc__;
 	public PyObject __call__ = this;

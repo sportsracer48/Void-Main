@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import program.Environment;
 import program.ProgramCoordinator;
 import util.Grid;
 import util.Grid.Coord;
+import game.map.Unit;
 import graphics.Sprite;
-import graphics.entity.Entity;
 
 public class ItemType //kinda reflexive, but hey, whatever
 {
@@ -34,23 +35,31 @@ public class ItemType //kinda reflexive, but hey, whatever
 	List<Coord> stripEndLocations = new ArrayList<>();
 	int numBreakoutPins;
 	
-	BiConsumer<List<Pin>,ItemEntity> pinUpdate;
+	BiConsumer<List<Pin>,Item> pinUpdate;
+	BiConsumer<List<Pin>,ItemEntity> graphicsUpdate;
+	QuinConsumer<List<Pin>, List<Pin>, Integer,Unit,Item> exportPinUpdate;
+	BiConsumer<List<Pin>,Item> radioUpdate;
 	
 	Sprite endCap, highlight, wireEnd, wireEndOpaque,  wireFade, pinMask;
 	
-	public ItemType(Sprite workbench, Sprite inventory)
+	public final int typeId;
+	
+	public ItemType(int typeId,Sprite workbench, Sprite inventory)
 	{
+		this.typeId = typeId;
 		this.workbench = workbench;
 		this.inventory = inventory;
 	}
 	
-	public ItemType(Sprite inventory)
+	public ItemType(int typeId, Sprite inventory)
 	{
+		this.typeId = typeId;
 		this.inventory = inventory;
 	}
 	
-	public ItemType(Sprite inventory, int externalPins)
+	public ItemType(int typeId, Sprite inventory, int externalPins)
 	{
+		this.typeId = typeId;
 		this.inventory = inventory;
 		this.numBreakoutPins = externalPins;
 	}
@@ -171,7 +180,7 @@ public class ItemType //kinda reflexive, but hey, whatever
 	{
 		return workbenchHeight;
 	}
-	public Entity getWorldEntity(Item instance)
+	public ItemEntity getWorldEntity(Item instance)
 	{
 		return new ItemEntity(-offsetX,-offsetY,0,instance);
 	}
@@ -254,6 +263,17 @@ public class ItemType //kinda reflexive, but hey, whatever
 		});
 		return toReturn;
 	}
+	
+	public List<Pin> getBreakoutPins(Item instance)
+	{
+		List<Pin> toReturn = new ArrayList<Pin>();
+		for(int i = 0; i<numBreakoutPins; i++)
+		{
+			toReturn.add(new Pin(instance,0,0));
+		}
+		return toReturn;
+	}
+	
 	public int getNumBreakoutPins()
 	{
 		return numBreakoutPins;
@@ -267,19 +287,58 @@ public class ItemType //kinda reflexive, but hey, whatever
 	{
 		return pinTooltips;
 	}
-
-	public BiConsumer<List<Pin>, ItemEntity> getPinUpdate()
+	
+	public BiConsumer<List<Pin>,Item> getLogicUpdate()
 	{
 		return pinUpdate;
 	}
-
-	public void setPinUpdate(BiConsumer<List<Pin>, ItemEntity> pinUpdate)
+	
+	public BiConsumer<List<Pin>, ItemEntity> getGraphicsPinUpdate()
 	{
-		this.pinUpdate = pinUpdate;
+		return graphicsUpdate;
+	}
+	
+	public QuinConsumer<List<Pin>,List<Pin>,Integer,Unit,Item> getExportPinUpdate()
+	{
+		return exportPinUpdate;
+	}
+	
+	public void setExportPinUpdate(QuinConsumer<List<Pin>,List<Pin>,Integer,Unit,Item> pinUpdate)
+	{
+		this.exportPinUpdate = pinUpdate;
+	}
+	
+	public void setGraphicsPinUpdate(BiConsumer<List<Pin>, ItemEntity> pinUpdate)
+	{
+		this.graphicsUpdate = pinUpdate;
+	}
+	
+	public void setLogicUpdate(Consumer<List<Pin>> logicUpdate)
+	{
+		this.pinUpdate = (pins,item)->logicUpdate.accept(pins);//kinda like currying
+	}
+	public void setLogicUpdate(BiConsumer<List<Pin>,Item> logicUpdate)
+	{
+		this.pinUpdate = logicUpdate;
+	}
+	
+	public BiConsumer<List<Pin>,Item> getRadioUpdate()
+	{
+		return radioUpdate;
+	}
+	public void setRadioUpdate(BiConsumer<List<Pin>,Item> radioUpdate)
+	{
+		this.radioUpdate = radioUpdate;
 	}
 
 	public Environment getEnvironmentFor(List<Pin> pins, ProgramCoordinator coordinator)
 	{
 		return null;
 	}
+	
+	@FunctionalInterface
+	public interface QuinConsumer<A,B,C,D,E>
+	{
+		public void accept(A a, B b, C c, D d, E e);
+	}	
 }

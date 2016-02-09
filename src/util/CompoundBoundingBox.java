@@ -6,6 +6,8 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class CompoundBoundingBox implements BoundingInterface
 {
+	private static final long serialVersionUID = 6000210342553573280L;
+	
 	float scale;
 	boolean[][] isWall;
 	BoundingBox[][] boxes;

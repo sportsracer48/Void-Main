@@ -13,12 +13,12 @@ public class BreadboardUtil
 		for(int i = start; i<start+num; i++)
 		{
 			ground |= pins.get(i).leadsToGround();
-			potential += pins.get(i).getReceivedPotential();
+			potential = Math.max(potential,pins.get(i).getReceivedPotential());
 		}
 		for(int i = start; i<start+num; i++)
 		{
-			pins.get(i).setPotential(potential);
-			pins.get(i).setGrounded(ground);
+			pins.get(i).setTotalPotential(potential);
+			pins.get(i).setTotalGrounding(ground);
 		}
 	}
 	public static void linkVert(List<Pin> pins, int start, int num, int width)

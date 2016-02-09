@@ -7,8 +7,8 @@ import org.python.core.PySet;
 
 public class ObjectInstance extends PyObject
 {
-	private static final long serialVersionUID = 1L;
-	
+	private static final long serialVersionUID = -1619018145777009108L;
+
 	public PyObject __class__;
 	
 	protected ClassInstance type;

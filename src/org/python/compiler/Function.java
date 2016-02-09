@@ -1,5 +1,6 @@
 package org.python.compiler;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,8 +8,10 @@ import org.python.antlr.ast.Name;
 import org.python.antlr.ast.arguments;
 import org.python.antlr.base.expr;
 
-public class Function
+public class Function implements Serializable
 {	
+	private static final long serialVersionUID = 7271069512874509140L;
+	
 	List<String> args = new ArrayList<>();
 	List<expr> defaults = new ArrayList<>();
 	int numDefaults;

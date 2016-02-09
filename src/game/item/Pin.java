@@ -1,18 +1,20 @@
 package game.item;
 
+import java.io.Serializable;
+
 import state.workbench.graphics.PinHighlight;
 import util.Grid.Coord;
 
-public class Pin
+public class Pin implements Serializable
 {
+	private static final long serialVersionUID = 3758193998126042911L;
+	
 	int x, y;
 	Item parent;
 	Wire attatched;
 	int potential = 0;
-	int goalPotential = 0;
 	boolean grounded = false;
-	boolean goalGrounded = false;
-	
+	boolean toggling = false;
 	
 	public transient PinHighlight highlight;
 	
@@ -60,21 +62,41 @@ public class Pin
 	}
 	public void setPotential(int potential)
 	{
-		this.goalPotential = potential;
+		if(potential == this.potential)
+		{
+			return;
+		}
+		if(toggling)
+		{
+			System.err.println("NEGATIVE FEEDBACK DETECTED");
+			return;
+		}
 		this.potential = potential;
+		if(attatched != null && attatched.getOtherEnd(this)!=null)
+		{
+			toggling = true;
+			attatched.getOtherEnd(this).parent.pinUpdate();
+			toggling = false;
+		}
 	}
 	public void setGrounded(boolean grounded)
 	{
-		this.goalGrounded = grounded;
+		if(grounded == this.grounded)
+		{
+			return;
+		}
+		if(toggling)
+		{
+			System.err.println("NEGATIVE FEEDBACK DETECTED");
+			return;
+		}
 		this.grounded = grounded;
-	}
-	public void setGoalPotential(int potential)
-	{
-		this.goalPotential = potential;
-	}
-	public void setGoalGrounded(boolean grounded)
-	{
-		this.goalGrounded = grounded;
+		if(attatched != null && attatched.getOtherEnd(this)!=null)
+		{
+			toggling = true;
+			attatched.getOtherEnd(this).parent.pinUpdate();
+			toggling = false;
+		}
 	}
 	public void setTotalPotential(int potential)
 	{
@@ -110,11 +132,5 @@ public class Pin
 	public Coord getLocation()
 	{
 		return new Coord(x,y);
-	}
-
-	public void act(int dt)
-	{
-		this.potential = goalPotential;
-		this.grounded = goalGrounded;
 	}
 }

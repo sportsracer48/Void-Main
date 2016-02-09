@@ -1,11 +1,14 @@
 package org.python.compiler;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import org.python.core.PyObject;
 
-public class StackFrame
+public class StackFrame implements Serializable
 {
+	private static final long serialVersionUID = 1338920319479492915L;
+	
 	CompiledCode returnTo;
 	int returnLine;
 	

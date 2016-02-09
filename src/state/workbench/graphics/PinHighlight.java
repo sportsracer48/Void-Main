@@ -118,11 +118,16 @@ public class PinHighlight extends AnimatedEntity
 			mask.setVisible(true);
 			preview.setVisible(false);
 			wireFade.setColor(pin.getAttatched().getColor());
+			
+			
 			if(!pin.getAttatched().isAttatchedOnBothSides())
 			{
 				wire.setColor(new Color(1,1,1,.6f));
 			}
-			else if(area.ownsMouse() || pin.getAttatched().isAttatchedOnBothSides() && pin.getAttatched().getOtherEnd(pin).highlight.area.ownsMouse())
+			else if(area.ownsMouse() || 
+					pin.getAttatched().isAttatchedOnBothSides() && 
+					pin.getAttatched().getOtherEnd(pin).highlight != null && 
+					pin.getAttatched().getOtherEnd(pin).highlight.area.ownsMouse())
 			{
 				wire.setColor(new Color(2,2,2,1));
 			}

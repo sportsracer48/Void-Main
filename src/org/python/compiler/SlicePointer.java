@@ -4,7 +4,7 @@ import org.python.core.PyObject;
 
 public class SlicePointer extends Pointer
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 8237043169884393893L;
 	
 	PyObject target;
 	ItemSelectArgs args;

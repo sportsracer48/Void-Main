@@ -8,6 +8,8 @@ import org.python.core.Py;
 import org.python.core.PyInteger;
 import org.python.core.PyObject;
 
+import game.map.UnitController;
+
 import java.util.Hashtable;
 
 public class OuinoPythonEnvironment
@@ -21,8 +23,8 @@ public class OuinoPythonEnvironment
 		locals.put("OUTPUT", new PyInteger(OuinoEnvironment.OUTPUT));
 		locals.put("INPUT", new PyInteger(OuinoEnvironment.INPUT));
 		locals.put("INPUT_PULLUP", new PyInteger(OuinoEnvironment.INPUT_PULLUP));
-		locals.put("NO_CONNECTION", new PyInteger(OuinoEnvironment.NO_CONNECTION));
-		locals.put("CONSTANT", new PyInteger(OuinoEnvironment.CONSTANT));
+		locals.put("SERIAL_INPUT", new PyInteger(OuinoEnvironment.SERIAL_INPUT));
+		locals.put("SERIAL_CLOCK", new PyInteger(OuinoEnvironment.SERIAL_CLOCK));
 		
 		
 		locals.put("True", Py.True);
@@ -57,6 +59,14 @@ public class OuinoPythonEnvironment
 				return null;
 			}));
 			
+			locals.put("serialMode", new PyCallable((args,keys)->{
+				env.serialMode(
+						getArg(0,"clockPin",args,keys).asInt(),
+						getArg(1,"signalPin",args,keys).asInt()
+						);
+				return null;
+			}));
+			
 			locals.put("digitalWrite", new PyCallable((args,keys)->{
 				env.digitalWrite(
 						getArg(0,"pin",args,keys).asInt(),
@@ -69,6 +79,31 @@ public class OuinoPythonEnvironment
 				env.delay(
 						getArg(0,"ms",args,keys).asInt()
 						);
+				return null;
+			}));
+			
+			locals.put("digitalRead", new PyCallable((args,keys)->{
+				return new PyInteger(
+						env.digitalRead(
+								getArg(0,"pin",args,keys).asInt()
+								)
+						);
+			}));
+			
+			locals.put("serialRead", new PyCallable((args,keys)->{
+				return new PyInteger(
+						env.serialRead(
+								getArg(0,"pin",args,keys).asInt()
+								)
+						);
+			}));
+			
+			locals.put("tick", new PyCallable((args,keys)->{
+				UnitController controller = env.getUnitController();
+				if(controller != null)
+				{
+					controller.tick();
+				}
 				return null;
 			}));
 		}

@@ -1,6 +1,9 @@
 package entry;
 
 import static org.lwjgl.opengl.GL11.*;
+import game.item.ItemTypes;
+import game.map.UnitTypes;
+import game.session.levelgen.MapTypes;
 import graphics.Context;
 import graphics.registry.RegisteredFont;
 import graphics.registry.SpriteAtlas;
@@ -142,13 +145,32 @@ public class Driver
 	public void initGame()
 	{
 		GlobalState.init();
+		
+		
+		ItemTypes.init(spriteAtlas);
+		MapTypes.init(spriteAtlas);
+		UnitTypes.init(spriteAtlas);
+		
 		GlobalState.currentProgramming = new ProgrammingState(input,window);
 		GlobalState.currentProgramming.init(spriteAtlas);
 		GlobalState.currentWorkbench = new WorkbenchState(input,window);
 		GlobalState.currentWorkbench.init(spriteAtlas);
-		//PythonInit.init();
-		currentState = new ViewportState(input,window);//GlobalState.currentWorkbench;
-		currentState.init(spriteAtlas);
+		GlobalState.currentViewport = new ViewportState(input,window);
+		GlobalState.currentViewport.init(spriteAtlas);
+		PythonInit.init();
+		
+		try
+		{
+			GlobalState.load("session.jso");
+			currentState = GlobalState.currentViewport;
+			currentState.enable();
+		} 
+		catch (ClassNotFoundException | IOException e)
+		{
+			e.printStackTrace();
+			currentState = GlobalState.currentWorkbench;
+			currentState.enable();
+		}
 	}
 	
 	public void checkError()
@@ -172,7 +194,10 @@ public class Driver
 		currentState.beforeInput(dt);
 		GLFW.glfwPollEvents();
 		GlobalState.coordinator.act(dt);
+		GlobalState.pinUpdateAll();
 		currentState.update(dt);
+		GlobalState.coordinator.act(dt);
+		GlobalState.pinUpdateAll();
 	}
 
 	public void run()

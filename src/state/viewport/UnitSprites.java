@@ -5,19 +5,19 @@ import java.util.List;
 import graphics.Sprite;
 import graphics.entity.Entity;
 import graphics.entity.FramerateEntity;
-import graphics.registry.SpriteAtlas;
 
 public class UnitSprites
 {
 	FramerateEntity[] entities;
 	Entity[] stillEntities;
 	Entity onlyEntity;
+	public final int id;
 	
-	public UnitSprites(SpriteAtlas sprites, String prefix, float fps,int frames)
+	public UnitSprites(int id,List<Sprite[]> animationList, float fps)
 	{
 		entities = new FramerateEntity[4];
 		stillEntities = new Entity[4];
-		List<Sprite[]> animationList = sprites.getAnimations(prefix, frames);
+		this.id = id;
 		for(int i = 0; i<entities.length; i++)
 		{
 			entities[i] = new FramerateEntity(0,0,0,animationList.get(i),fps);
@@ -27,21 +27,15 @@ public class UnitSprites
 		}
 	}
 	
-	public Entity getEntity(int direction, boolean moving)
-	{
-		if(moving)
-		{
-			return getMovingEntity(direction);
-		}
-		else
-		{
-			return getStillEntity(direction);
-		}
-	}
-	
-	public UnitSprites(Entity onlyEntity)
+	public UnitSprites(int id,Entity onlyEntity)
 	{
 		this.onlyEntity = onlyEntity;
+		this.id = id;
+	}
+	
+	public Entity getEntity(int direction, boolean moving)
+	{
+		return getMovingEntity(direction);
 	}
 	
 	public Entity getOnlyEntity()

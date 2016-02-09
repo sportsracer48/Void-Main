@@ -7,6 +7,8 @@ import org.python.core.PyType;
 
 public class ExceptionHandler extends StackFrame
 {
+	private static final long serialVersionUID = -1581904180503080118L;
+	
 	String type;
 	
 	public ExceptionHandler(CompiledCode suite, int line, String type,

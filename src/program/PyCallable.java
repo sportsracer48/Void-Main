@@ -4,7 +4,7 @@ import org.python.core.PyObject;
 
 public class PyCallable extends PyObject
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 4749070376719350307L;
 	
 	private PythonFunction func;
 	public PyCallable(PythonFunction func)

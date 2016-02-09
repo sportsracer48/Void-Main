@@ -1,6 +1,6 @@
 package state.workbench;
 
-import static state.workbench.ItemTypes.*;
+import static game.item.ItemTypes.*;
 import static state.workbench.ButtonThemes.*;
 import game.item.Item;
 import graphics.Sprite;
@@ -47,15 +47,15 @@ public class WindowBuilder
 			double rand = Math.random();
 			if(rand<.25)
 			{
-				slot = new InventorySlot(x2,y2,invHighlight,new Item(microController),itemManip);
+				slot = new InventorySlot(x2,y2,invHighlight,new Item(eightBitCounter),itemManip);
 			}
 			else if(rand<.5)
 			{
-				slot = new InventorySlot(x2,y2,invHighlight,new Item(ledOutput),itemManip);
+				slot = new InventorySlot(x2,y2,invHighlight,new Item(bitShiftRegister),itemManip);
 			}
 			else if(rand<.75)
 			{
-				slot = new InventorySlot(x2,y2,invHighlight,new Item(battery),itemManip);
+				slot = new InventorySlot(x2,y2,invHighlight,new Item(antenna),itemManip);
 			}
 			else
 			{

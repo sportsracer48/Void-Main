@@ -4,7 +4,7 @@ import java.io.PrintStream;
 
 public class VMException extends RuntimeException
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 8024562013531220169L;
 	
 	String type,message;
 	int line;

@@ -2,6 +2,8 @@ package org.python.compiler;
 
 public class ClassLine extends CodeLine
 {
+	private static final long serialVersionUID = -843967499499971991L;
+	
 	Klass defined;
 	int numBases;
 	public ClassLine(Klass defined, int numBases, int line, int col)

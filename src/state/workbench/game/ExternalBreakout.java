@@ -1,5 +1,6 @@
 package state.workbench.game;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class ExternalBreakout
 	Item itemInterface;
 	WiringMode mode;
 	
+	@SuppressWarnings("serial")
 	public ExternalBreakout(Sprite pinSprite, Sprite bgSprite, ItemType breakoutType, WiringMode mode, InventorySlot... slots)
 	{
 		if(slots.length != 4)
@@ -30,6 +32,10 @@ public class ExternalBreakout
 		}
 		itemInterface = new Item(breakoutType)
 		{
+			private void writeObject(java.io.ObjectOutputStream stream)throws IOException
+		    {
+				throw new IOException("Item breakouts should be transient, never written");
+		    }
 			public List<Pin> getPins()
 			{
 				List<Pin> pins = new ArrayList<>();
@@ -153,5 +159,13 @@ public class ExternalBreakout
 	public InventorySlot[] getSlots()
 	{
 		return slots;
+	}
+
+	public void clear()
+	{
+		for(InventorySlot slot:slots)
+		{
+			slot.setContents(null);
+		}
 	}
 }

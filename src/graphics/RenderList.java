@@ -25,13 +25,19 @@ public class RenderList implements Iterable<Entity>
 	
 	public void add(Entity r)
 	{
-		toAdd.add(r);
+		if(r!=null)
+		{
+			toAdd.add(r);
+		}
 	}
 	
 	public void remove(Entity r)
 	{
-		r.setEnabled(false);
-		toRemove.add(r);
+		if(r!=null)
+		{
+			r.setEnabled(false);
+			toRemove.add(r);
+		}
 	}
 	
 	public void clear()

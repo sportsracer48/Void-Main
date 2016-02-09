@@ -1,6 +1,7 @@
 package org.python.compiler;
 
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
@@ -15,8 +16,10 @@ import org.python.core.PyString;
 
 import program.SafeImport;
 
-public class Interpreter
+public class Interpreter implements Serializable
 {
+	private static final long serialVersionUID = -5414910241151988330L;
+	
 	ArrayList<PyObject> stack = new ArrayList<>();
 	ArrayList<Scope> scopeStack = new ArrayList<>();
 	ArrayList<StackFrame> callStack = new ArrayList<>();
@@ -37,7 +40,7 @@ public class Interpreter
 	boolean running;
 	SafeImport safeImport;
 	
-	PrintStream stdout;
+	transient PrintStream stdout;
 	
 	public Interpreter(CompiledCode root,Hashtable<String,PyObject> globals,PrintStream stdout)
 	{
@@ -59,6 +62,13 @@ public class Interpreter
 		}
 		this.safeImport = (SafeImport) global.get("__import__");
 	}
+	
+	public void setStdOut(PrintStream stdOut)
+	{
+		this.stdout = stdOut;
+	}
+	
+	
 	/**
 	 * 
 	 * @param count the maximum number of cycles to execute
@@ -1216,7 +1226,8 @@ public class Interpreter
 
 	private void evalPrint()
 	{
-		stdout.print(popObject().__str__());
+		PyString str = popObject().__str__();
+		stdout.print(str);
 		pc++;
 	}
 

@@ -1,7 +1,10 @@
 package org.python.compiler;
 
-public class Klass
+import java.io.Serializable;
+
+public class Klass implements Serializable
 {
+	private static final long serialVersionUID = -1582031628196223517L;
 	CompiledCode internals;
 	String name;
 	

@@ -1,8 +1,10 @@
 package util;
 
+import java.io.Serializable;
+
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public interface BoundingInterface
+public interface BoundingInterface extends Serializable
 {
 	public boolean inBounds(float x, float y, float z);
 	public boolean onBound(float x, float y, float z);

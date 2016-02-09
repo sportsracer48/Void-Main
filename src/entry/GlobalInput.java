@@ -58,8 +58,9 @@ public class GlobalInput
 	}
 	public void changeState(GameState newState)
 	{
-		globalState.currentState.cleanup();
+		globalState.currentState.disable();
 		globalState.currentState = newState;
+		globalState.currentState.enable();
 	}
 	public void systemExit()
 	{

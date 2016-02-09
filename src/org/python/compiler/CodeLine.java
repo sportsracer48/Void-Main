@@ -1,7 +1,10 @@
 package org.python.compiler;
 
-public class CodeLine
+import java.io.Serializable;
+
+public class CodeLine implements Serializable
 {
+	private static final long serialVersionUID = -6144783853978497146L;
 	String op;
 	int line;
 	int col;

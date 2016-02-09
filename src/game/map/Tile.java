@@ -1,5 +1,8 @@
-package state.viewport;
+package game.map;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import util.BoundingBox;
 import util.BoundingInterface;
 import util.CompoundBoundingBox;
@@ -11,28 +14,45 @@ import graphics.entity.particles.Particle;
 import graphics.entity.particles.ParticleSystem;
 import graphics.registry.UtilSprites;
 
-public class Tile
+public class Tile implements Serializable
 {
+	private static final long serialVersionUID = 4388163361303692076L;
+	
 	boolean isWall;
 	boolean isFloor;
-	int x,y;
+	public final int x,y;
 	private Unit unit;
+	Map parent;
 	
-	Entity floorEntity;
-	Entity wallEntity;
-	Entity parentEntity;
-	int spriteSize;
-	int wallHeight;
-	ParticleSystem tileParticles;
+	transient Entity floorEntity;
+	transient Entity wallEntity;
+	transient Entity parentEntity;
+	transient ParticleSystem tileParticles;
+	
+	public final int spriteSize;
+	public final int wallHeight;
 	BoundingInterface tileBounds;
 	boolean explored = false;
 	
-	public Tile(int x, int y, int spriteSize, int wallHeight)
+	public Tile(int x, int y, int spriteSize, int wallHeight, Map parent)
 	{
 		this.x=x;
 		this.y=y;
 		this.spriteSize = spriteSize;
 		this.wallHeight = wallHeight;
+		this.parent = parent;
+		initParticleSystem();
+		parentEntity = new Entity(x*spriteSize, y*spriteSize,0,null);
+	}
+	
+	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
+	{
+		stream.defaultReadObject();
+		initParticleSystem();
+		parentEntity = new Entity(x*spriteSize, y*spriteSize,0,null);
+	}
+	private void initParticleSystem()
+	{
 		this.tileParticles = new ParticleSystem(0)
 		{
 			public Particle createParticle()
@@ -43,7 +63,11 @@ public class Tile
 			{
 			}
 		};
-		parentEntity = new Entity(x*spriteSize, y*spriteSize,0,null);
+	}
+	
+	public ParticleSystem getParticles()
+	{
+		return tileParticles;
 	}
 	
 	public void initNeighbors(Tile[][] map, CompoundBoundingBox levelBox)
@@ -98,14 +122,24 @@ public class Tile
 	public void setFloorEntity(Sprite floor)
 	{
 		setFloorEntity(new Entity(0,0,0,floor));
-		this.isWall = false;
-		this.isFloor = true;
-		this.wallEntity = null;
 	}
 	
 	public void setFloorEntity(Entity e)
 	{
 		this.floorEntity = e;
+		this.isWall = false;
+		this.isFloor = true;
+		this.wallEntity = null;
+	}
+	
+	public void makeFloor()
+	{
+		parent.getConfig().assignFloor(this);
+	}
+	
+	public void makeWall()
+	{
+		parent.getConfig().assignWall(this);
 	}
 	
 	public void setWallEntity(Sprite top, Sprite front)

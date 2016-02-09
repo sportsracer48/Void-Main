@@ -4,6 +4,8 @@ import math.Matrix;
 
 public class Color extends Matrix
 {
+	private static final long serialVersionUID = -6514178484994263273L;
+	
 	public static Color white = new Color(1,1,1,1);
 	public static Color red = new Color(0x9c071d);
 	public static Color green = new Color(0x5ca242);

@@ -4,7 +4,7 @@ import org.python.core.PyObject;
 
 public class Pointer extends PyObject
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -3290562145776076595L;
 	
 	String name;
 	PyObject value;

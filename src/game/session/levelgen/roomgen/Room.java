@@ -1,17 +1,19 @@
-package levelgen;
+package game.session.levelgen.roomgen;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Room
 {
-	int x, y, width, height;
-	public Room(int x, int y, int width, int height)
+	int x, y, width, height,n;
+	boolean knownInvalid = false;
+	public Room(int x, int y, int width, int height,int n)
 	{
 		this.x=x;
 		this.y=y;
 		this.width=width;
 		this.height=height;
+		this.n=n;
 	}
 	public Door getRandomDoor()
 	{
@@ -20,6 +22,10 @@ public class Room
 	}
 	public boolean collides(Room other)
 	{
+		if(other.x+other.width<x && other.y+other.height<y || x+width<other.x && y+height<other.y)
+		{
+			return false;
+		}
 		return collidesOneWay(other) || other.collidesOneWay(this);
 	}
 	private boolean collidesOneWay(Room other)
@@ -27,7 +33,11 @@ public class Room
 		return contains(other.x+1,other.y+1) || 
 				contains(other.x+other.width-2,other.y+1) || 
 				contains(other.x+other.width-2,other.y+other.height-2) ||
-				contains(other.x+1,other.y+other.height-2);
+				contains(other.x+1,other.y+other.height-2)||
+				x<other.x && 
+				x+width>other.x+other.width && 
+				other.y<y && 
+				other.y+other.height>y+height;
 	}
 	public Door getDoor(int val)
 	{

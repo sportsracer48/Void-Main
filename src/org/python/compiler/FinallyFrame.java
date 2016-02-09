@@ -6,6 +6,8 @@ import org.python.core.PyObject;
 
 public class FinallyFrame extends StackFrame
 {
+	private static final long serialVersionUID = 8991797749942000828L;
+	
 	public static final int BREAK = 0;
 	public static final int CONTINUE = 1;
 	public static final int RETURN = 2;

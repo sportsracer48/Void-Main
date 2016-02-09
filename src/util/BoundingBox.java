@@ -2,6 +2,8 @@ package util;
 
 public class BoundingBox implements BoundingInterface
 {
+	private static final long serialVersionUID = -2037114124102061666L;
+	
 	protected boolean westBound,eastBound,topBound,bottomBound,northBound,southBound;
 	protected float minX,minY,minZ,maxX,maxY,maxZ;
 	

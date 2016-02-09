@@ -1,5 +1,7 @@
 package state.viewport;
 
+import game.map.Unit;
+
 public class LightSource
 {
 	Unit attatched;
@@ -26,7 +28,7 @@ public class LightSource
 		{
 			return x;
 		}
-		return attatched.getX()+attatched.xOffset/16f;
+		return attatched.getX()+attatched.getxOffset()/16f;
 	}
 	public float getY()
 	{
@@ -34,7 +36,7 @@ public class LightSource
 		{
 			return y;
 		}
-		return attatched.getY()+attatched.yOffset/16f;
+		return attatched.getY()+attatched.getyOffset()/16f;
 	}
 	
 	public void act(int dt)

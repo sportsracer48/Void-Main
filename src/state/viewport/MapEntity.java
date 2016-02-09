@@ -2,6 +2,8 @@ package state.viewport;
 
 import state.workbench.Camera;
 import util.Color;
+import game.map.Tile;
+import game.map.Unit;
 import graphics.Context;
 import graphics.entity.Entity;
 import graphics.entity.particles.ParticleSystem;
@@ -49,7 +51,7 @@ public class MapEntity extends Entity
 		float y = t.y*t.spriteSize*scale;
 		float width = t.spriteSize*scale;
 		float height = t.spriteSize*scale;
-		if(t.isWall)
+		if(t.isWall())
 		{
 			y -= t.wallHeight*scale;
 			height += t.wallHeight*scale;

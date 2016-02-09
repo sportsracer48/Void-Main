@@ -14,6 +14,10 @@ public class LightSystem
 	{
 		lights.add(source);
 	}
+	public void removeLight(LightSource source)
+	{
+		lights.remove(source);
+	}
 	public float getIntensity(float x, float y)
 	{
 		float intensity = ambient;

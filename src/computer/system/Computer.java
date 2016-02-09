@@ -6,12 +6,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
 
 import program.Environment;
 import util.FileLoader;
 
-public class Computer
+public class Computer implements Serializable
 {
+	private static final long serialVersionUID = 8175286991987632824L;
+	
 	private String name;
 	String rootPath;
 	Environment connected = null;

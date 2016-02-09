@@ -36,6 +36,11 @@ public class ProgrammingState extends GameState
 		this.computer = GlobalState.laptop;
 	}
 	
+	public void enable()
+	{
+		
+	}
+	
 	public void init(SpriteAtlas sprites)
 	{
 		sprites.setNamespace("res/sprite/workbench/");
@@ -176,7 +181,7 @@ public class ProgrammingState extends GameState
 		context.resetColor();
 		renderUI(context);
 	}
-	public void cleanup()
+	public void disable()
 	{
 		setCursor(defaultCursor);
 	}

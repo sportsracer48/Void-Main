@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFW;
 
 import entry.GlobalInput;
 import entry.GlobalState;
+import game.map.CircuitSystem;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
@@ -23,9 +24,10 @@ import state.workbench.controller.DragContext;
 import state.workbench.controller.ItemManipulator;
 import state.workbench.game.ChassisGrid;
 import state.workbench.game.EditHistory;
+import state.workbench.game.ExportState;
 import state.workbench.game.WiringMode;
 import util.Color;
-import static state.workbench.ItemTypes.*;
+import static game.item.ItemTypes.*;
 
 public class WorkbenchState extends GameState
 {
@@ -56,6 +58,8 @@ public class WorkbenchState extends GameState
 	Sprite wireSymbol;
 	Sprite programmingSymbol;
 	
+	WorkbenchCircuitSystem circuit;
+	
 	Mode edit = new Mode()
 	{
 		public void enable()
@@ -71,6 +75,24 @@ public class WorkbenchState extends GameState
 		}
 		
 	};
+	
+	
+	Mode deploy = new Mode()
+	{
+		public void enable()
+		{
+			ExportState state = grid.export();
+			GlobalState.currentViewport.setRobot(state);
+			grid.clear();
+			changeTo(GlobalState.currentViewport);
+		}
+		
+		public void disable()
+		{
+			
+		}
+	};
+	
 	WiringMode wiring = new WiringMode(mouseCompanion,this,history,screenWidth(),screenHeight())
 	{
 		public void enable()
@@ -108,9 +130,17 @@ public class WorkbenchState extends GameState
 	List<Entity> ui;
 	List<Entity> screen;
 	
-	ChassisGrid grid;
+	public ChassisGrid grid;
 	
 	ZoomTransition programmingTransition = new ZoomTransition(camera,700,100,screenWidth(),screenHeight(),236,152);
+	
+	public void enable()
+	{
+		if(manager.getMode() == deploy)
+		{
+			manager.setMode(edit);
+		}
+	}
 	
 	public void keyPressed(int key)
 	{
@@ -276,6 +306,8 @@ public class WorkbenchState extends GameState
 			}
 			return;
 		}
+		
+		
 		float cameraSpeed = 1f/camera.scale;//pixels per millisecond
 		if(
 				(isKeyPressed(GLFW.GLFW_KEY_W) ^ isKeyPressed(GLFW.GLFW_KEY_S)) &&
@@ -361,13 +393,9 @@ public class WorkbenchState extends GameState
 		sprites.setNamespace("res/sprite/workbench/");
 		
 		// style init
-		
 		Entity bg = new Entity(0, 0, 0, sprites.getSprite("background.png"));
 		addRenderable(bg);
 		ButtonThemes.init(sprites);
-		
-		// initialize all the item types
-		ItemTypes.init(sprites);
 		
 		// root children init
 		
@@ -387,8 +415,9 @@ public class WorkbenchState extends GameState
 		grid.addExternalBreakouts(breakout,sprites.getSprite("extern pin.png"),sprites.getSprite("breakout bg.png"), 
 				windowBuilder.top, windowBuilder.bot, windowBuilder.left, windowBuilder.right, windowBuilder.front, windowBuilder.back);
 		
+		circuit = new WorkbenchCircuitSystem(grid);
 		
-		ToolInitializer.init(tools, sprites, inventory, partMounting, manager, wiring, programming, history);
+		ToolInitializer.init(tools, sprites, grid, inventory, partMounting, manager, wiring, programming,deploy, history);
 		
 		//scene init
 		add(grid);
@@ -408,8 +437,16 @@ public class WorkbenchState extends GameState
 				sprites.getSprite("fade center.png"));
 		
 		sprites.resetNamespace();
-
+	}
+	
+	public CircuitSystem getCircuit()
+	{
+		return circuit;
 	}
 
-	
+	public void load(ExportState state)
+	{
+		history.init(state.getSave());
+		state.revertBreakouts(grid.getBreakouts());
+	}
 }

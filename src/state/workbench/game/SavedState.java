@@ -1,25 +1,41 @@
 package state.workbench.game;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Set;
 
 import game.item.Item;
+import game.item.ItemTypes;
 import game.item.Pin;
 import game.item.Wire;
 
-public class SavedState
+public class SavedState implements Serializable
 {
+	private static final long serialVersionUID = 864193333717597763L;
+	
 	HashSet<Wire> wires = new HashSet<>();
 	Item[][] savedItems;
 	Item[][] savedBreakoutItems;
-	public SavedState(Item[][] items, Wire currentWire, List<ExternalBreakout> breakouts)
+	
+	public SavedState(Item[][] items, Wire currentWire, BreakoutItems breakouts)
 	{
-		this.savedItems = items;
-		this.savedBreakoutItems = new Item[breakouts.size()][4];
+		savedItems = new Item[items.length][];
+		for(int x = 0; x<items.length; x++)
+		{
+			savedItems[x] = new Item[items[x].length];
+			for(int y = 0; y<items[x].length; y++)
+			{
+				if(items[x][y] == null || items[x][y].getType() != ItemTypes.breakout)
+				{
+					savedItems[x][y] = items[x][y];
+				}
+			}
+		}
+		this.savedBreakoutItems = new Item[breakouts.allBreakouts.length][4];
 		{
 		int i = 0;
-		for(ExternalBreakout b: breakouts)
+		for(ExternalBreakout b: breakouts.allBreakouts)
 		{
 			for(int j = 0; j<4; j++)
 			{
@@ -46,7 +62,21 @@ public class SavedState
 			}
 		}
 	}
-	public void load(Item[][] output, WiringMode wireEditor, List<ExternalBreakout> breakouts)
+	
+	public Set<Item> getItems()
+	{
+		Set<Item> toReturn = new HashSet<>();
+		for(Item[] col:savedItems)
+		{
+			for(Item item:col)
+			{
+				toReturn.add(item);
+			}
+		}
+		return toReturn;
+	}
+	
+	public void load(Item[][] output, WiringMode wireEditor, BreakoutItems breakouts)
 	{
 		HashSet<Item> oldItems = new HashSet<>();
 		HashSet<Item> newItems = new HashSet<>();
@@ -58,7 +88,10 @@ public class SavedState
 				{
 					oldItems.add(output[x][y]);
 				}
-				output[x][y] = savedItems[x][y];
+				if(output[x][y] == null || output[x][y].getType() != ItemTypes.breakout)
+				{
+					output[x][y] = savedItems[x][y];
+				}
 				if(output[x][y]!=null)
 				{
 					output[x][y].stripPins();
@@ -68,21 +101,21 @@ public class SavedState
 		}
 		{
 		int i = 0;
-		for(ExternalBreakout b: breakouts)
+		for(ExternalBreakout b: breakouts.allBreakouts)
 		{
-		for(int j = 0; j<4; j++)
-		{
-			if(b.getSlots()[j].getContents()!=null)
+			for(int j = 0; j<4; j++)
 			{
-				oldItems.add(b.getSlots()[j].getContents());
+				if(b.getSlots()[j].getContents()!=null)
+				{
+					oldItems.add(b.getSlots()[j].getContents());
+				}
+				b.getSlots()[j].setContents(savedBreakoutItems[i][j]);
+				if(savedBreakoutItems[i][j] != null)
+				{
+					newItems.add(savedBreakoutItems[i][j]);
+				}
 			}
-			b.getSlots()[j].setContents(savedBreakoutItems[i][j]);
-			if(savedBreakoutItems[i][j] != null)
-			{
-				newItems.add(savedBreakoutItems[i][j]);
-			}
-		}
-		i++;
+			i++;
 		}
 		}
 		HashSet<Item> dupedItems = new HashSet<>();

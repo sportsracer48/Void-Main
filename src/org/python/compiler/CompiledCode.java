@@ -1,5 +1,6 @@
 package org.python.compiler;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -71,8 +72,9 @@ import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PySyntaxError;
 
-public class CompiledCode extends Visitor
+public class CompiledCode extends Visitor implements Serializable
 {
+	private static final long serialVersionUID = 5763369430479571735L;
 	HashSet<String> declaredVars = new HashSet<>();
 	HashSet<String> referencedExternalVars = new HashSet<>();
 	ArrayList<CodeLine> code = new ArrayList<>();
