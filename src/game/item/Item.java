@@ -6,11 +6,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import entry.GlobalState;
 import program.Environment;
 import state.workbench.game.WiringMode;
 import state.workbench.graphics.PinHighlight;
-import game.map.Unit;
+import game.map.unit.Unit;
+import game.session.GlobalState;
 import graphics.Sprite;
 import graphics.entity.Entity;
 
@@ -24,14 +24,22 @@ public class Item implements Serializable
 	List<Pin> breakoutPins;
 	List<Long> state = new ArrayList<>();
 	Environment env;
+	Inventory contents;
+	String name;
+	Unit unit;
 	
 	public Item(ItemType type)
 	{
 		this.type = type;
 		pins = type.getPins(this);
 		breakoutPins = type.getBreakoutPins(this);
-		env = type.getEnvironmentFor(pins, GlobalState.coordinator);
+		env = type.getEnvironmentFor(pins);
 		typeId = type.typeId;
+		if(type.isUnit())
+		{
+			unit = type.makeUnit();
+			unit.setItem(this);
+		}
 	}
 	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
 	{
@@ -39,17 +47,12 @@ public class Item implements Serializable
 		type = ItemTypes.fromId(typeId);
 		if(env!=null)
 		{
-			GlobalState.coordinator.addEnvironment(env);
+			GlobalState.getCoordinator().addEnvironment(env);
 		}
-		
-//		List<Coord> pinLocations = type.getPinLocations();
-//		for(int i = 0; i<pins.size(); i++)
-//		{
-//			Pin p = pins.get(i);
-//			Coord c = pinLocations.get(i);
-//			p.x = c.x;
-//			p.y = c.y;
-//		}
+	}
+	public Unit getUnit()
+	{
+		return unit;
 	}
 	
 	public Entity getInvEntity()
@@ -141,6 +144,16 @@ public class Item implements Serializable
 		type.getRadioUpdate().accept(pins,this);
 	}
 	
+	public void resetPinsAndState()
+	{
+		for(Pin p:getPins())
+		{
+			p.strip();
+			p.setPotential(0);
+			p.setGrounded(false);
+		}
+		resetState();
+	}
 	public void stripPins()
 	{
 		for(Pin p:getPins())

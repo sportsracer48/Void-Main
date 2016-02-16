@@ -1,10 +1,14 @@
-package game.map;
+package game.map.unit;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 import state.viewport.UnitSprites;
+import game.item.Inventory;
+import game.item.Item;
+import game.map.Map;
+import game.map.Tile;
 import graphics.entity.Entity;
 import graphics.entity.FluidEntity;
 
@@ -21,6 +25,7 @@ public class Unit implements Serializable
 	
 	transient FluidEntity base;
 	transient UnitSprites sprites;
+	transient UnitType type;
 	
 	
 	private Tile tile;
@@ -34,20 +39,42 @@ public class Unit implements Serializable
 	int force;
 	
 	UnitController controller = null;
+	Inventory externalPartMounting;
+	Item item;
 	
-	public Unit(UnitSprites sprites)
+	public Unit(UnitType type)
 	{
 		this.base = new FluidEntity(0,0,0);
-		this.sprites = sprites;
+		this.type = type;
+		this.sprites = type.createSprites();
 		this.unitTypeId = sprites.id;
 		base.setTo(getEntity());
+		
+		if(type.isRobot())
+		{
+			externalPartMounting = new Inventory(24);
+		}
 	}
 	
 	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
 	{
 		stream.defaultReadObject();
 		base = new FluidEntity(0,0,0);
-		sprites = UnitTypes.fromId(unitTypeId);
+		type = UnitTypes.fromId(unitTypeId);
+		sprites = type.createSprites();
+	}
+	
+	public Inventory getExternalPartMounting()
+	{
+		return externalPartMounting;
+	}
+	
+	public void setItem(Item item)
+	{
+		if(item==null)
+		{
+			this.item = item;
+		}
 	}
 	
 	public void setController(UnitController controller)
@@ -73,6 +100,10 @@ public class Unit implements Serializable
 		return base;
 	}
 	
+	public UnitSprites getSprites()
+	{
+		return sprites;
+	}
 	
 	public void addForce(int force)
 	{

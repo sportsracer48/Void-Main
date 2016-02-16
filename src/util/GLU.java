@@ -1,6 +1,6 @@
 package util;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
@@ -8,7 +8,7 @@ import org.lwjgl.opengl.GL45;
 
 public class GLU
 {
-	static Hashtable<Integer, String> errorTable = new Hashtable<>();
+	static HashMap<Integer, String> errorTable = new HashMap<>();
 	static
 	{
 		errorTable.put(GL11.GL_INVALID_ENUM,"Invalid enum");

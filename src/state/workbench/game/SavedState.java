@@ -78,6 +78,11 @@ public class SavedState implements Serializable
 	
 	public void load(Item[][] output, WiringMode wireEditor, BreakoutItems breakouts)
 	{
+		load(output, wireEditor, breakouts, true);
+	}
+	
+	public void load(Item[][] output, WiringMode wireEditor, BreakoutItems breakouts, boolean trackItems)
+	{
 		HashSet<Item> oldItems = new HashSet<>();
 		HashSet<Item> newItems = new HashSet<>();
 		for(int x = 0; x<output.length; x++)
@@ -126,14 +131,18 @@ public class SavedState implements Serializable
 		deletedItems.addAll(oldItems);
 		deletedItems.removeAll(newItems);
 		
-		for(Item i:deletedItems)
+		if(trackItems)
 		{
-			System.out.format("deleted %s%n",i);
+			for(Item i:deletedItems)
+			{
+				System.out.format("deleted %s%n",i);
+			}
+			for(Item i:dupedItems)
+			{
+				System.out.format("duped %s%n",i);
+			}
 		}
-		for(Item i:dupedItems)
-		{
-			System.out.format("duped %s%n",i);
-		}
+		
 		for(Wire w:wires)
 		{
 			w.clone().attachSelf();

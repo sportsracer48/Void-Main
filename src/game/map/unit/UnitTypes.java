@@ -1,7 +1,6 @@
-package game.map;
+package game.map.unit;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 import state.viewport.UnitSprites;
 import game.session.levelgen.MapUtil;
@@ -12,24 +11,24 @@ import graphics.registry.SpriteAtlas;
 
 public class UnitTypes
 {
-	public static Supplier<UnitSprites> spores;
-	public static Supplier<UnitSprites> mushrooms;
-	public static Supplier<UnitSprites> robot;
+	public static UnitType spores;
+	public static UnitType mushrooms;
+	public static UnitType robot;
 	
 	public static final int SPORES = 0;
 	public static final int MUSHROOMS = 1;
 	public static final int ROBOT  = 2;
 	
-	public static UnitSprites fromId(int id)
+	public static UnitType fromId(int id)
 	{
 		switch(id)
 		{
 		case SPORES:
-			return mushrooms.get();
+			return mushrooms;
 		case MUSHROOMS:
-			return spores.get();
+			return spores;
 		case ROBOT:
-			return robot.get();
+			return robot;
 		}
 		return null;
 	}
@@ -42,9 +41,10 @@ public class UnitTypes
 		List<Sprite> mushroomSprites = sprites.getSprites("mushroom_%d.png");
 		List<Sprite[]> sporeSprites = sprites.getAnimations("spore_%d.png", 9);
 		
-		robot = ()->new UnitSprites(ROBOT,robotSprites,16);
-		mushrooms = ()->new UnitSprites(MUSHROOMS,new Entity(0,0,0,MapUtil.selectRandom(mushroomSprites)));
-		spores = ()->new UnitSprites(SPORES,new FramerateEntity(0,0,0,MapUtil.selectRandom(sporeSprites),9,(float) Math.random(),30));
+		robot = new UnitType(()->new UnitSprites(ROBOT,robotSprites,16));
+		robot.setIsRobot(true);
+		mushrooms = new UnitType(()->new UnitSprites(MUSHROOMS,new Entity(0,0,0,MapUtil.selectRandom(mushroomSprites))));
+		spores = new UnitType(()->new UnitSprites(SPORES,new FramerateEntity(0,0,0,MapUtil.selectRandom(sporeSprites),9,(float) Math.random(),30)));
 		
 		sprites.resetNamespace();
 	}

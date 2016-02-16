@@ -2,13 +2,14 @@ package game.item;
 
 import java.util.List;
 
-import entry.GlobalState;
 import program.Environment;
 import program.OuinoEnvironment;
-import program.ProgramCoordinator;
 import state.workbench.game.ExportBreakout;
 import util.Grid;
 import breadboard.BreadboardUtil;
+import game.map.unit.Unit;
+import game.map.unit.UnitTypes;
+import game.session.GlobalState;
 import graphics.Sprite;
 import graphics.entity.CounterEntity;
 import graphics.registry.SpriteAtlas;
@@ -24,6 +25,9 @@ public class ItemTypes
 	public static ItemType ledOutput;
 	public static ItemType bitShiftRegister;
 	public static ItemType eightBitCounter;
+	public static ItemType sensor;
+	public static ItemType transmitter;
+	public static ItemType robot;
 	
 	public static final int BREAKOUT = 0;
 	public static final int MICRO_CONTROLLER = 1;
@@ -34,6 +38,9 @@ public class ItemTypes
 	public static final int LED_OUTPUT = 6;
 	public static final int BIT_SHIFT_REGISTER = 7;
 	public static final int EIGHT_BIT_COUNTER = 8; //:::;)
+	public static final int SENSOR = 9;
+	public static final int TRANSMITTER  = 10;
+	public static final int ROBOT = 11;
 	
 	public static ItemType fromId(int id)
 	{
@@ -57,6 +64,12 @@ public class ItemTypes
 			return bitShiftRegister;
 		case EIGHT_BIT_COUNTER:
 			return eightBitCounter;
+		case SENSOR:
+			return sensor;
+		case TRANSMITTER:
+			return transmitter;
+		case ROBOT:
+			return robot;
 		}
 		return null;
 	}
@@ -79,10 +92,10 @@ public class ItemTypes
 		breakout = new ItemType(BREAKOUT,null);
 		microController = new ItemType(MICRO_CONTROLLER,sprites.getSprite("ouino.png"),sprites.getSprite("ouino item.png"))
 		{
-			public Environment getEnvironmentFor(List<Pin> pins, ProgramCoordinator coordinator)
+			public Environment getEnvironmentFor(List<Pin> pins)
 			{
 				Environment e = new OuinoEnvironment(pins);
-				coordinator.addEnvironment(e);
+				GlobalState.getCoordinator().addEnvironment(e);
 				return e;
 			}
 		};
@@ -90,6 +103,8 @@ public class ItemTypes
 		antenna = new ItemType(ANTENNA,sprites.getSprite("antenna ic.png"),sprites.getSprite("antenna item.png"));
 		breadboard = new ItemType(BREADBOARD,sprites.getSprite("breadboard.png"),sprites.getSprite("breadboard item.png"));
 		poweredWheel = new ItemType(POWERED_WHEEL,sprites.getSprite("wheel item.png"),2);
+		transmitter = new ItemType(TRANSMITTER,sprites.getSprite("broadcaster item.png"),5);
+		sensor = new ItemType(SENSOR,sprites.getSprite("sensor item.png"),4);
 		ledOutput = new ItemType(LED_OUTPUT,ledOff, sprites.getSprite("led item.png"));
 		bitShiftRegister = new ItemType(BIT_SHIFT_REGISTER,sprites.getSprite("BSR.png"),sprites.getSprite("BSR item.png"));
 		eightBitCounter = new ItemType(EIGHT_BIT_COUNTER,sprites.getSprite("8bit counter.png"),sprites.getSprite("counter item.png"))
@@ -97,6 +112,13 @@ public class ItemTypes
 			public ItemEntity getWorldEntity(Item instance)
 			{
 				return new CounterEntity(-getOffsetX(),-getOffsetY(),0,20,15,instance,3,counterH,counterV);
+			}
+		};
+		robot = new ItemType(ROBOT,sprites.getSprite("robot item.png"),0)
+		{
+			public Unit makeUnit()
+			{
+				return new Unit(UnitTypes.robot);
 			}
 		};
 		
@@ -162,6 +184,74 @@ public class ItemTypes
 			}
 		});
 		
+		//sensor = new ItemType(SENSOR,sprites.getSprite("sensor item.png"),4);
+		sensor.setTooltips("+5v","GND","CLOCK","SIGNAL");
+		sensor.setExportPinUpdate((internalPins,pins,location,unit,item)->
+		{
+			if(pins.get(0).getReceivedPotential()==1024 && pins.get(1).isGrounded())
+			{
+				long key = GlobalState.getSensorManager().registerUnit(unit);
+				item.setState(0, key);
+				for(int bite = 0; bite<8; bite++)
+				{
+					int biteVal = (int) ((key >>> (bite*8)) & 0xFF);
+					serialWrite(biteVal,pins.get(2),pins.get(3));
+				}
+			}
+			else
+			{
+				GlobalState.getSensorManager().unregisterUnit(item.getState(0), unit);
+				item.resetState();
+				pins.get(2).setPotential(0);
+				pins.get(3).setPotential(0);
+			}
+		});
+		
+		
+		//new ItemType(TRANSMITTER,sprites.getSprite("broadcaster item.png"),5);
+		transmitter.setTooltips("+5v","GND","SIGNAL","CHAN_C","CHAN_S");
+		transmitter.setLogicUpdate(($,item)->{
+			List<Pin> pins = item.getBreakoutPins();
+			if(pins.get(0).getReceivedPotential()==1024 && pins.get(1).isGrounded())
+			{
+				boolean wasOff = item.getState(0)==1;
+				if(wasOff && pins.get(3).getReceivedPotential()==1024)
+				{
+					int lastChannel = (int) item.getState(1);
+					pushBit(item,1,pins.get(4).getReceivedPotential()==1024);
+					int nextChannel = (int) item.getState(1);
+					if(lastChannel != nextChannel)
+					{
+						GlobalState.getRadio().stopBroadcast(lastChannel, item);
+					}
+				}
+				
+				int channel = (int) item.getState(1);
+				if(pins.get(2).getReceivedPotential()==1024)
+				{
+					GlobalState.getRadio().broadcast(channel, item);
+				}
+				else
+				{
+					GlobalState.getRadio().stopBroadcast(channel, item);
+				}
+				
+				if(pins.get(3).getReceivedPotential()!=1024)
+				{
+					item.setState(0, 1L);
+				}
+				else
+				{
+					item.setState(0, 0L);
+				}
+			}
+			else
+			{
+				GlobalState.getRadio().stopBroadcast(item);
+				item.resetState();
+			}
+		});
+		
 		bitShiftRegister.setOffsets(-1, -1);
 		bitShiftRegister.addPinLocation(4, 3);
 		bitShiftRegister.addPins(new Grid(10,3,3,3,1,8));
@@ -210,7 +300,7 @@ public class ItemTypes
 			if(pins.get(0).getReceivedPotential()==1024 && pins.get(1).isGrounded())
 			{
 				int channel = fromParallel(pins,3,8);
-				if(GlobalState.radio.isOn(channel))
+				if(GlobalState.getRadio().isOn(channel))
 				{
 					pins.get(2).setPotential(1024);
 				}
@@ -293,5 +383,32 @@ public class ItemTypes
 			accum = (accum<<1) | (p.getReceivedPotential()==1024?1:0);
 		}
 		return accum;
+	}
+	public static void pushBit(Item item, int index, boolean bit)
+	{
+		item.setState(index,
+				(
+				(item.getState(index)>>1)|
+				(((bit?1:0)&1)<<7)
+				)
+				&0xFF);
+		
+	}
+	public static void serialWrite(int toWrite, Pin clock, Pin signal)
+	{
+		for(int bit = 0; bit<8; bit++)
+		{
+			if((toWrite & (1<<bit)) == (1<<bit))
+			{
+				signal.setPotential(1024);
+			}
+			else
+			{
+				signal.setPotential(0);
+			}
+			clock.setPotential(1024);
+			clock.setPotential(0);
+		}
+		signal.setPotential(0);
 	}
 }

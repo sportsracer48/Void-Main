@@ -3,7 +3,7 @@ package org.python.compiler;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Set;
 
 import org.python.core.Py;
@@ -28,7 +28,7 @@ public class Interpreter implements Serializable
 	ArrayList<ExceptionHandler> exceptionStack = new ArrayList<>();
 	ArrayList<FinallyFrame> finallyStack = new ArrayList<>();
 	
-	Hashtable<String,Integer> labelLocations = new Hashtable<>();
+	HashMap<String,Integer> labelLocations = new HashMap<>();
 	String member = "";
 	ItemSelectArgs itemArgs = null;
 	
@@ -42,13 +42,13 @@ public class Interpreter implements Serializable
 	
 	transient PrintStream stdout;
 	
-	public Interpreter(CompiledCode root,Hashtable<String,PyObject> globals,PrintStream stdout)
+	public Interpreter(CompiledCode root,HashMap<String,PyObject> globals,PrintStream stdout)
 	{
 		this(globals,stdout);
 		this.root = root;
 		this.setpSuite(root);
 	}
-	public Interpreter(Hashtable<String,PyObject> globals,PrintStream stdout)
+	public Interpreter(HashMap<String,PyObject> globals,PrintStream stdout)
 	{
 		this.stdout = stdout;
 		if(stdout == null)
@@ -1228,6 +1228,7 @@ public class Interpreter implements Serializable
 	{
 		PyString str = popObject().__str__();
 		stdout.print(str);
+		System.out.print(str);
 		pc++;
 	}
 

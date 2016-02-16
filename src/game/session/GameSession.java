@@ -1,7 +1,7 @@
 package game.session;
 
-import entry.GlobalState;
 import game.comm.RadioManager;
+import game.comm.SensorManager;
 import game.map.Map;
 
 import java.io.File;
@@ -22,6 +22,7 @@ public class GameSession implements Serializable
 	ExportState workbenchExport;
 	RadioManager radio;
 	Computer laptop;
+	SensorManager sensorManager;
 	
 	public GameSession()
 	{
@@ -30,6 +31,7 @@ public class GameSession implements Serializable
 		
 		map = GlobalState.currentViewport.map;
 		workbenchExport = GlobalState.currentWorkbench.grid.export();
+		sensorManager = GlobalState.sensorManager;
 	}
 	
 	public void save(String filePath)
@@ -58,8 +60,7 @@ public class GameSession implements Serializable
 	{
 		GlobalState.radio = radio;
 		GlobalState.laptop = laptop;
-		
-		
+		GlobalState.sensorManager = sensorManager;
 		GlobalState.currentViewport.setMap(map);
 		
 		map.makeEntities();

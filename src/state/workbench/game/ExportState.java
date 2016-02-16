@@ -6,7 +6,7 @@ import java.util.List;
 
 import game.item.Item;
 import game.item.ItemTypes;
-import game.map.Unit;
+import game.map.unit.Unit;
 import static state.workbench.game.ExportBreakout.*;
 
 public class ExportState implements Serializable

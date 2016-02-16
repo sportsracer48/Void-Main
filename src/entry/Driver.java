@@ -2,7 +2,9 @@ package entry;
 
 import static org.lwjgl.opengl.GL11.*;
 import game.item.ItemTypes;
-import game.map.UnitTypes;
+import game.map.unit.UnitTypes;
+import game.session.GameSession;
+import game.session.GlobalState;
 import game.session.levelgen.MapTypes;
 import graphics.Context;
 import graphics.registry.RegisteredFont;
@@ -13,7 +15,10 @@ import graphics.shader.Shader;
 
 import java.awt.Font;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 
 import math.Matrix;
 
@@ -30,6 +35,7 @@ import state.GameState;
 import state.programming.ProgrammingState;
 import state.viewport.ViewportState;
 import state.workbench.WorkbenchState;
+import state.workbench.game.ExportState;
 //import state.workbench.WorkbenchState;
 import util.GLU;
 
@@ -81,8 +87,6 @@ public class Driver
 		input = new GlobalInput(this);
 		GLFW.glfwMakeContextCurrent(window);
 		GLFW.glfwShowWindow(window);
-		
-		//GLFW.glfwSetInputMode(window,GLFW.GLFW_CURSOR,GLFW.GLFW_CURSOR_DISABLED);
 	}
 	
 	public void initGL()
@@ -101,10 +105,11 @@ public class Driver
 		spriteAtlas = new SpriteAtlas(new File("res/sprite/workbench/"));
 		spriteAtlas.addAllChildren(new File("res/sprite/util/"));
 		spriteAtlas.addAllChildren(new File("res/sprite/level/"));
-		RegisteredFont defaultFont = spriteAtlas.addFont(new File("res/font/TERMINALVECTOR.TTF"), Font.PLAIN, 12);
-		RegisteredFont defaultFontOutline = new RegisteredFont("TerminalVector$o", defaultFont.metrics, spriteAtlas);
-		RegisteredFont.setDefault(defaultFont);
-		RegisteredFont.setDefaultOutline(defaultFontOutline);
+		RegisteredFont workbenchFont = spriteAtlas.addFont(new File("res/font/TERMINALVECTOR.TTF"), Font.PLAIN, 12);
+		RegisteredFont consoleFont = spriteAtlas.addFont(new File("res/font/IBMIS09.ttf"), Font.PLAIN, 16);
+		RegisteredFont workbencFontOutline = new RegisteredFont("TerminalVector$o", workbenchFont.metrics, spriteAtlas);
+		RegisteredFont.setDefault(consoleFont);
+		RegisteredFont.setDefaultOutline(workbencFontOutline);
 		spriteAtlas.build();
 		UtilSprites.init(spriteAtlas);
 	}
@@ -145,11 +150,22 @@ public class Driver
 	public void initGame()
 	{
 		GlobalState.init();
-		
+		boolean loaded = true;
+		GameSession loadedSession = null;
 		
 		ItemTypes.init(spriteAtlas);
 		MapTypes.init(spriteAtlas);
 		UnitTypes.init(spriteAtlas);
+		
+		try
+		{
+			loadedSession = GlobalState.load("session.jso");
+		} 
+		catch (ClassNotFoundException | IOException e)
+		{
+			loaded = false;
+			e.printStackTrace();
+		}
 		
 		GlobalState.currentProgramming = new ProgrammingState(input,window);
 		GlobalState.currentProgramming.init(spriteAtlas);
@@ -157,20 +173,40 @@ public class Driver
 		GlobalState.currentWorkbench.init(spriteAtlas);
 		GlobalState.currentViewport = new ViewportState(input,window);
 		GlobalState.currentViewport.init(spriteAtlas);
+		
 		PythonInit.init();
 		
-		try
+		if(loaded)
 		{
-			GlobalState.load("session.jso");
-			currentState = GlobalState.currentViewport;
-			currentState.enable();
-		} 
-		catch (ClassNotFoundException | IOException e)
-		{
-			e.printStackTrace();
-			currentState = GlobalState.currentWorkbench;
-			currentState.enable();
+			loadedSession.load();
 		}
+		
+		if(!loaded)
+		{
+			currentState = GlobalState.currentWorkbench;
+			File configFile = new File("save.jso");
+			try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(configFile)))
+			{
+				GlobalState.currentWorkbench.load((ExportState) in.readObject());
+			} 
+			catch (FileNotFoundException e)
+			{
+				e.printStackTrace();
+			} 
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+			catch (ClassNotFoundException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			currentState = GlobalState.currentViewport;
+		}
+		currentState.enable();
 	}
 	
 	public void checkError()
@@ -193,10 +229,10 @@ public class Driver
 	{
 		currentState.beforeInput(dt);
 		GLFW.glfwPollEvents();
-		GlobalState.coordinator.act(dt);
+		GlobalState.getCoordinator().act(dt);
 		GlobalState.pinUpdateAll();
 		currentState.update(dt);
-		GlobalState.coordinator.act(dt);
+		GlobalState.getCoordinator().act(dt);
 		GlobalState.pinUpdateAll();
 	}
 

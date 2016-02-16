@@ -4,7 +4,7 @@ import game.item.Item;
 import game.item.ItemType;
 import game.item.Pin;
 import game.item.Wire;
-import game.map.Unit;
+import game.map.unit.Unit;
 
 import java.io.Serializable;
 import java.util.ArrayList;

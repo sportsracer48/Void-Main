@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import game.item.Inventory;
 import game.item.Item;
 import game.item.ItemType;
 import game.item.Pin;
@@ -103,6 +104,16 @@ public class ExternalBreakout
 			});
 		}
 	}
+	
+
+	public void setBackingInventory(Inventory inventory)
+	{
+		for(int i = 0; i<slots.length; i++)
+		{
+			slots[i].setParent(inventory);
+		}
+	}
+	
 	
 	private void clearPins(int row)
 	{

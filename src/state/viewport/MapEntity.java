@@ -3,7 +3,8 @@ package state.viewport;
 import state.workbench.Camera;
 import util.Color;
 import game.map.Tile;
-import game.map.Unit;
+import game.map.unit.Unit;
+import game.session.GlobalState;
 import graphics.Context;
 import graphics.entity.Entity;
 import graphics.entity.particles.ParticleSystem;
@@ -17,8 +18,8 @@ public class MapEntity extends Entity
 	
 	LightSystem lightSystem;
 	
-	Unit center;
-	int vision;
+	long sensorFeed;
+	int vision = 5;
 	
 	public MapEntity(float x, float y, float z, float scale, Tile[][] map, Camera camera)
 	{
@@ -29,10 +30,9 @@ public class MapEntity extends Entity
 		this.setScale(scale, scale);
 	}
 	
-	public void setCenter(Unit center, int vision)
+	public void setSensorFeed(long sensorFeed)
 	{
-		this.center = center;
-		this.vision = vision;
+		this.sensorFeed = sensorFeed;
 	}
 	
 	public void setAmbientParticles(ParticleSystem ambient)
@@ -61,6 +61,7 @@ public class MapEntity extends Entity
 	}
 	public boolean isVisible(Tile t)
 	{
+		Unit center = GlobalState.getSensorManager().getUnit(sensorFeed);
 		if(center == null)
 		{
 			return false;

@@ -7,8 +7,9 @@ import math.Matrix;
 import org.lwjgl.glfw.GLFW;
 
 import entry.GlobalInput;
-import entry.GlobalState;
+import game.item.Item;
 import game.map.CircuitSystem;
+import game.session.GlobalState;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
@@ -59,6 +60,7 @@ public class WorkbenchState extends GameState
 	Sprite programmingSymbol;
 	
 	WorkbenchCircuitSystem circuit;
+	Item currentlyEditing;
 	
 	Mode edit = new Mode()
 	{
@@ -133,6 +135,12 @@ public class WorkbenchState extends GameState
 	public ChassisGrid grid;
 	
 	ZoomTransition programmingTransition = new ZoomTransition(camera,700,100,screenWidth(),screenHeight(),236,152);
+	
+	public void setItem(Item toEdit)
+	{
+		this.currentlyEditing = toEdit;
+		grid.getBreakouts().setBackingInventory(toEdit.getUnit().getExternalPartMounting());
+	}
 	
 	public void enable()
 	{
@@ -307,6 +315,14 @@ public class WorkbenchState extends GameState
 			return;
 		}
 		
+		if(currentlyEditing == null)
+		{
+			grid.setEnabled(false);
+		}
+		else
+		{
+			grid.setEnabled(true);
+		}
 		
 		float cameraSpeed = 1f/camera.scale;//pixels per millisecond
 		if(

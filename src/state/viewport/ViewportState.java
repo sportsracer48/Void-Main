@@ -4,13 +4,17 @@ import javax.sound.sampled.Clip;
 
 import org.lwjgl.glfw.GLFW;
 
+import computer.system.Computer;
 import math.Matrix;
 import entry.GlobalInput;
-import entry.GlobalState;
+import game.comm.RadioHook;
+import game.comm.RadioManager;
+import game.item.Item;
 import game.map.Map;
-import game.map.Unit;
-import game.map.UnitController;
-import game.map.UnitTypes;
+import game.map.unit.Unit;
+import game.map.unit.UnitController;
+import game.map.unit.UnitTypes;
+import game.session.GlobalState;
 import game.session.levelgen.MapTypes;
 import game.session.levelgen.roomgen.RoomGen;
 import graphics.Context;
@@ -37,9 +41,22 @@ public class ViewportState extends GameState
 	Clip bgMusic;
 	LightSystem lightSystem = new LightSystem(.1f);
 	
+	final int videoClock = 16;
+	final int videoSignal = 17;
+	
+	RadioHook updateFeed = new ViewportRadioHook(videoClock,videoSignal);
+	
 	public ViewportState(GlobalInput input, long window)
 	{
 		super(input, window);
+	}
+	
+	public void setSensorFeed(long sensorFeed)
+	{
+		if(me != null)
+		{
+			me.setSensorFeed(sensorFeed);
+		}
 	}
 	
 	public void setRobot(ExportState robotConfig)
@@ -55,10 +72,9 @@ public class ViewportState extends GameState
 		}
 		
 		this.robotConfig = robotConfig;
-		robot = new Unit(UnitTypes.robot.get());
+		robot = new Unit(UnitTypes.robot);
 		robotController = new UnitController(robotConfig,robot,map);
 		map.setUnitAtStart(robot);
-		me.setCenter(robot, 5);
 		robotLight = new LightSource(robot,5);
 		lightSystem.addLight(robotLight);
 	}
@@ -85,7 +101,6 @@ public class ViewportState extends GameState
 		{
 			robotController = robot.getController();
 			robotConfig = robotController.getConfig();
-			me.setCenter(robot, 5);
 			robotLight = new LightSource(robot,5);
 			lightSystem.addLight(robotLight);
 		}
@@ -107,8 +122,8 @@ public class ViewportState extends GameState
 		RoomGen generator = new RoomGen(6,100,MapTypes.surface);
 		map = generator.getMap();
 		
-		generator.populate(()->new Unit(UnitTypes.mushrooms.get()), .1);
-		generator.populate(()->new Unit(UnitTypes.spores.get()), .2);
+		generator.populate(()->new Unit(UnitTypes.mushrooms), .1);
+		generator.populate(()->new Unit(UnitTypes.spores), .2);
 		
 		me = generator.build(scale, camera, lightSystem);
 		add(me);
@@ -133,53 +148,72 @@ public class ViewportState extends GameState
 				robot.setTile(null);
 				lightSystem.removeLight(robotLight);
 			}
-			ExportState config = robotConfig;
-			robot = null;
-			robotConfig = null;
-			robotController = null;
-			robotLight = null;
-			
-			GlobalState.currentWorkbench.load(config);
+			if(!isKeyPressed(GLFW.GLFW_KEY_LEFT_SHIFT))
+			{
+				ExportState config = robotConfig;
+				robot = null;
+				robotConfig = null;
+				robotController = null;
+				robotLight = null;
+				
+				GlobalState.currentWorkbench.load(config);
+			}
 			this.changeTo(GlobalState.currentWorkbench);
 		}
+		if(key == GLFW.GLFW_KEY_F5)
+		{
+			if(robot!=null)
+			{
+				for(Item i:robotConfig.getItems())
+				{
+					if(i.getEnvironment() != null)
+					{
+						i.getEnvironment().reset();
+					}
+				}
+			}
+		}
+		
 	}
 	
 	public void afterInput(int dt)
 	{
+		RadioManager radio = GlobalState.getRadio();
+		Computer laptop = GlobalState.getLaptop();
 		if(isKeyPressed(GLFW.GLFW_KEY_UP))
 		{
-			GlobalState.radio.broadcast(0,GlobalState.laptop);
+			radio.broadcast(0,laptop);
 		}
 		else
 		{
-			GlobalState.radio.stopBroadcast(0,GlobalState.laptop);
+			radio.stopBroadcast(0,laptop);
 		}
 		
 		if(isKeyPressed(GLFW.GLFW_KEY_DOWN))
 		{
-			GlobalState.radio.broadcast(1,GlobalState.laptop);
+			radio.broadcast(1,laptop);
 		}
 		else
 		{
-			GlobalState.radio.stopBroadcast(1,GlobalState.laptop);
+			radio.stopBroadcast(1,laptop);
 		}
 		
 		if(isKeyPressed(GLFW.GLFW_KEY_LEFT))
 		{
-			GlobalState.radio.broadcast(2,GlobalState.laptop);
+			radio.broadcast(2,laptop);
 		}
 		else
 		{
-			GlobalState.radio.stopBroadcast(2,GlobalState.laptop);
+			radio.stopBroadcast(2,laptop);
 		}
 		
 		if(isKeyPressed(GLFW.GLFW_KEY_RIGHT))
 		{
-			GlobalState.radio.broadcast(3,GlobalState.laptop);
+			radio.broadcast(3,laptop);
 		}
 		else
 		{
-			GlobalState.radio.stopBroadcast(3,GlobalState.laptop);
+			radio.stopBroadcast(3,laptop);
 		}
 		
 		if(robot!= null && robot.isMoving())
@@ -283,6 +317,15 @@ public class ViewportState extends GameState
 		catch(Exception e)
 		{
 			e.printStackTrace();
+		}
+		
+		if(GlobalState.getRadio().getSensorFeedUpdate() == null)
+		{
+			GlobalState.getRadio().setSensorFeedUpdate(updateFeed);
+		}
+		else
+		{
+			updateFeed = GlobalState.getRadio().getSensorFeedUpdate();
 		}
 	}
 

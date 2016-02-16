@@ -9,6 +9,8 @@ def setup():
   global leftMotor,rightMotor
   leftMotor = Motor([8])
   rightMotor = Motor([9])
+  serialWrite(0,1,16)
+  serialWrite(2,3,17)
   
 def loop():
   shouldMove = False
@@ -28,7 +30,7 @@ def loop():
     leftMotor.activate()
     rightMotor.activate()
     tick()
-
+ 
 class Motor:
     def __init__(self, pins):
         self.pins = pins
@@ -38,6 +40,17 @@ class Motor:
     def deactivate(self):
         for i in self.pins:
             digitalWrite(i,LOW)
+
+def serialWrite(clockPin,dataPin,val):
+  for bit in range (8):
+    if (val & (1<<bit)) == (1<<bit):
+      digitalWrite(dataPin,HIGH)
+      digitalWrite(clockPin,HIGH)
+      digitalWrite(clockPin,LOW)
+    else:
+      digitalWrite(dataPin,LOW)
+      digitalWrite(clockPin,HIGH)
+      digitalWrite(clockPin,LOW)
 
 def turnToFace(direction):
     while facing != direction:
@@ -57,8 +70,8 @@ def channelActive(channel):
     return val == 1024
 
 def selectChannel(channel):
-  for bit in range (8):
+  for bit in range (2):
     if (channel & (1<<bit)) == (1<<bit):
-      digitalWrite(bit,HIGH)
+      digitalWrite(bit+4,HIGH)
     else:
-      digitalWrite(bit,LOW)
+      digitalWrite(bit+4,LOW)

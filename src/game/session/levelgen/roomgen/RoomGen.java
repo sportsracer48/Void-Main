@@ -3,7 +3,7 @@ package game.session.levelgen.roomgen;
 import java.util.function.Supplier;
 
 import game.map.Map;
-import game.map.Unit;
+import game.map.unit.Unit;
 import game.session.levelgen.MapConfig;
 import game.session.levelgen.MapUtil;
 import graphics.Sprite;

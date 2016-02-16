@@ -1,8 +1,8 @@
 package org.python.compiler;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,17 +14,17 @@ public class Scope implements Serializable
 {
 	private static final long serialVersionUID = 5296057157691916790L;
 	
-	Hashtable<String,PyObject> scope;
+	HashMap<String,PyObject> scope;
 	HashSet<String> global = new HashSet<>();
 	Scope closure;
 	
-	public Scope(Hashtable<String, PyObject> scope)
+	public Scope(HashMap<String, PyObject> scope)
 	{
 		this.scope = scope;
 	}
 	public Scope()
 	{
-		scope = new Hashtable<>();
+		scope = new HashMap<>();
 	}
 	
 	public PyTuple getPretendClosure()//because we are pretending this does something

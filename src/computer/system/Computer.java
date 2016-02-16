@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 
@@ -36,7 +37,13 @@ public class Computer implements Serializable
 			init(name+"$");
 			return;
 		}
-		rootPath = root.getAbsolutePath();
+		rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
+	}
+	private void readObject(ObjectInputStream in) throws ClassNotFoundException, IOException
+	{
+		in.defaultReadObject();
+		init(name);
+		System.out.println(rootPath);
 	}
 	public void upload(String source)
 	{
@@ -85,7 +92,7 @@ public class Computer implements Serializable
 			filePath = filePath.substring(1);
 		}
 		File file = new File(rootPath+"/"+filePath);
-		if(!file.getAbsolutePath().startsWith(rootPath))
+		if(!file.getAbsolutePath().replace(File.separatorChar, '/').startsWith(rootPath))
 		{
 			return false;
 		}
@@ -103,7 +110,7 @@ public class Computer implements Serializable
 			filePath = filePath.substring(1);
 		}
 		File file = new File(rootPath+"/"+filePath);
-		if(!file.getAbsolutePath().startsWith(rootPath))
+		if(!file.getAbsolutePath().replace(File.separatorChar, '/').startsWith(rootPath))
 		{
 			return;
 		}
@@ -140,6 +147,10 @@ public class Computer implements Serializable
 	public String getName()
 	{
 		return name;
+	}
+	public String getRootPath()
+	{
+		return rootPath;
 	}
 	public boolean hasConnection()
 	{

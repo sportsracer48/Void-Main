@@ -7,10 +7,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import program.Environment;
-import program.ProgramCoordinator;
 import util.Grid;
 import util.Grid.Coord;
-import game.map.Unit;
+import game.map.unit.Unit;
 import graphics.Sprite;
 
 public class ItemType //kinda reflexive, but hey, whatever
@@ -40,6 +39,9 @@ public class ItemType //kinda reflexive, but hey, whatever
 	QuinConsumer<List<Pin>, List<Pin>, Integer,Unit,Item> exportPinUpdate;
 	BiConsumer<List<Pin>,Item> radioUpdate;
 	
+	int inventorySize = 0;
+	boolean isUnit = false;
+	
 	Sprite endCap, highlight, wireEnd, wireEndOpaque,  wireFade, pinMask;
 	
 	public final int typeId;
@@ -62,6 +64,23 @@ public class ItemType //kinda reflexive, but hey, whatever
 		this.typeId = typeId;
 		this.inventory = inventory;
 		this.numBreakoutPins = externalPins;
+	}
+	
+	public void setInventorySize(int size)
+	{
+		this.inventorySize = size;
+	}
+	public int getIventorySize(int size)
+	{
+		return inventorySize;
+	}
+	public boolean isUnit()
+	{
+		return isUnit;
+	}
+	public void setIsUnit(boolean isUnit)
+	{
+		this.isUnit = isUnit;
 	}
 	
 	public void setTooltips(String... tooltips)
@@ -331,7 +350,7 @@ public class ItemType //kinda reflexive, but hey, whatever
 		this.radioUpdate = radioUpdate;
 	}
 
-	public Environment getEnvironmentFor(List<Pin> pins, ProgramCoordinator coordinator)
+	public Environment getEnvironmentFor(List<Pin> pins)
 	{
 		return null;
 	}
@@ -340,5 +359,10 @@ public class ItemType //kinda reflexive, but hey, whatever
 	public interface QuinConsumer<A,B,C,D,E>
 	{
 		public void accept(A a, B b, C c, D d, E e);
+	}
+
+	public Unit makeUnit()
+	{
+		return null;
 	}	
 }

@@ -9,6 +9,7 @@ import state.ui.HighlightArea;
 import state.workbench.controller.ItemAcceptor;
 import state.workbench.controller.ItemManipulator;
 import util.Color;
+import game.item.Inventory;
 import game.item.Item;
 import graphics.Sprite;
 import graphics.entity.Entity;
@@ -21,11 +22,13 @@ public class InventorySlot extends Entity
 	ItemAcceptor acceptor;
 	Entity itemEntity;
 	FluidEntity preview;
-	Item contents;
 	float width, height;
 	List<Runnable> onChange = new ArrayList<>();
 	
-	public InventorySlot(float x, float y, Sprite highlightSprite, Item contains, ItemManipulator manip)
+	Inventory parent;
+	int index;
+	
+	public InventorySlot(float x, float y, Sprite highlightSprite, Inventory parent, int index, ItemManipulator manip)
 	{
 		super(x, y, 0, null);
 		
@@ -33,12 +36,13 @@ public class InventorySlot extends Entity
 		this.width = area.getWidth();
 		this.height = area.getHeight();
 		preview = new FluidEntity(3,3,0);
-		this.contents = contains;
+		this.parent = parent;
+		this.index = index;
 		this.acceptor = new ItemAcceptor(3,3,0,area.getArea(),manip)
 		{
 			public boolean canAccept(Item i)
 			{
-				return contents == null;
+				return parent != null && getContents() == null;
 			}
 
 			public void accept(Item i)
@@ -71,9 +75,9 @@ public class InventorySlot extends Entity
 		acceptor.setDisplayIcon(true);
 		
 		addChild(this.acceptor);
-		if(contains != null)
+		if(getContents() != null)
 		{
-			this.itemEntity = contains.getInvEntity();
+			this.itemEntity = getContents().getInvEntity();
 			this.itemEntity.setPos(3, 3);
 			addChild(this.itemEntity);
 		}
@@ -83,33 +87,73 @@ public class InventorySlot extends Entity
 		{
 			if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
 			{
-				if(contents == null)
+				if(getContents() == null)
 				{
 					return;
 				}
-				manip.grabItem(contents, 16, 16, acceptor);
+				manip.grabItem(getContents(), 16, 16, acceptor);
 				setContents(null);
 			}
 		});
 	}
+	
+	public void setParent(Inventory parent)
+	{
+		this.parent = parent;
+		if(itemEntity != null)
+		{
+			removeChild(itemEntity);
+		}
+		if(getContents() != null)
+		{
+			Item i = getContents();
+			i.resetPinsAndState();
+			itemEntity = i.getInvEntity();
+			itemEntity.setPos(3, 3);
+			addChild(itemEntity);
+		}
+	}
+	
+	public void act(int dt)
+	{
+		if(parent == null)
+		{
+			this.setEnabled(false);
+		}
+		else
+		{
+			this.setEnabled(true);
+		}
+		super.act(dt);
+	}
+	
+	public Item getContents()
+	{
+		if(parent == null)
+		{
+			return null;
+		}
+		return parent.getItem(index);
+	}
+	
 	public void addOnChange(Runnable r)
 	{
 		onChange.add(r);
 	}
 	public void setContents(Item i)
 	{
-		if(i==contents)
+		if(i==getContents())
 		{
 			return;
 		}
-		if(contents != null)
+		if(getContents() != null)
 		{
 			removeChild(itemEntity);
 		}
-		contents = i;
+		parent.setItem(index,i);
 		if(i!=null)
 		{
-			i.stripPins();
+			i.resetPinsAndState();
 			itemEntity = i.getInvEntity();
 			itemEntity.setPos(3, 3);
 			addChild(itemEntity);
@@ -118,9 +162,5 @@ public class InventorySlot extends Entity
 		{
 			r.run();
 		}
-	}
-	public Item getContents()
-	{
-		return contents;
 	}
 }

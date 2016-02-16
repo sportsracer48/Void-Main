@@ -1,5 +1,6 @@
 package game.map;
 
+import game.map.unit.Unit;
 import game.session.levelgen.MapConfig;
 import game.session.levelgen.MapTypes;
 
@@ -77,7 +78,7 @@ public class Map implements Serializable
 		{
 			for(Tile t:col)
 			{
-				if(t.getUnit() != null && t.getUnit().sprites.id == type)
+				if(t.getUnit() != null && t.getUnit().getSprites().id == type)
 				{
 					return t.getUnit();
 				}

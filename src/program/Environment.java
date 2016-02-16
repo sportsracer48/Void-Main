@@ -1,6 +1,6 @@
 package program;
 
-import game.map.UnitController;
+import game.map.unit.UnitController;
 
 import java.io.InputStream;
 import java.io.Serializable;

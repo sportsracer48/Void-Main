@@ -14,8 +14,8 @@ import org.lwjgl.opengl.GL20;
 import computer.program.ExecutableHolder;
 import computer.program.InteractiveExecutable;
 import computer.program.RenderedExecutable;
-import computer.system.Computer;
 import state.ui.ClickableArea;
+import game.session.GlobalState;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
@@ -49,11 +49,9 @@ public class ConsoleEntity extends Entity
 	RenderedExecutable renderedProgram;
 	CommandParser parser;
 	
-	Computer computer;
-	
 	float scale = 1f;
 	
-	public ConsoleEntity(float x, float y, float z, float width, float height, Computer computer)
+	public ConsoleEntity(float x, float y, float z, float width, float height)
 	{
 		super(x, y, z, null);
 		
@@ -93,8 +91,6 @@ public class ConsoleEntity extends Entity
 			}
 		});
 		
-		this.computer = computer;
-		
 		this.setScale(scale, scale);
 		font = RegisteredFont.defaultFont;
 		this.width = width/scale;
@@ -108,7 +104,7 @@ public class ConsoleEntity extends Entity
 		appendOnly = new AppendOnlyBuffer(cols);
 		parser = new CommandParser();
 		
-		appendOnly.append("Login admin@"+computer.getName()+"\n\n");
+		appendOnly.append("Login admin@"+GlobalState.getLaptop().getName()+"\n\n");
 		newPrompt();
 	}
 	public void act(int dt)
@@ -404,7 +400,7 @@ public class ConsoleEntity extends Entity
 			}
 			if(holder!=null)
 			{
-				holder.init(tokens, appendOnly, editable, font, scale, cols, rows, this::makeVisible, computer);
+				holder.init(tokens, appendOnly, editable, font, scale, cols, rows, this::makeVisible, GlobalState.getLaptop());
 				if(!runningProgram())
 				{
 					runningInteractiveProgram = false;

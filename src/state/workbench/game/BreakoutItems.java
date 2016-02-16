@@ -1,5 +1,7 @@
 package state.workbench.game;
 
+import game.item.Inventory;
+
 public class BreakoutItems
 {
 	ExternalBreakout top;
@@ -20,5 +22,13 @@ public class BreakoutItems
 		this.front = front;
 		this.back = back;
 		allBreakouts = new ExternalBreakout[]{top,bot,left,right,front,back};
+	}
+	
+	public void setBackingInventory(Inventory inventory)
+	{
+		for(ExternalBreakout breakout:allBreakouts)
+		{
+			breakout.setBackingInventory(inventory);
+		}
 	}
 }

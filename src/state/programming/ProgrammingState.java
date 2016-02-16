@@ -4,9 +4,8 @@ import math.Matrix;
 
 import org.lwjgl.glfw.GLFW;
 
-import computer.system.Computer;
 import entry.GlobalInput;
-import entry.GlobalState;
+import game.session.GlobalState;
 import graphics.Context;
 import graphics.Sprite;
 import graphics.entity.Entity;
@@ -25,7 +24,6 @@ public class ProgrammingState extends GameState
 	boolean mouseMoveThisFrame = false;
 	long ibeamCursor;
 	long defaultCursor;
-	Computer computer;
 	
 	int laptopX = 700;
 	int laptopY = 100;
@@ -33,7 +31,6 @@ public class ProgrammingState extends GameState
 	public ProgrammingState(GlobalInput input, long window)
 	{
 		super(input, window);
-		this.computer = GlobalState.laptop;
 	}
 	
 	public void enable()
@@ -78,7 +75,7 @@ public class ProgrammingState extends GameState
 		laptopBg.setScale(xScale,yScale);
 		laptop = new Entity(xOffset,yOffset,0,laptopSprite);
 		laptop.setScale(xScale, yScale);
-		console = new ConsoleEntity(22*xScale+xOffset+2,18*yScale+yOffset+2,0,193*xScale-4,109*yScale-4,computer);
+		console = new ConsoleEntity(22*xScale+xOffset+2,18*yScale+yOffset+2,0,193*xScale-4,109*yScale-4);
 		addUI(background);
 		addUI(laptopBg);
 		addUI(laptop);

@@ -8,15 +8,13 @@ import org.python.core.Py;
 import org.python.core.PyInteger;
 import org.python.core.PyObject;
 
-import game.map.UnitController;
-
-import java.util.Hashtable;
+import java.util.HashMap;
 
 public class OuinoPythonEnvironment
 {
-	public static Hashtable<String,PyObject> getGlobals(OuinoEnvironment env)
+	public static HashMap<String,PyObject> getGlobals(OuinoEnvironment env)
 	{
-		Hashtable<String,PyObject> locals = new Hashtable<>();
+		HashMap<String,PyObject> locals = new HashMap<>();
 		
 		locals.put("HIGH", new PyInteger(OuinoEnvironment.HIGH));
 		locals.put("LOW", new PyInteger(OuinoEnvironment.LOW));
@@ -99,11 +97,7 @@ public class OuinoPythonEnvironment
 			}));
 			
 			locals.put("tick", new PyCallable((args,keys)->{
-				UnitController controller = env.getUnitController();
-				if(controller != null)
-				{
-					controller.tick();
-				}
+				env.tick();
 				return null;
 			}));
 		}

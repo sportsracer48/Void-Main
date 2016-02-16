@@ -5,7 +5,6 @@ import java.util.function.Consumer;
 
 import org.lwjgl.glfw.GLFW;
 
-import entry.GlobalState;
 import state.Mode;
 import state.ModeManager;
 import state.ui.ClickableArea;
@@ -21,6 +20,7 @@ import util.Color;
 import game.item.Item;
 import game.item.ItemType;
 import game.item.ItemTypes;
+import game.session.GlobalState;
 import graphics.Sprite;
 import graphics.entity.Entity;
 import graphics.entity.FluidEntity;
@@ -143,7 +143,7 @@ public class ChassisGrid extends Entity
 					}
 					else if(manager.getMode()==programming)
 					{
-						GlobalState.laptop.setConnected(item.getEnvironment());
+						GlobalState.getLaptop().setConnected(item.getEnvironment());
 						programmingTransition.start();
 					}
 					else

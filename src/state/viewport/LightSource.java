@@ -1,6 +1,6 @@
 package state.viewport;
 
-import game.map.Unit;
+import game.map.unit.Unit;
 
 public class LightSource
 {

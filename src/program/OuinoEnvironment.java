@@ -1,8 +1,8 @@
 package program;
 
-import entry.GlobalState;
 import game.item.Pin;
-import game.map.UnitController;
+import game.map.unit.UnitController;
+import game.session.GlobalState;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -266,7 +266,7 @@ public class OuinoEnvironment implements Environment
 		if(controller!=null)
 		{
 			controller.tick();
-			if(controller.isAnimating())
+			if(isAnimating())
 			{
 				interpreter.stop();
 			}

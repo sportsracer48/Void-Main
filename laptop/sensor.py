@@ -1,12 +1,14 @@
 def setup():
-  pinMode(3,OUTPUT)
-  pinMode(4,OUTPUT)
+  for i in range(4):
+    pinMode(i,OUTPUT)
+  print 'setup'
+  serialWrite(0,1,16)
+  serialWrite(2,3,17)
   
 def loop():
-  for i in range(256):
-    serialWrite(3,4,i)
-    delay(1000)
+  tick()
   delay(1000)
+
 
 def serialWrite(clockPin,dataPin,val):
   for bit in range (8):

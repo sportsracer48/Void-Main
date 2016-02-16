@@ -1,7 +1,9 @@
-package game.map;
+package game.map.unit;
 
 import program.Environment;
 import game.item.Item;
+import game.map.CircuitSystem;
+import game.map.Map;
 import state.workbench.game.ExportState;
 
 public class UnitController implements CircuitSystem

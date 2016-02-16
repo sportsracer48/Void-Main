@@ -2,7 +2,7 @@ package computer.program;
 
 import state.programming.AppendOnlyBuffer;
 import computer.system.Computer;
-import entry.GlobalState;
+import game.session.GlobalState;
 
 public class Exit implements WriteOnlyExecutable
 {

@@ -70,7 +70,7 @@ public class EditHistory
 		history.clear();
 		history.add(toLoad);
 		statePtr = 0;
-		toLoad.load(view.contents, wireEditor, view.getBreakouts());
+		toLoad.load(view.contents, wireEditor, view.getBreakouts(),false);
 		view.revalidateEntities();
 	}
 }
